@@ -1,3 +1,14 @@
+[MasterBuild]: https://dev.azure.com/trailofbits/osquery/_build/latest?definitionId=6&branchName=master
+
+[Ubuntu1804MasterBuildImage]: https://dev.azure.com/trailofbits/osquery/_apis/build/status/osquery?branchName=master&jobName=LinuxBuild
+[Ubuntu1804MasterTestsImage]: https://dev.azure.com/trailofbits/osquery/_apis/build/status/osquery?branchName=master&jobName=LinuxTest
+
+[macOSMasterBuildImage]: https://dev.azure.com/trailofbits/osquery/_apis/build/status/osquery?branchName=master&jobName=macOSBuild
+[macOSMasterTestsImage]: https://dev.azure.com/trailofbits/osquery/_apis/build/status/osquery?branchName=master&jobName=macOSTest
+
+[WindowsMasterBuildImage]: https://dev.azure.com/trailofbits/osquery/_apis/build/status/osquery?branchName=master&jobName=WindowsBuild
+[WindowsMasterTestsImage]: https://dev.azure.com/trailofbits/osquery/_apis/build/status/osquery?branchName=master&jobName=WindowsTest
+
 # osquery
 
 <p align="center">
@@ -10,6 +21,12 @@ osquery is a SQL powered operating system instrumentation, monitoring, and analy
 <br>
 Available for Linux, macOS, Windows and FreeBSD.
 </p>
+
+|Platform|Build Status|Tests Status|
+|--------|------------|------------|
+|Ubuntu 18.04|[![Build Status][Ubuntu1804MasterBuildImage]][MasterBuild]|[![Tests Status][Ubuntu1804MasterTestsImage]][MasterBuild]|
+|macOS 10.14|[![Build Status][macOSMasterBuildImage]][MasterBuild]|[![Tests Status][macOSMasterTestsImage]][MasterBuild]|
+|Windows Server 2016|[![Build Status][WindowsMasterBuildImage]][MasterBuild]|[![Tests Status][WindowsMasterTestsImage]][MasterBuild]|
 
 ## What is osquery?
 
