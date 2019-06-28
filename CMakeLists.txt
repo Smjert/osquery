@@ -14,10 +14,10 @@ endif()
 include(cmake/globals.cmake)
 include(cmake/utilities.cmake)
 include(cmake/options.cmake)
-include(cmake/packaging.cmake)
+inlude(cmake/packaging.cmake)
 
 function(main)
-  message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+  essage(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
   message(STATUS "Shared libraries: ${BUILD_SHARED_LIBS}")
 
   if(DEFINED PLATFORM_MACOS)
