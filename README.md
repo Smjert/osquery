@@ -22,11 +22,14 @@ osquery is a SQL powered operating system instrumentation, monitoring, and analy
 Available for Linux, macOS, Windows and FreeBSD.
 </p>
 
-|Platform|Build Status|Tests Status|
-|--------|------------|------------|
-|Ubuntu 18.04|[![Build Status][Ubuntu1804MasterBuildImage]][MasterBuild]|[![Tests Status][Ubuntu1804MasterTestsImage]][MasterBuild]|
-|macOS 10.14|[![Build Status][macOSMasterBuildImage]][MasterBuild]|[![Tests Status][macOSMasterTestsImage]][MasterBuild]|
-|Windows Server 2016|[![Build Status][WindowsMasterBuildImage]][MasterBuild]|[![Tests Status][WindowsMasterTestsImage]][MasterBuild]|
+|Platform|Build Status|Tests Status| | | |
+|--------|------------|------------|---|---|---|
+|Ubuntu 18.04|[![Build Status][Ubuntu1804MasterBuildImage]][MasterBuild]|[![Tests Status][Ubuntu1804MasterTestsImage]][MasterBuild]| | **Homepage:** | https://osquery.io
+|macOS 10.14|[![Build Status][macOSMasterBuildImage]][MasterBuild]|[![Tests Status][macOSMasterTestsImage]][MasterBuild]| | **Downloads:** | https://osquery.io/downloads
+|Windows Server 2016|[![Build Status][WindowsMasterBuildImage]][MasterBuild]|[![Tests Status][WindowsMasterTestsImage]][MasterBuild]| | **Tables:** | https://osquery.io/schema
+|FreeBSD 11 | N/A | N/A | | **Packs:** | [https://osquery.io/packs]
+| | | | | **Guide:** | https://osquery.readthedocs.org
+| | | | | [![Slack Status](https://osquery-slack.herokuapp.com/badge.svg)](https://osquery-slack.herokuapp.com) | https://osquery-slack.herokuapp.com
 
 ## What is osquery?
 
