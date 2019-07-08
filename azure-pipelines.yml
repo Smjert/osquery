@@ -54,7 +54,7 @@ jobs:
     - script: |
         sysctl machdep.cpu
         brew upgrade
-        brew install ccache
+        brew install ccache ninja
       displayName: "Install Homebrew and prerequisites"
       timeoutInMinutes: 20
 
@@ -65,7 +65,7 @@ jobs:
       displayName: "Configure osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)/build
-        cmakeArgs: -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON $(Build.SourcesDirectory)
+        cmakeArgs: -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON $(Build.SourcesDirectory)
 
     - task: CMake@1
       displayName: "Build osquery"
