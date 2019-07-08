@@ -13,7 +13,9 @@ jobs:
     container: trailofbits/osql-experimental:ubuntu-18.04
 
     steps:
-    - script: mkdir $(Build.BinariesDirectory)/build
+    - script: |
+        cat /proc/cpuinfo
+        mkdir $(Build.BinariesDirectory)/build
       displayName: "Create build folder"
 
     - task: CMake@1
@@ -50,6 +52,7 @@ jobs:
 
     steps:
     - script: |
+        sysctl machdep.cpu
         brew upgrade
         brew install ccache
       displayName: "Install Homebrew and prerequisites"
