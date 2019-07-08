@@ -34,7 +34,7 @@ jobs:
       displayName: "Build osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)/build
-        cmakeArgs: --build . -j 3
+        cmakeArgs: --build . -j 5
 
     - script: |
         ctest --build-nocmake -V
@@ -71,7 +71,7 @@ jobs:
       displayName: "Build osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)/build
-        cmakeArgs: --build . -j 3
+        cmakeArgs: --build . -j 5
 
     - script: |
         ctest --build-nocmake -V
@@ -102,7 +102,7 @@ jobs:
       displayName: "Build osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: --build . -j 3 --config Release
+        cmakeArgs: --build . -j 5 --config Release
 
     - powershell: |
         ctest --build-nocmake -C Release -V
