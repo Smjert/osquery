@@ -53,6 +53,7 @@ jobs:
         cmakeArgs: --build . -j 3
 
     - script: |
+        du -sh
         ctest --build-nocmake -V
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/build
