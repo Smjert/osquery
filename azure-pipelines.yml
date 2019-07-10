@@ -25,7 +25,7 @@ jobs:
       options: --privileged
 
     steps:
-    - script: mkdir $(Build.BinariesDirectory)/build
+    - script: mkdir $(Build.BinariesDirectory)/build && df -h
       displayName: "Create build folder"
 
     - task: CMake@1
@@ -107,6 +107,7 @@ jobs:
 
     steps:
     - script: |
+        df -h
         brew upgrade
         brew install ccache
       displayName: "Install Homebrew and prerequisites"
