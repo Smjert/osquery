@@ -163,7 +163,14 @@ jobs:
 
 # WINDOWS
 
-  - job: Windows
+  - job: WindowsBuild
+
+    strategy:
+      matrix:
+        Release:
+          BUILD_TYPE: Release
+        RelWithDebInfo:
+          BUILD_TYPE: RelWithDebInfo
 
     pool:
       vmImage: vs2017-win2016
@@ -188,11 +195,56 @@ jobs:
       displayName: "Build osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: --build . -j 3 --config Release
+        cmakeArgs: --build . -j 3 --config ${BUILD_TYPE}
 
     - powershell: |
-        ctest --build-nocmake -C Release -V
+        if ("$(BUILD_TYPE)" -eq "RelWithDebInfo") {
+          echo "##vso[task.setvariable variable=RunAppverif]1"
+        }
+        else {
+          echo "##vso[task.setvariable variable=RunAppverif]0"
+        }
+      displayName: "Detect if appverif is to be run"
+
+    - powershell: |
+        $files = (Get-ChildItem -Path $(Build.BinariesDirectory)\build -Recurse -Filter "*-test.exe")
+        foreach ($file in $files) {
+          appverif -enable exceptions handles heaps leak memory -for $file.FullName
+        }
+      condition: $(RunAppverif)
+      displayName: "Enable AppVerifier for all the tests"
+
+    - powershell: |
+        ctest --build-nocmake -C ${BUILD_TYPE} -V
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/build
+
+    - powershell: |
+         echo "##vso[task.setvariable variable=Status;isOutput=true]1"
+      name: JobResult
+
+
+  - job: Windows
+
+    pool:
+      vmImage: 'Ubuntu-16.04'
+
+    condition: succeededOrFailed()
+
+    dependsOn:
+      - WindowsBuild
+
+    variables:
+      WindowsReleaseStatus: $[ dependencies.WindowsBuild.outputs['Release.JobResult.Status'] ]
+      WindowsRelWithDebInfoStatus: $[ dependencies.WindowsBuild.outputs['RelWithDebInfo.JobResult.Status'] ]
+
+    steps:
+    - checkout: none
+
+    - script: |
+        if [ -z "$(WindowsReleaseStatus)" ] || [ -z "$(WindowsRelWithDebInfoStatus)" ]; then
+          exit 1
+        fi
+      displayName: "Detect Windows Release and RelWithDebInfo build status"
 
 # WINDOWS
