@@ -264,6 +264,10 @@ jobs:
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/build
 
+    - powershell: |
+        echo "##vso[task.setvariable variable=Status;isOutput=true]1"
+      name: JobResult
+
 
   - job: WindowsBuck
     displayName: "WindowsBuck Release"
