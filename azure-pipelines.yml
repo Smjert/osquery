@@ -273,6 +273,11 @@ jobs:
 
     steps:
     - powershell: |
+        git config --global core.autocrlf false
+
+    - checkout: self
+
+    - powershell: |
         choco uninstall mingw -y
         (New-Object System.Net.WebClient).DownloadFile("https://github.com/facebook/buck/releases/download/v2019.06.17.01/buck.2019.06.17.01.nupkg", `
         "buck.2019.06.17.01.nupkg")
