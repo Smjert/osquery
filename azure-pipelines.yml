@@ -164,6 +164,7 @@ jobs:
 # WINDOWS
 
   - job: WindowsBuild
+    displayName: Windows
 
     strategy:
       matrix:
@@ -195,7 +196,7 @@ jobs:
       displayName: "Build osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: --build . -j 3 --config ${BUILD_TYPE}
+        cmakeArgs: --build . -j 3 --config $(BUILD_TYPE)
 
     - powershell: |
         if ("$(BUILD_TYPE)" -eq "RelWithDebInfo") {
@@ -215,7 +216,7 @@ jobs:
       displayName: "Enable AppVerifier for all the tests"
 
     - powershell: |
-        ctest --build-nocmake -C ${BUILD_TYPE} -V
+        ctest --build-nocmake -C $(BUILD_TYPE) -V
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/build
 
