@@ -303,7 +303,7 @@ jobs:
         C:\Python27amd64\python.exe "C:\Program Files\PackageManagement\NuGet\Packages\buck.2019.06.17.01\tools\buck.pex" build @mode/windows-x86_64/release osquery:osqueryd
       displayName: "Build osquery"
 
-    - powershell: |
+    - script: |
         set PATH=C:\Python27amd64;%PATH%
         C:\Python27amd64\python.exe "C:\Program Files\PackageManagement\NuGet\Packages\buck.2019.06.17.01\tools\buck.pex" test @mode/windows-x86_64/release osquery/...
       displayName: "Run tests"
