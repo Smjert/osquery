@@ -211,7 +211,7 @@ jobs:
         foreach ($file in $files) {
           appverif -enable exceptions handles heaps leak memory -for $file.FullName
         }
-      condition: $(RunAppverif)
+      condition: and(succeeded(), eq(variables['RunAppverif'], 1))
       displayName: "Enable AppVerifier for all the tests"
 
     - powershell: |
