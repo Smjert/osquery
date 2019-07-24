@@ -27,11 +27,17 @@ jobs:
     - script: mkdir $(Build.BinariesDirectory)/build
       displayName: "Create build folder"
 
+    - script: |
+        sudo apt update -q -y
+        sudo apt install -q -y ninja-build
+      displayName: "Install ninja"
+
     - task: CMake@1
       displayName: "Configure osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)/build
         cmakeArgs:
+          -G Ninja
           -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
           -DCMAKE_C_COMPILER=clang
           -DCMAKE_CXX_COMPILER=clang++
@@ -141,7 +147,7 @@ jobs:
     steps:
     - script: |
         brew upgrade
-        brew install ccache
+        brew install ccache ninja
       displayName: "Install Homebrew and prerequisites"
       timeoutInMinutes: 20
 
@@ -152,13 +158,13 @@ jobs:
       displayName: "Configure osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)/build
-        cmakeArgs: -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=ON $(EXTRA_CMAKE_ARGS) $(Build.SourcesDirectory)
+        cmakeArgs: -G Ninja -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=ON $(EXTRA_CMAKE_ARGS) $(Build.SourcesDirectory)
 
     - task: CMake@1
       displayName: "Build osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)/build
-        cmakeArgs: --build . -j 3
+        cmakeArgs: --build .
 
     - script: |
         ctest --build-nocmake -V
@@ -247,20 +253,20 @@ jobs:
         mkdir $(Build.BinariesDirectory)\build
       displayName: "Create build folder"
 
-    - task: CMake@1
+    - script: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DBUILD_TESTING=ON $(Build.SourcesDirectory)
       displayName: "Configure osquery"
-      inputs:
-        workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DBUILD_TESTING=ON $(Build.SourcesDirectory)
+      workingDirectory: $(Build.BinariesDirectory)\build
 
-    - task: CMake@1
+    - script: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        cmake --build . --config Release
       displayName: "Build osquery"
-      inputs:
-        workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: --build . -j 3 --config Release
+      workingDirectory: $(Build.BinariesDirectory)\build
 
     - powershell: |
-        ctest --build-nocmake -C Release -V
+        ctest --build-nocmake -V
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/build
 
