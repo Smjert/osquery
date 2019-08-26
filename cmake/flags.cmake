@@ -2,6 +2,9 @@ include(CheckPIESupported)
 check_pie_supported()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(CMAKE_LINK_SEARCH_START_STATIC ON)
+set(CMAKE_LINK_SEARCH_END_STATIC ON)
+
 function(setupBuildFlags)
   add_library(cxx_settings INTERFACE)
   add_library(c_settings INTERFACE)
