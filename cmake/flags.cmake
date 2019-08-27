@@ -66,8 +66,9 @@ function(setupBuildFlags)
     )
 
     set(posix_cxx_libraries
-      c++
-      c++abi
+      libc++abi.a
+      rt
+      dl
     )
 
     set(posix_c_compile_options
