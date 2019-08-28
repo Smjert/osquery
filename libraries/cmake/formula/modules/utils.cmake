@@ -217,6 +217,5 @@ function(getCompilationFlags language output_variable)
   list(TRANSFORM compile_definitions PREPEND -D)
   list(APPEND compile_flags ${compile_definitions})
 
-  message(STATUS "output: ${output_variable} flags: ${compile_flags}")
   set(${output_variable} "${compile_flags}" PARENT_SCOPE)
 endfunction()
