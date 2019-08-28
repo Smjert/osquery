@@ -8,17 +8,14 @@ function(opensslMain)
 
   if(NOT DEFINED thirdparty_zlib_INCLUDE_DIRS OR
      NOT DEFINED thirdparty_zlib_LIBRARIES)
-
     message(WARNING "The zlib dependency was not specified correctly")
     return()
   endif()
 
-  # The formula will be configured with the C_FLAGS and CXX_FLAGS parameters; we should
-  # forward them to the configure script when possible
-  message(WARNING "TODO: Use C_FLAGS")
+  set(openssl_c_flags -fPIC)
+  list(APPEND openssl_c_flags ${C_FLAGS})
+  string(REPLACE ";" " " openssl_c_flags "${openssl_c_flags}")
 
-  # TODO(alessandro): Port all the settings from the original formula
-  # TODO(alessandro): Use the compilation flags we got from the main project (C_FLAGS, CXX_FLAGS)
   ExternalProject_Add(
     openssl
     URL "https://www.openssl.org/source/openssl-1.0.2o.tar.gz"
@@ -36,13 +33,12 @@ function(opensslMain)
         "--with-zlib-include=${thirdparty_zlib_INCLUDE_DIRS}"
         "--with-zlib-lib=${thirdparty_zlib_LIBRARIES}"
         linux-x86_64
-        -fPIC
+        ${openssl_c_flags}
 
     BUILD_COMMAND
-     "${CMAKE_COMMAND}" -E env CC="${CMAKE_C_COMPILER}"
      "${CMAKE_COMMAND}" -E make_directory "${CMAKE_INSTALL_PREFIX}/etc/openssl" &&
-      make depend -j 10 &&
-      make -j 10
+      make depend &&
+      make
 
     INSTALL_COMMAND
       make install

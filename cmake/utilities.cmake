@@ -241,9 +241,15 @@ function(generateSpecialTargets)
     VERBATIM)
 endfunction()
 
-function(copyInterfaceTargetFlagsTo destination_target source_target mode)
+function(collectInterfaceOptionsFromTarget)
+  set(oneValueArgs TARGET COMPILE DEFINES LINK)
+  cmake_parse_arguments(PARSE_ARGV 0 osquery "" "${oneValueArgs}" "")
 
-  set(target_list ${source_target})
+  if(NOT osquery_TARGET OR NOT TARGET ${osquery_TARGET})
+    message(FATAL_ERROR "A valid target has to be provided")
+  endif()
+
+  set(target_list ${osquery_TARGET})
   set(target_list_length 1)
 
   while(${target_list_length} GREATER 0)
@@ -269,15 +275,15 @@ function(copyInterfaceTargetFlagsTo destination_target source_target mode)
       get_target_property(compile_definitions ${target} INTERFACE_COMPILE_DEFINITIONS)
       get_target_property(link_options ${target} INTERFACE_LINK_OPTIONS)
 
-      if(NOT "${compile_options}" STREQUAL "compile_options-NOTFOUND")
+      if(osquery_COMPILE AND NOT "${compile_options}" STREQUAL "compile_options-NOTFOUND")
         list(APPEND compile_options_list ${compile_options})
       endif()
 
-      if(NOT "${compile_definitions}" STREQUAL "compile_definitions-NOTFOUND")
+      if(osquery_DEFINES AND NOT "${compile_definitions}" STREQUAL "compile_definitions-NOTFOUND")
         list(APPEND compile_definitions_list ${compile_definitions})
       endif()
 
-      if(NOT "${link_options}" STREQUAL "link_options-NOTFOUND")
+      if(osquery_LINK AND NOT "${link_options}" STREQUAL "link_options-NOTFOUND")
         list(APPEND link_options_list ${link_options})
       endif()
     endforeach()
@@ -291,7 +297,49 @@ function(copyInterfaceTargetFlagsTo destination_target source_target mode)
   list(REMOVE_DUPLICATES compile_definitions_list)
   list(REMOVE_DUPLICATES link_options_list)
 
-  target_compile_options(${destination_target} ${mode} ${compile_options_list})
-  target_compile_definitions(${destination_target} ${mode} ${compile_definitions_list})
-  target_link_options(${destination_target} ${mode} ${link_options_list})
+  if(osquery_COMPILE)
+    set(${osquery_COMPILE} ${compile_options_list} PARENT_SCOPE)
+  endif()
+
+  if(osquery_LINK_OPTIONS)
+    set(${osquery_LINK_OPTIONS} ${link_options_list} PARENT_SCOPE)
+  endif()
+
+  if(osquery_DEFINES)
+    set(${osquery_DEFINES} ${compile_definitions_list} PARENT_SCOPE)
+  endif()
+
+endfunction()
+
+function(copyInterfaceTargetFlagsTo destination_target source_target mode)
+
+  collectInterfaceOptionsFromTarget(TARGET ${source_target}
+    COMPILE compile_options_list
+    LINK link_options_list
+    DEFINES compile_definitions_list
+  )
+
+  get_target_property(dest_compile_options_list ${destination_target} INTERFACE_COMPILE_OPTIONS)
+  get_target_property(dest_compile_definitions_list ${destination_target} INTERFACE_COMPILE_DEFINITIONS)
+  get_target_property(dest_link_options_list ${destination_target} INTERFACE_LINK_OPTIONS)
+
+  if("${dest_compile_options_list}" STREQUAL "dest_compile_options_list-NOTFOUND")
+    unset(dest_compile_options_list)
+  endif()
+
+  if("${dest_compile_definitions_list}" STREQUAL "dest_compile_definitions_list-NOTFOUND")
+    unset(dest_compile_definitions_list)
+  endif()
+
+  if("${dest_link_options_list}" STREQUAL "dest_link_options_list-NOTFOUND")
+    unset(dest_link_options_list)
+  endif()
+
+  list(APPEND dest_compile_options_list ${compile_options_list})
+  list(APPEND dest_compile_definitions_list ${compile_definitions_list})
+  list(APPEND dest_link_options_list ${link_options_list})
+
+  target_compile_options(${destination_target} ${mode} ${dest_compile_options_list})
+  target_compile_definitions(${destination_target} ${mode} ${dest_compile_definitions_list})
+  target_link_options(${destination_target} ${mode} ${dest_link_options_list})
 endfunction()

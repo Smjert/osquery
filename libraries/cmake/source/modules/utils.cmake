@@ -120,19 +120,12 @@ function(importSourceSubmodule)
   endforeach()
 
   if(NOT OSQUERY_THIRD_PARTY_SOURCE_MODULE_WARNINGS)
-    if(NOT TARGET submodule_options)
-      add_library(submodule_options INTERFACE)
-      target_compile_options(submodule_options INTERFACE
-        -Wno-everything -Wno-all -Wno-error
-      )
-
-      target_link_libraries(thirdparty_cxx_settings INTERFACE
-        submodule_options
-      )
-      target_link_libraries(thirdparty_c_settings INTERFACE
-        submodule_options
-      )
-    endif()
+    target_compile_options(osquery_thirdparty_extra_c_settings INTERFACE
+      -Wno-everything -Wno-all -Wno-error
+    )
+    target_compile_options(osquery_thirdparty_extra_cxx_settings INTERFACE
+      -Wno-everything -Wno-all -Wno-error
+    )
   endif()
 
   add_subdirectory(

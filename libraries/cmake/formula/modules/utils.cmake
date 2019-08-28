@@ -9,6 +9,8 @@ include(ExternalProject)
 
 set(OSQUERY_FORMULA_INSTALL_DIRECTORY "${CMAKE_BINARY_DIR}/installed_formulas")
 
+set(OSQUERY_FORMULA_BUILD_JOBS 4 CACHE STRING "Numer of parallel jobs that will be used for each third party library which uses the formula system to build")
+
 function(importFormula library_name)
   if("${library_name}" STREQUAL "modules")
     message(FATAL_ERROR "Invalid library name specified: ${library_name}")
@@ -41,8 +43,15 @@ function(importFormula library_name)
       set(toolset_option -T "${CMAKE_GENERATOR_TOOLSET}")
     endif()
 
+    if(DEFINED PLATFORM_POSIX)
+      # Most of the third party libraries will use makefiles and won't support Ninja
+      set(generator_option "Unix Makefiles")
+    else()
+      set(generator_option "${CMAKE_GENERATOR}")
+    endif()
+
     execute_process(
-      COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" ${toolset_option} "-DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}" "-DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}" "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}" "-DCMAKE_INSTALL_PREFIX:STRING=${install_prefix}" "${project_directory_path}"
+      COMMAND "${CMAKE_COMMAND}" -G ${generator_option} ${toolset_option} "-DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}" "-DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}" "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}" "-DCMAKE_INSTALL_PREFIX:STRING=${install_prefix}" "${project_directory_path}"
       WORKING_DIRECTORY "${build_directory_path}"
       RESULT_VARIABLE error
       OUTPUT_VARIABLE std_output
@@ -151,8 +160,8 @@ function(importFormula library_name)
     OUTPUT ${${library_name}_output_file_list}
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${log_folder_path}"
     COMMAND "${CMAKE_COMMAND}" -E remove -f "${log_file_path}"
-    COMMAND "${CMAKE_COMMAND}" -DC_FLAGS:STRING="${c_compilation_flags}" -DCXX_FLAGS:STRING="${cxx_compilation_flags}" ${${library_name}_formula_dependency_settings} "${project_directory_path}" > "${log_file_path}" 2>&1
-    COMMAND "${CMAKE_COMMAND}" --build . --config "${CMAKE_BUILD_TYPE}" >> "${log_file_path}" 2>&1
+    COMMAND "${CMAKE_COMMAND}" "-DC_FLAGS:STRING=${c_compilation_flags}" "-DCXX_FLAGS:STRING=${cxx_compilation_flags}" ${${library_name}_formula_dependency_settings} "${project_directory_path}" > "${log_file_path}" 2>&1
+    COMMAND "${CMAKE_COMMAND}" --build . --config "${CMAKE_BUILD_TYPE}" -j ${OSQUERY_FORMULA_BUILD_JOBS} >> "${log_file_path}" 2>&1
     WORKING_DIRECTORY "${build_directory_path}"
     COMMENT "Running formula: ${library_name} (${log_file_path})"
     VERBATIM
@@ -193,34 +202,21 @@ endfunction()
 
 function(getCompilationFlags language output_variable)
   if("${language}" STREQUAL "c")
-    set(target_name_list "thirdparty_c_settings")
+    set(target_name "thirdparty_c_settings")
 
   elseif("${language}" STREQUAL "cxx")
-    set(target_name_list "thirdparty_cxx_settings")
+    set(target_name "thirdparty_cxx_settings")
 
   else()
     message(FATAL_ERROR "Invalid language specified. Valid options are c and cxx")
   endif()
 
-  unset("${output_variable}")
+  collectInterfaceOptionsFromTarget(TARGET ${target_name} COMPILE compile_options DEFINES compile_definitions)
 
-  foreach(target_name ${target_name_list})
-    get_target_property(compile_option_list "${target_name}" INTERFACE_COMPILE_OPTIONS)
-    get_target_property(compile_def_list "${target_name}" INTERFACE_COMPILE_DEFINITIONS)
+  list(APPEND compile_flags ${compile_options})
+  list(TRANSFORM compile_definitions PREPEND -D)
+  list(APPEND compile_flags ${compile_definitions})
 
-    if(NOT "${compile_option_list}" STREQUAL "compile_option_list-NOTFOUND")
-      list(APPEND "${output_variable}" ${compile_option_list})
-    endif()
-
-    if(NOT "${compile_def_list}" STREQUAL "compile_def_list-NOTFOUND")
-      foreach(compile_def ${compile_def_list})
-        list(APPEND "${output_variable}"
-          "-D${compile_def}"
-        )
-      endforeach()
-    endif()
-  endforeach()
-
-  string(REPLACE ";" "," "${output_variable}" "${${output_variable}}")
-  set("${output_variable}" "${${output_variable}}" PARENT_SCOPE)
+  message(STATUS "output: ${output_variable} flags: ${compile_flags}")
+  set(${output_variable} "${compile_flags}" PARENT_SCOPE)
 endfunction()
