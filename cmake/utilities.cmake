@@ -230,13 +230,18 @@ function(generateSpecialTargets)
   # Used to generate all the files necessary to have a complete view of the project in the IDE
   add_custom_target(prepare_for_ide)
 
+
+  set(excluded_folders
+    "libraries/cmake/source"
+  )
+
   add_custom_target(format_check
-    COMMAND ${EX_TOOL_PYTHON2_EXECUTABLE_PATH} ${CMAKE_SOURCE_DIR}/tools/formatting/format-check.py origin/master
+    COMMAND ${EX_TOOL_PYTHON2_EXECUTABLE_PATH} ${CMAKE_SOURCE_DIR}/tools/formatting/format-check.py --exclude-folders ${excluded_folders} origin/master
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     VERBATIM
   )
   add_custom_target(format
-    COMMAND ${EX_TOOL_PYTHON2_EXECUTABLE_PATH} ${CMAKE_SOURCE_DIR}/tools/formatting/git-clang-format.py -f --style=file
+    COMMAND ${EX_TOOL_PYTHON2_EXECUTABLE_PATH} ${CMAKE_SOURCE_DIR}/tools/formatting/git-clang-format.py --exclude-folders ${excluded_folders} -f --style=file
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     VERBATIM)
 endfunction()

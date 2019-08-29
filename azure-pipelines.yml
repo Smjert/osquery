@@ -41,15 +41,11 @@ jobs:
           $(EXTRA_CMAKE_ARGS)
           $(Build.SourcesDirectory)
 
-    # Temporary; this is disabled because it complains about the config.h files
-    # that I have committed. We will update the code formatting checks to
-    # skip those files
-    #
-    #- task: CMake@1
-    #  displayName: "Check code formatting"
-    #  inputs:
-    #    workingDirectory: $(Build.BinariesDirectory)/build
-    #    cmakeArgs: --build . --target format_check
+    - task: CMake@1
+      displayName: "Check code formatting"
+      inputs:
+        workingDirectory: $(Build.BinariesDirectory)/build
+        cmakeArgs: --build . --target format_check
 
     - task: CMake@1
       displayName: "Build osquery"
