@@ -8,6 +8,9 @@ cmake_minimum_required(VERSION 3.13.3)
 
 cmake_policy(SET CMP0083 NEW)
 
+include(cmake/utilities.cmake)
+include(cmake/portable_toolchain.cmake)
+
 project(osquery)
 
 if(OSQUERY_BUILD_TESTS)
@@ -15,7 +18,6 @@ if(OSQUERY_BUILD_TESTS)
 endif()
 
 include(cmake/globals.cmake)
-include(cmake/utilities.cmake)
 include(cmake/options.cmake)
 include(cmake/flags.cmake)
 include(cmake/packaging.cmake)
