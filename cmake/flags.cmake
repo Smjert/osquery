@@ -58,11 +58,10 @@ function(setupBuildFlags)
       -Woverloaded-virtual
       -Wnon-virtual-dtor
       -Weffc++
-      -stdlib=libc++
     )
 
     set(posix_cxx_link_options
-      -stdlib=libc++
+      -Wl,-z,relro,-z,now
     )
 
     set(posix_cxx_libraries

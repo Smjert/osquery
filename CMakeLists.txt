@@ -9,7 +9,10 @@ cmake_minimum_required(VERSION 3.13.3)
 cmake_policy(SET CMP0083 NEW)
 
 include(cmake/utilities.cmake)
-include(cmake/portable_toolchain.cmake)
+
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  include(cmake/portable_toolchain.cmake)
+endif()
 
 project(osquery)
 
