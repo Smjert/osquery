@@ -60,7 +60,7 @@
 #define HAVE_BSEARCH 1
 
 /* Define to 1 if you have the `clock_gettime' function. */
-#define HAVE_CLOCK_GETTIME 1
+/* #undef HAVE_CLOCK_GETTIME */
 
 /* Define to 1 if clock_gettime supports CLOCK_MONOTONIC. */
 /* #undef HAVE_CLOCK_MONOTONIC */
