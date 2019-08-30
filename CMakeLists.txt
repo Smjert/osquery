@@ -9,10 +9,7 @@ cmake_minimum_required(VERSION 3.13.3)
 cmake_policy(SET CMP0083 NEW)
 
 include(cmake/utilities.cmake)
-
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-  include(cmake/portable_toolchain.cmake)
-endif()
+include(cmake/portable_toolchain.cmake)
 
 project(osquery)
 
@@ -24,6 +21,10 @@ include(cmake/globals.cmake)
 include(cmake/options.cmake)
 include(cmake/flags.cmake)
 include(cmake/packaging.cmake)
+
+if (OSQUERY_PORTABLE_TOOLCHAIN_SYSROOT AND NOT DEFINED PLATFORM_LINUX)
+  message(FATAL_ERROR "The portable toolchain can only be used with Linux, undefine OSQUERY_PORTABLE_TOOLCHAIN_SYSROOT and specify a compiler to use")
+endif()
 
 function(main)
   message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
