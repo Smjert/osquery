@@ -210,7 +210,7 @@ typedef uint64_t uintmax_t;
 /* #undef ARCHIVE_CRYPTO_MD5_NETTLE */
 
 /* MD5 via ARCHIVE_CRYPTO_MD5_OPENSSL supported. */
-#define ARCHIVE_CRYPTO_MD5_OPENSSL 1
+/* #undef ARCHIVE_CRYPTO_MD5_OPENSSL */
 
 /* MD5 via ARCHIVE_CRYPTO_MD5_WIN supported. */
 /* #undef ARCHIVE_CRYPTO_MD5_WIN */
@@ -222,7 +222,7 @@ typedef uint64_t uintmax_t;
 /* #undef ARCHIVE_CRYPTO_RMD160_NETTLE */
 
 /* RMD160 via ARCHIVE_CRYPTO_RMD160_OPENSSL supported. */
-#define ARCHIVE_CRYPTO_RMD160_OPENSSL 1
+/* #undef ARCHIVE_CRYPTO_RMD160_OPENSSL */
 
 /* SHA1 via ARCHIVE_CRYPTO_SHA1_LIBC supported. */
 /* #undef ARCHIVE_CRYPTO_SHA1_LIBC */
@@ -234,7 +234,7 @@ typedef uint64_t uintmax_t;
 /* #undef ARCHIVE_CRYPTO_SHA1_NETTLE */
 
 /* SHA1 via ARCHIVE_CRYPTO_SHA1_OPENSSL supported. */
-#define ARCHIVE_CRYPTO_SHA1_OPENSSL 1
+/* #undef ARCHIVE_CRYPTO_SHA1_OPENSSL */
 
 /* SHA1 via ARCHIVE_CRYPTO_SHA1_WIN supported. */
 /* #undef ARCHIVE_CRYPTO_SHA1_WIN */
@@ -255,7 +255,7 @@ typedef uint64_t uintmax_t;
 /* #undef ARCHIVE_CRYPTO_SHA256_NETTLE */
 
 /* SHA256 via ARCHIVE_CRYPTO_SHA256_OPENSSL supported. */
-#define ARCHIVE_CRYPTO_SHA256_OPENSSL 1
+/* #undef ARCHIVE_CRYPTO_SHA256_OPENSSL */
 
 /* SHA256 via ARCHIVE_CRYPTO_SHA256_WIN supported. */
 /* #undef ARCHIVE_CRYPTO_SHA256_WIN */
@@ -276,7 +276,7 @@ typedef uint64_t uintmax_t;
 /* #undef ARCHIVE_CRYPTO_SHA384_NETTLE */
 
 /* SHA384 via ARCHIVE_CRYPTO_SHA384_OPENSSL supported. */
- #define ARCHIVE_CRYPTO_SHA384_OPENSSL 1
+/* #undef ARCHIVE_CRYPTO_SHA384_OPENSSL */
 
 /* SHA384 via ARCHIVE_CRYPTO_SHA384_WIN supported. */
 /* #undef ARCHIVE_CRYPTO_SHA384_WIN */
@@ -297,7 +297,7 @@ typedef uint64_t uintmax_t;
 /* #undef ARCHIVE_CRYPTO_SHA512_NETTLE */
 
 /* SHA512 via ARCHIVE_CRYPTO_SHA512_OPENSSL supported. */
-#define ARCHIVE_CRYPTO_SHA512_OPENSSL 1
+/* #undef ARCHIVE_CRYPTO_SHA512_OPENSSL */
 
 /* SHA512 via ARCHIVE_CRYPTO_SHA512_WIN supported. */
 /* #undef ARCHIVE_CRYPTO_SHA512_WIN */
@@ -372,7 +372,7 @@ typedef uint64_t uintmax_t;
 /* #undef HAVE_BSDXML_H */
 
 /* Define to 1 if you have the <bzlib.h> header file. */
-/* #undef HAVE_BZLIB_H */
+#define HAVE_BZLIB_H 1
 
 /* Define to 1 if you have the `chflags' function. */
 /* #undef HAVE_CHFLAGS */
@@ -687,7 +687,7 @@ typedef uint64_t uintmax_t;
 /* #undef HAVE_LIBCRYPTO */
 
 /* Define to 1 if you have the `expat' library (-lexpat). */
-#define HAVE_LIBEXPAT 1
+/* #undef HAVE_LIBEXPAT */
 
 /* Define to 1 if you have the `gcc' library (-lgcc). */
 /* #undef HAVE_LIBGCC */
@@ -714,7 +714,7 @@ typedef uint64_t uintmax_t;
 /* #undef HAVE_LIBPCREPOSIX */
 
 /* Define to 1 if you have the `xml2' library (-lxml2). */
-#define HAVE_LIBXML2 1
+/* #undef HAVE_LIBXML2 */
 
 /* Define to 1 if you have the <libxml/xmlreader.h> header file. */
 /* #undef HAVE_LIBXML_XMLREADER_H */
@@ -796,7 +796,7 @@ typedef uint64_t uintmax_t;
 /* #undef HAVE_LZMADEC_H */
 
 /* Define to 1 if you have the <lzma.h> header file. */
-/* #undef HAVE_LZMA_H */
+#define HAVE_LZMA_H 1
 
 /* Define to 1 if you have a working `lzma_stream_encoder_mt' function. */
 /* #undef HAVE_LZMA_STREAM_ENCODER_MT */
