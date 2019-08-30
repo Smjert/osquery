@@ -289,7 +289,7 @@
 
 /* Define to 1 if you have the declaration of `isblank', and to 0 if you
    don't. */
-/* #undef HAVE_DECL_ISBLANK */
+#define HAVE_DECL_ISBLANK 1
 
 /* Define to 1 if you have the declaration of `mbrtowc', and to 0 if you
    don't. */
@@ -638,7 +638,7 @@
 #define HAVE_RAW_DECL_GETPAGESIZE 1
 
 /* Define to 1 if gets is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_GETS */
+#define HAVE_RAW_DECL_GETS 1
 
 /* Define to 1 if getsubopt is declared even after undefining macros. */
 #define HAVE_RAW_DECL_GETSUBOPT 1
@@ -812,7 +812,7 @@
 #define HAVE_RAW_DECL_RPMATCH 1
 
 /* Define to 1 if secure_getenv is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SECURE_GETENV 1
+/* #undef HAVE_RAW_DECL_SECURE_GETENV */
 
 /* Define to 1 if setenv is declared even after undefining macros. */
 #define HAVE_RAW_DECL_SETENV 1
@@ -1054,35 +1054,23 @@
 /* Define to 1 if _Exit is declared even after undefining macros. */
 #define HAVE_RAW_DECL__EXIT 1
 
-/* Define to 1 if you have the <readline/readline.h> header file. */
-#define HAVE_READLINE_READLINE_H 1
-
 /* Define to 1 if you have the 'readlink' function. */
 #define HAVE_READLINK 1
 
 /* Define to 1 if you have the 'realpath' function. */
 #define HAVE_REALPATH 1
 
-/* Define to 1 if you have the `rl_completion_matches' function. */
-#define HAVE_RL_COMPLETION_MATCHES 1
-
-/* Define to 1 if you have the `rl_crlf' function. */
-#define HAVE_RL_CRLF 1
-
-/* Define to 1 if you have the `rl_replace_line' function. */
-#define HAVE_RL_REPLACE_LINE 1
-
 /* Define to 1 if you have the <search.h> header file. */
 #define HAVE_SEARCH_H 1
 
 /* Define to 1 if you have the 'secure_getenv' function. */
-#define HAVE_SECURE_GETENV 1
+/* #undef HAVE_SECURE_GETENV */
 
 /* Define to 1 if you have the <selinux/context.h> header file. */
 /* #undef HAVE_SELINUX_CONTEXT_H */
 
 /* Define to 1 if you have the <selinux/selinux.h> header file. */
-/* #undef HAVE_SELINUX_SELINUX_H */
+#define HAVE_SELINUX_SELINUX_H 0
 
 /* Define to 1 if you have the <semaphore.h> header file. */
 #define HAVE_SEMAPHORE_H 1
@@ -1259,7 +1247,7 @@
 #define HAVE_WORKING_O_NOFOLLOW 1
 
 /* Define to 1 if you have the <xlocale.h> header file. */
-/* #undef HAVE_XLOCALE_H */
+#define HAVE_XLOCALE_H 1
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
@@ -1281,13 +1269,14 @@
     
 
 /* Define to 1 if you have the `__secure_getenv' function. */
-/* #undef HAVE___SECURE_GETENV */
+#define HAVE___SECURE_GETENV 1
 
 /* Define to 1 if 'lstat' dereferences a symlink specified with a trailing
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
 #define LT_OBJDIR ".libs/"
 
 /* If malloc(0) is != NULL, define this to 1. Otherwise define this to 0. */
@@ -1298,7 +1287,7 @@
 
 /* Define if the mbrtowc function does not return (size_t) -2 for empty input.
    */
-/* #undef MBRTOWC_EMPTY_INPUT_BUG */
+#define MBRTOWC_EMPTY_INPUT_BUG 1
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */
@@ -1513,7 +1502,7 @@
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-#define YYTEXT_POINTER 1
+/* #undef YYTEXT_POINTER */
 
 /* Enable large inode numbers on Mac OS X 10.5. */
 #define _DARWIN_USE_64_BIT_INODE 1
@@ -1567,7 +1556,7 @@
 
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
-/* #undef __GETOPT_PREFIX */
+#define __GETOPT_PREFIX rpl_
 
 /* Define to 1 if the system <stdint.h> predates C++11. */
 /* #undef __STDC_CONSTANT_MACROS */
@@ -1677,7 +1666,7 @@
 /* #undef fgetfilecon */
 
 /* Define to a replacement function name for fnmatch(). */
-/* #undef fnmatch */
+#define fnmatch posix_fnmatch
 
 /* Always use our getfilecon wrapper. */
 /* #undef getfilecon */
