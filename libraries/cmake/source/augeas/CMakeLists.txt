@@ -28,6 +28,7 @@ function(augeasMain)
     "${library_root}/src/jmt.c"
     "${library_root}/src/put.c"
     "${library_root}/src/hash.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gnulib/src/lib/fnmatch.c"
   )
 
   # Flex and Bison are now required, since they are needed to build augeas.
@@ -132,12 +133,22 @@ function(augeasMain)
 
   target_include_directories(thirdparty_augeas PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/config"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gnulib/generated"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${library_root}/src"
   )
 
   target_include_directories(thirdparty_augeas SYSTEM INTERFACE
     "${library_root}/src"
+  )
+
+  target_compile_options(thirdparty_augeas PRIVATE
+    -std=gnu99
+  )
+
+  # This is needed by fnmatch.c, maybe we can pass the define only to it
+  target_compile_definitions(thirdparty_augeas PRIVATE
+    HAVE_CONFIG_H
   )
 
   set_property(GLOBAL PROPERTY AUGEAS_LENSES_FOLDER_PATH "${library_root}/lenses")
