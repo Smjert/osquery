@@ -278,6 +278,7 @@ function(berkeleydbMain)
     _GNU_SOURCE
     _REENTRANT
     __atomic_compare_exchange=__atomic_compare_exchange_db
+    atomic_init=atomic_init_db
   )
 
   target_link_libraries(thirdparty_berkeley-db PUBLIC
