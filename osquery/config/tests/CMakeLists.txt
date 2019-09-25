@@ -47,7 +47,6 @@ function(generateOsqueryConfigTestsTest)
     osquery_config_tests_testutils
     thirdparty_googletest
   )
-
 endfunction()
 
 function(generateOsqueryConfigTestsPacksTest)
@@ -70,7 +69,6 @@ function(generateOsqueryConfigTestsPacksTest)
     osquery_config_tests_testutils
     thirdparty_googletest
   )
-
 endfunction()
 
 osqueryConfigTestsMain()
