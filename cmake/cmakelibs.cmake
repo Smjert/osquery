@@ -1,6 +1,7 @@
 ###################################################
-##       utilities.cmake
+##       cmakelibs.cmake
 ###################################################
+
 # This function takes the global properties saved by add_osquery_extension_ex and 
 # generates a single extension executable containing all the user code
 function(generate_osquery_extension_group)
@@ -9,8 +10,7 @@ function(generate_osquery_extension_group)
     return()
   endif()
 
-  # Allow the user to customize the extension name and version using
-  # environment variables
+  # Allow the user to customize the extension name and version using environment variables
   if(DEFINED ENV{OSQUERY_EXTENSION_GROUP_NAME})
     set(OSQUERY_EXTENSION_GROUP_NAME $ENV{OSQUERY_EXTENSION_GROUP_NAME})
   else()
@@ -25,7 +25,6 @@ function(generate_osquery_extension_group)
 
   # Build the include list; this contains the files required to declare
   # the classes used in the REGISTER_EXTERNAL directives
-  #
   # Note: The variables in uppercase are used by the template
   get_property(main_include_list GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_MAIN_INCLUDES)
   foreach(include_file ${main_include_list})
@@ -56,11 +55,6 @@ function(generate_osquery_extension_group)
 
   set_property(TARGET "${OSQUERY_EXTENSION_GROUP_NAME}" PROPERTY INCLUDE_DIRECTORIES "")
   target_compile_options("${OSQUERY_EXTENSION_GROUP_NAME}" PRIVATE ${extension_cxx_flags})
-
-  get_version_number(${OSQUERY_VERSION_INTERNAL} version)
-  target_compile_options("${OSQUERY_EXTENSION_GROUP_NAME}" PRIVATE 
-    -DOSQUERY_VERSION_NUMBER=${version}
-  )
 
   target_link_libraries("${OSQUERY_EXTENSION_GROUP_NAME}" PUBLIC
   	osquery_sdk_pluginsdk
@@ -101,8 +95,7 @@ endfunction()
 
 function(add_osquery_extension_ex class_name extension_type extension_name ${ARGN})
   # Make sure the extension type is valid
-  if(NOT "${extension_type}" STREQUAL "config" 
-    AND NOT "${extension_type}" STREQUAL "table")
+  if(NOT "${extension_type}" STREQUAL "config" AND NOT "${extension_type}" STREQUAL "table")
     message(FATAL_ERROR "Invalid extension type specified")
   endif()
 
@@ -125,18 +118,17 @@ function(add_osquery_extension_ex class_name extension_type extension_name ${ARG
       if(NOT IS_ABSOLUTE "${argument}")
         set(argument "${CMAKE_CURRENT_SOURCE_DIR}/${argument}")
       endif()
-
       list(APPEND source_file_list "${argument}")
 
     elseif("${current_scope}" STREQUAL "INCLUDEDIRS")
       if(NOT IS_ABSOLUTE "${argument}")
         set(argument "${CMAKE_CURRENT_SOURCE_DIR}/${argument}")
       endif()
-
       list(APPEND include_folder_list "${argument}")
 
     elseif("${current_scope}" STREQUAL "LIBRARIES")
       list(APPEND library_list "${argument}")
+
     elseif("${current_scope}" STREQUAL "MAININCLUDES")
       list(APPEND main_include_list "${argument}")
     else()
@@ -154,32 +146,33 @@ function(add_osquery_extension_ex class_name extension_type extension_name ${ARG
   endif()
 
   # Update the global properties
-  set_property(GLOBAL APPEND
-    PROPERTY OSQUERY_EXTENSION_GROUP_SOURCES
+  set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_SOURCES
     ${source_file_list}
   )
 
-  set_property(GLOBAL APPEND
-    PROPERTY OSQUERY_EXTENSION_GROUP_MAIN_INCLUDES
+  set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_MAIN_INCLUDES
     ${main_include_list}
   )
 
   if(NOT "${library_list}" STREQUAL "")
-    set_property(GLOBAL APPEND
-      PROPERTY OSQUERY_EXTENSION_GROUP_LIBRARIES
+    set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_LIBRARIES
       ${library_list}
     )
   endif()
 
   if(NOT "${include_folder_list}" STREQUAL "")
-    set_property(GLOBAL APPEND
-      PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS
+    set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS
       ${include_folder_list}
     )
   endif()
 endfunction()
 
 macro(ADD_OSQUERY_EXTENSION TARGET)
+  add_executable(${TARGET} ${ARGN})
+  set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "${TARGET}.ext")
+endmacro(ADD_OSQUERY_EXTENSION)
+
+macro(ADD_OSQUERY_MODULE TARGET)
   add_executable(${TARGET} ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "${TARGET}.ext")
 endmacro(ADD_OSQUERY_EXTENSION)
