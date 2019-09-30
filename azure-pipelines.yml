@@ -159,6 +159,7 @@ jobs:
 
     steps:
     - script: |
+        brew update
         brew upgrade
         brew install ccache flex bison
       displayName: "Install Homebrew and prerequisites"
@@ -204,6 +205,7 @@ jobs:
 
     steps:
     - script: |
+        brew update
         brew tap facebook/fb
         brew upgrade
         brew cask install adoptopenjdk8
