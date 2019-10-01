@@ -1,6 +1,8 @@
-###################################################
-##       cmakelibs.cmake
-###################################################
+# Copyright (c) 2014-present, Facebook, Inc.
+# All rights reserved.
+#
+# This source code is licensed in accordance with the terms specified in
+# the LICENSE file found in the root directory of this source tree.
 
 # This function takes the global properties saved by add_osquery_extension_ex and 
 # generates a single extension executable containing all the user code
