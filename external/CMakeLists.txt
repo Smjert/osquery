@@ -6,10 +6,11 @@
 # If a directory includes: "module_NAME" it is built as a module.
 
 add_custom_target(externals)
-add_definitions(-DOSQUERY_EXTERNAL)
-#target_compile_definitions(externals PUBLIC OSQUERY_EXTERNAL)
+add_compile_definitions(OSQUERY_EXTERNAL)
 
 include(cmake/cmakelibs.cmake)
+
+set(EXTERNALS_DIR "${CMAKE_SOURCE_DIR}/external")
 
 function(subdirlist output path)
   file(GLOB children RELATIVE ${path} "${path}/*")
@@ -25,10 +26,9 @@ function(subdirlist output path)
   set(${output} ${DIRS} PARENT_SCOPE)
 endfunction()
 
-
-# Discover each directory, which contains the implementation for an extension
-# or module, usually symlinked.
-subdirlist(EXTERNAL_PROJECTS "${CMAKE_SOURCE_DIR}/external")
+function(externalsMain)
+# Discover the implementation for extensions or modules in external directory
+subdirlist(EXTERNAL_PROJECTS ${EXTERNALS_DIR})
 
 # Each project may:
 #   1. Be named "external_PROJECT_NAME", all .cpp, .c, .mm files will be compiled.
@@ -36,7 +36,6 @@ subdirlist(EXTERNAL_PROJECTS "${CMAKE_SOURCE_DIR}/external")
 #   3. Contain a "CMakeLists.txt", the project will be added to CMake's evaluation.
 foreach(external_project ${EXTERNAL_PROJECTS})
   get_filename_component(PROJECT_NAME "${external_project}" NAME)
-
   # check for the cmake having utilities functions
   if(${PROJECT_NAME} MATCHES "cmake")
     continue()
@@ -65,3 +64,6 @@ foreach(external_project ${EXTERNAL_PROJECTS})
     endif()
   endif()
 endforeach()
+endfunction()
+
+externalsMain()
