@@ -13,7 +13,7 @@ function(generateOsqueryExtensionGroup)
   endif()
 
   if(DEFINED ENV{OSQUERY_EXTENSION_GROUP_NAME} OR ENV{OSQUERY_EXTENSION_GROUP_VERSION})
-    message(WARNING "ENV {OSQUERY_EXTENSION_GROUP_NAME/VERSION} has been deprecated. Please set the cache variable.")
+    message("ENV {OSQUERY_EXTENSION_GROUP_NAME/VERSION} has been deprecated. Please set cache variable!")
   endif()
 
   if(NOT OSQUERY_EXTENSION_GROUP_NAME)
@@ -95,7 +95,7 @@ function(generateOsqueryExtensionGroup)
   endif()
 endfunction()
 
-function(add_osquery_extension_ex class_name extension_type extension_name ${ARGN})
+function(addOsqueryExtensionEx class_name extension_type extension_name ${ARGN})
   # Make sure the extension type is valid
   if(NOT "${extension_type}" STREQUAL "config" AND NOT "${extension_type}" STREQUAL "table")
     message(FATAL_ERROR "Invalid extension type specified")
@@ -167,6 +167,12 @@ function(add_osquery_extension_ex class_name extension_type extension_name ${ARG
       ${include_folder_list}
     )
   endif()
+endfunction()
+
+
+function(add_osquery_extension_ex class_name extension_type extension_name ${ARGN})
+  message("add_osquery_extension_ex has been deprecated. Please use addOsqueryExtensionEx!")
+  addOsqueryExtensionEx(${class_name} ${extension_type} ${extension_name} ${ARGN})
 endfunction()
 
 function(add_osquery_extension TARGET)
