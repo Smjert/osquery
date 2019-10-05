@@ -77,21 +77,16 @@ function(generateOsqueryExtensionGroup)
   # Import the core libraries; note that we are going to inherit include directories
   # with the wrong scope, so we'll have to fix it
   set_property(TARGET "${OSQUERY_EXTENSION_GROUP_NAME}" PROPERTY INCLUDE_DIRECTORIES "")
-  target_include_directories("${OSQUERY_EXTENSION_GROUP_NAME}" SYSTEM PRIVATE 
-    ${include_folder_list}
-  )
+
+  get_property(include_dirs GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS)
+  if(NOT "${include_dirs}" STREQUAL "")
+    target_include_directories("${OSQUERY_EXTENSION_GROUP_NAME}" PRIVATE ${include_dirs})
+  endif()
 
   # Apply the user (extension) settings
   get_property(library_list GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_LIBRARIES)
   if(NOT "${library_list}" STREQUAL "")
     target_link_libraries("${OSQUERY_EXTENSION_GROUP_NAME}" PUBLIC ${library_list})
-  endif()
-
-  get_property(include_folder_list GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS)
-  if(NOT "${include_folder_list}" STREQUAL "")
-    target_include_directories("${OSQUERY_EXTENSION_GROUP_NAME}" PRIVATE
-      ${include_folder_list}
-    )
   endif()
 endfunction()
 
@@ -101,10 +96,9 @@ function(addOsqueryExtensionEx class_name extension_type extension_name ${ARGN})
     message(FATAL_ERROR "Invalid extension type specified")
   endif()
 
-  # Update the initializer list; this will be added to the main.cpp file of the extension
-  # group
-  set_property(GLOBAL APPEND_STRING
-    PROPERTY OSQUERY_EXTENSION_GROUP_INITIALIZERS
+  # Update the initializer list; this will be added to the main.cpp file of the extension group
+  set_property(GLOBAL APPEND_STRING PROPERTY
+    OSQUERY_EXTENSION_GROUP_INITIALIZERS
     "REGISTER_EXTERNAL(${class_name}, \"${extension_type}\", \"${extension_name}\");\n"
   )
 
@@ -120,51 +114,51 @@ function(addOsqueryExtensionEx class_name extension_type extension_name ${ARGN})
       if(NOT IS_ABSOLUTE "${argument}")
         set(argument "${CMAKE_CURRENT_SOURCE_DIR}/${argument}")
       endif()
-      list(APPEND source_file_list "${argument}")
+      list(APPEND source_files "${argument}")
 
     elseif("${current_scope}" STREQUAL "INCLUDEDIRS")
       if(NOT IS_ABSOLUTE "${argument}")
         set(argument "${CMAKE_CURRENT_SOURCE_DIR}/${argument}")
       endif()
-      list(APPEND include_folder_list "${argument}")
+      list(APPEND include_dirs "${argument}")
 
     elseif("${current_scope}" STREQUAL "LIBRARIES")
-      list(APPEND library_list "${argument}")
+      list(APPEND libraries "${argument}")
 
     elseif("${current_scope}" STREQUAL "MAININCLUDES")
-      list(APPEND main_include_list "${argument}")
+      list(APPEND main_include_files "${argument}")
     else()
       message(FATAL_ERROR "Invalid scope")
     endif()
   endforeach()
 
   # Validate the arguments
-  if("${source_file_list}" STREQUAL "")
+  if("${source_files}" STREQUAL "")
     message(FATAL_ERROR "Source files are missing")
   endif()
 
-  if("${main_include_list}" STREQUAL "")
+  if("${main_include_files}" STREQUAL "")
     message(FATAL_ERROR "The main include list is missing")
   endif()
 
   # Update the global properties
   set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_SOURCES
-    ${source_file_list}
+    ${source_files}
   )
 
   set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_MAIN_INCLUDES
-    ${main_include_list}
+    ${main_include_files}
   )
 
-  if(NOT "${library_list}" STREQUAL "")
+  if(NOT "${libraries}" STREQUAL "")
     set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_LIBRARIES
-      ${library_list}
+      ${libraries}
     )
   endif()
 
-  if(NOT "${include_folder_list}" STREQUAL "")
+  if(NOT "${include_dirs}" STREQUAL "")
     set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS
-      ${include_folder_list}
+      ${include_dirs}
     )
   endif()
 endfunction()
@@ -175,12 +169,12 @@ function(add_osquery_extension_ex class_name extension_type extension_name ${ARG
   addOsqueryExtensionEx(${class_name} ${extension_type} ${extension_name} ${ARGN})
 endfunction()
 
-function(add_osquery_extension TARGET)
+function(addOsqueryExtension TARGET)
   add_executable(${TARGET} ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "${TARGET}.ext")
 endfunction()
 
-function(add_osquery_module TARGET)
+function(addOsqueryModule TARGET)
   add_library(${TARGET} STATIC ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 endfunction()
