@@ -6,24 +6,25 @@
 
 # This function takes the global properties saved by add_osquery_extension_ex and 
 # generates a single extension executable containing all the user code
-function(generate_osquery_extension_group)
+function(generateOsqueryExtensionGroup)
   get_property(extension_source_files GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_SOURCES)
   if("${extension_source_files}" STREQUAL "")
     return()
   endif()
 
-  # Allow the user to customize the extension name and version using environment variables
-  if(DEFINED ENV{OSQUERY_EXTENSION_GROUP_NAME})
-    set(OSQUERY_EXTENSION_GROUP_NAME $ENV{OSQUERY_EXTENSION_GROUP_NAME})
-  else()
-    set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group")
+  if(DEFINED ENV{OSQUERY_EXTENSION_GROUP_NAME} OR ENV{OSQUERY_EXTENSION_GROUP_VERSION})
+    message(WARNING "ENV {OSQUERY_EXTENSION_GROUP_NAME/VERSION} has been deprecated. Please set the cache variable.")
   endif()
 
-  if(DEFINED ENV{OSQUERY_EXTENSION_GROUP_VERSION})
-    set(OSQUERY_EXTENSION_GROUP_VERSION $ENV{OSQUERY_EXTENSION_GROUP_VERSION})
-  else()
-    set(OSQUERY_EXTENSION_GROUP_VERSION "1.0")
+  if(NOT OSQUERY_EXTENSION_GROUP_NAME)
+    set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group" CACHE STRING "Overrides osquery extension group name" FORCE)
   endif()
+
+
+  if(NOT OSQUERY_EXTENSION_GROUP_VERSION)
+    set(OSQUERY_EXTENSION_GROUP_VERSION "1.0" CACHE STRING "Overrides osquery extension group version" FORCE)
+  endif()  
+  
 
   # Build the include list; this contains the files required to declare
   # the classes used in the REGISTER_EXTERNAL directives
@@ -33,8 +34,7 @@ function(generate_osquery_extension_group)
     set(OSQUERY_EXTENSION_GROUP_INCLUDES "${OSQUERY_EXTENSION_GROUP_INCLUDES}\n#include <${include_file}>")
   endforeach()
 
-  # We need to generate the main.cpp file, containing all the required
-  # REGISTER_EXTERNAL directives
+  # We need to generate the main.cpp file, containing all the required REGISTER_EXTERNAL directives
   get_property(OSQUERY_EXTENSION_GROUP_INITIALIZERS GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_INITIALIZERS)
   configure_file(
     "${CMAKE_SOURCE_DIR}/tools/codegen/templates/osquery_extension_group_main.cpp.in"
@@ -169,12 +169,12 @@ function(add_osquery_extension_ex class_name extension_type extension_name ${ARG
   endif()
 endfunction()
 
-macro(ADD_OSQUERY_EXTENSION TARGET)
+function(add_osquery_extension TARGET)
   add_executable(${TARGET} ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "${TARGET}.ext")
-endmacro(ADD_OSQUERY_EXTENSION)
+endfunction()
 
-macro(ADD_OSQUERY_MODULE TARGET)
+function(add_osquery_module TARGET)
   add_library(${TARGET} STATIC ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
-endmacro(ADD_OSQUERY_MODULE)
+endfunction()

@@ -24,7 +24,6 @@ include(cmake/globals.cmake)
 include(cmake/options.cmake)
 include(cmake/flags.cmake)
 include(cmake/packaging.cmake)
-include(cmake/cmakelibs.cmake)
 
 if(OSQUERY_TOOLCHAIN_SYSROOT AND NOT DEFINED PLATFORM_LINUX)
   message(FATAL_ERROR "The custom toolchain can only be used with Linux, undefine OSQUERY_TOOLCHAIN_SYSROOT and specify a compiler to use")
