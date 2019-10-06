@@ -72,9 +72,9 @@ function(generateOsqueryExtensionGroup)
     OUTPUT_NAME "${OSQUERY_EXTENSION_GROUP_NAME}.ext"
   )
 
-  get_property(include_dirs GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS)
-  if(NOT "${include_dirs}" STREQUAL "")
-    target_include_directories("${OSQUERY_EXTENSION_GROUP_NAME}" PRIVATE ${include_dirs})
+  get_property(include_folder_list GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS)
+  if(NOT "${include_folder_list}" STREQUAL "")
+    target_include_directories("${OSQUERY_EXTENSION_GROUP_NAME}" PRIVATE ${include_folder_list})
   endif()
 
   # Apply the user (extension) settings
@@ -108,51 +108,51 @@ function(addOsqueryExtensionEx class_name extension_type extension_name ${ARGN})
       if(NOT IS_ABSOLUTE "${argument}")
         set(argument "${CMAKE_CURRENT_SOURCE_DIR}/${argument}")
       endif()
-      list(APPEND source_files "${argument}")
+      list(APPEND source_file_list "${argument}")
 
     elseif("${current_scope}" STREQUAL "INCLUDEDIRS")
       if(NOT IS_ABSOLUTE "${argument}")
         set(argument "${CMAKE_CURRENT_SOURCE_DIR}/${argument}")
       endif()
-      list(APPEND include_dirs "${argument}")
+      list(APPEND include_folder_list "${argument}")
 
     elseif("${current_scope}" STREQUAL "LIBRARIES")
-      list(APPEND libraries "${argument}")
+      list(APPEND library_list "${argument}")
 
     elseif("${current_scope}" STREQUAL "MAININCLUDES")
-      list(APPEND main_include_files "${argument}")
+      list(APPEND main_include_list "${argument}")
     else()
       message(FATAL_ERROR "Invalid scope")
     endif()
   endforeach()
 
   # Validate the arguments
-  if("${source_files}" STREQUAL "")
+  if("${source_file_list}" STREQUAL "")
     message(FATAL_ERROR "Source files are missing")
   endif()
 
-  if("${main_include_files}" STREQUAL "")
+  if("${main_include_list}" STREQUAL "")
     message(FATAL_ERROR "The main include list is missing")
   endif()
 
   # Update the global properties
   set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_SOURCES
-    ${source_files}
+    ${source_file_list}
   )
 
   set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_MAIN_INCLUDES
-    ${main_include_files}
+    ${main_include_list}
   )
 
-  if(NOT "${libraries}" STREQUAL "")
+  if(NOT "${library_list}" STREQUAL "")
     set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_LIBRARIES
-      ${libraries}
+      ${library_list}
     )
   endif()
 
-  if(NOT "${include_dirs}" STREQUAL "")
+  if(NOT "${include_folder_list}" STREQUAL "")
     set_property(GLOBAL APPEND PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS
-      ${include_dirs}
+      ${include_folder_list}
     )
   endif()
 endfunction()
