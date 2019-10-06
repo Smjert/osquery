@@ -4,7 +4,7 @@
 # This source code is licensed in accordance with the terms specified in
 # the LICENSE file found in the root directory of this source tree.
 
-# This function takes the global properties saved by add_osquery_extension_ex and 
+# This function takes the global properties saved by addOsqueryExtensionEx and 
 # generates a single extension executable containing all the user code
 function(generateOsqueryExtensionGroup)
   get_property(extension_source_files GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_SOURCES)
@@ -17,15 +17,13 @@ function(generateOsqueryExtensionGroup)
   endif()
 
   if(NOT OSQUERY_EXTENSION_GROUP_NAME)
-    set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group" CACHE STRING "Overrides osquery extension group name" FORCE)
+    set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group" CACHE STRING "Overrides osquery extension group name")
   endif()
 
-
   if(NOT OSQUERY_EXTENSION_GROUP_VERSION)
-    set(OSQUERY_EXTENSION_GROUP_VERSION "1.0" CACHE STRING "Overrides osquery extension group version" FORCE)
+    set(OSQUERY_EXTENSION_GROUP_VERSION "1.0" CACHE STRING "Overrides osquery extension group version")
   endif()  
   
-
   # Build the include list; this contains the files required to declare
   # the classes used in the REGISTER_EXTERNAL directives
   # Note: The variables in uppercase are used by the template
@@ -73,10 +71,6 @@ function(generateOsqueryExtensionGroup)
   set_target_properties("${OSQUERY_EXTENSION_GROUP_NAME}" PROPERTIES
     OUTPUT_NAME "${OSQUERY_EXTENSION_GROUP_NAME}.ext"
   )
-
-  # Import the core libraries; note that we are going to inherit include directories
-  # with the wrong scope, so we'll have to fix it
-  set_property(TARGET "${OSQUERY_EXTENSION_GROUP_NAME}" PROPERTY INCLUDE_DIRECTORIES "")
 
   get_property(include_dirs GLOBAL PROPERTY OSQUERY_EXTENSION_GROUP_INCLUDE_FOLDERS)
   if(NOT "${include_dirs}" STREQUAL "")
