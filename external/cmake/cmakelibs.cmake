@@ -13,7 +13,7 @@ function(generateOsqueryExtensionGroup)
   endif()
 
   if(DEFINED ENV{OSQUERY_EXTENSION_GROUP_NAME} OR ENV{OSQUERY_EXTENSION_GROUP_VERSION})
-    message("ENV {OSQUERY_EXTENSION_GROUP_NAME/VERSION} has been deprecated. Please set cache variable!")
+    message(WARNING "ENV {OSQUERY_EXTENSION_GROUP_NAME/VERSION} has been deprecated. Please set cache variable!")
   endif()
 
   set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group" CACHE STRING "Overrides osquery extension group name")
@@ -155,7 +155,7 @@ function(addOsqueryExtensionEx class_name extension_type extension_name ${ARGN})
 endfunction()
 
 function(add_osquery_extension_ex class_name extension_type extension_name ${ARGN})
-  message("add_osquery_extension_ex has been deprecated. Please use addOsqueryExtensionEx!")
+  message(WARNING "add_osquery_extension_ex has been deprecated. Please use addOsqueryExtensionEx!")
   addOsqueryExtensionEx(${class_name} ${extension_type} ${extension_name} ${ARGN})
 endfunction()
 
