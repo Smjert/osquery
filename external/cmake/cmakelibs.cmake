@@ -60,6 +60,7 @@ function(generateOsqueryExtensionGroup)
   	osquery_sdk_pluginsdk
   	osquery_extensions_implthrift
 	thirdparty_boost
+	external_options
   )
   
   if(DEFINED PLATFORM_LINUX)
@@ -157,7 +158,6 @@ function(addOsqueryExtensionEx class_name extension_type extension_name ${ARGN})
   endif()
 endfunction()
 
-
 function(add_osquery_extension_ex class_name extension_type extension_name ${ARGN})
   message("add_osquery_extension_ex has been deprecated. Please use addOsqueryExtensionEx!")
   addOsqueryExtensionEx(${class_name} ${extension_type} ${extension_name} ${ARGN})
@@ -166,9 +166,11 @@ endfunction()
 function(addOsqueryExtension TARGET)
   add_executable(${TARGET} ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "${TARGET}.ext")
+  target_compile_options(${TARGET} PRIVATE -DOSQUERY_EXTERNAL)
 endfunction()
 
 function(addOsqueryModule TARGET)
   add_library(${TARGET} STATIC ${ARGN})
   set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
+  target_compile_options(${TARGET} PRIVATE -DOSQUERY_EXTERNAL)
 endfunction()

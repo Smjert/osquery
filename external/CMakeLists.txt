@@ -6,11 +6,13 @@
 # If a directory includes: "module_NAME" it is built as a module.
 
 add_custom_target(externals)
-add_compile_definitions(OSQUERY_EXTERNAL)
 
 include(cmake/cmakelibs.cmake)
 
 set(EXTERNALS_DIR "${CMAKE_SOURCE_DIR}/external")
+
+add_library(external_options INTERFACE)
+target_compile_options(external_options INTERFACE -DOSQUERY_EXTERNAL)
 
 function(subdirlist output path)
   file(GLOB children RELATIVE ${path} "${path}/*")
@@ -56,9 +58,11 @@ foreach(external_project ${EXTERNAL_PROJECTS})
     if("${PROJECT_NAME}" MATCHES "(^extension_.*)")
       addOsqueryExtension(external_${PROJECT_NAME} ${PROJECT_SOURCES})
       add_dependencies(externals external_${PROJECT_NAME})
+
     elseif("${PROJECT_NAME}" MATCHES "(^module_.*)")
       addOsqueryModule(external_${PROJECT_NAME} ${PROJECT_SOURCES})
       add_dependencies(externals external_${PROJECT_NAME})
+
     else()
       message(WARNING "External project: ${external_project} is incorrectly named")
     endif()
