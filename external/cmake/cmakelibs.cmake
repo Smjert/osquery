@@ -16,13 +16,9 @@ function(generateOsqueryExtensionGroup)
     message("ENV {OSQUERY_EXTENSION_GROUP_NAME/VERSION} has been deprecated. Please set cache variable!")
   endif()
 
-  if(NOT OSQUERY_EXTENSION_GROUP_NAME)
-    set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group" CACHE STRING "Overrides osquery extension group name")
-  endif()
+  set(OSQUERY_EXTENSION_GROUP_NAME "osquery_extension_group" CACHE STRING "Overrides osquery extension group name")
 
-  if(NOT OSQUERY_EXTENSION_GROUP_VERSION)
-    set(OSQUERY_EXTENSION_GROUP_VERSION "1.0" CACHE STRING "Overrides osquery extension group version")
-  endif()  
+  set(OSQUERY_EXTENSION_GROUP_VERSION "1.0" CACHE STRING "Overrides osquery extension group version")
   
   # Build the include list; this contains the files required to declare
   # the classes used in the REGISTER_EXTERNAL directives
