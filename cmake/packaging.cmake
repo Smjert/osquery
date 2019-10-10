@@ -255,7 +255,9 @@ set(CPACK_PACKAGE_HOMEPAGE_URL "https://osquery.io")
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/package/CPackConfig.cmake")
 set(CPACK_PACKAGE_RELOCATABLE ON)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_BINARY_DIR}/package/LICENSE.txt")
-set(CPACK_COMPONENTS_ALL osquery)
+if(DEFINED PLATFORM_MACOS OR DEFINED PLATFORM_LINUX)
+  set(CPACK_COMPONENTS_ALL osquery)
+endif()
 
 configure_file(cmake/CPackConfig.cmake.in package/CPackConfig.cmake @ONLY)
 
