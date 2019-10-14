@@ -1,6 +1,10 @@
-# -*- mode: cmake; -*-
-# - osquery external project builds
+# Copyright (c) 2014-present, Facebook, Inc.
+# All rights reserved.
 #
+# This source code is licensed in accordance with the terms specified in
+# the LICENSE file found in the root directory of this source tree.
+
+# - osquery external project builds
 # Symlink directories for extensions or modules here.
 # If a directory includes: "extension_NAME" it is built as an extension.
 # If a directory includes: "module_NAME" it is built as a module.
@@ -29,45 +33,40 @@ function(subdirlist output path)
 endfunction()
 
 function(externalsMain)
-# Discover the implementation for extensions or modules in external directory
-subdirlist(EXTERNAL_PROJECTS ${EXTERNALS_DIR})
+  # Discover the implementation for extensions or modules in external directory
+  subdirlist(EXTERNAL_PROJECTS ${EXTERNALS_DIR})
 
-# Each project may:
-#   1. Be named "external_PROJECT_NAME", all .cpp, .c, .mm files will be compiled.
-#   2. Be named "module_PROJECT_NAME", the same applies.
-#   3. Contain a "CMakeLists.txt", the project will be added to CMake's evaluation.
-foreach(external_project ${EXTERNAL_PROJECTS})
-  get_filename_component(PROJECT_NAME "${external_project}" NAME)
-  # check for the cmake having utilities functions
-  if(${PROJECT_NAME} MATCHES "cmake")
-    continue()
-  endif()
-
-  if(EXISTS "${external_project}/CMakeLists.txt")
-    add_subdirectory("${external_project}")
-  else()
-    file(GLOB_RECURSE PROJECT_FILES "${external_project}/*")
-
-    set(PROJECT_SOURCES "")
-    foreach(source ${PROJECT_FILES})
-      if(${source} MATCHES "^.*(cpp|c|mm)$")
-        list(APPEND PROJECT_SOURCES ${source})
-      endif()
-    endforeach()
-
-    if("${PROJECT_NAME}" MATCHES "(^extension_.*)")
-      addOsqueryExtension(external_${PROJECT_NAME} ${PROJECT_SOURCES})
-      add_dependencies(externals external_${PROJECT_NAME})
-
-    elseif("${PROJECT_NAME}" MATCHES "(^module_.*)")
-      addOsqueryModule(external_${PROJECT_NAME} ${PROJECT_SOURCES})
-      add_dependencies(externals external_${PROJECT_NAME})
-
-    else()
-      message(WARNING "External project: ${external_project} is incorrectly named")
+  # Each project may:
+  #   1. Be named "external_PROJECT_NAME", all .cpp, .c, .mm files will be compiled.
+  #   2. Be named "module_PROJECT_NAME", the same applies.
+  #   3. Contain a "CMakeLists.txt", the project will be added to CMake's evaluation.
+  foreach(external_project ${EXTERNAL_PROJECTS})
+    get_filename_component(PROJECT_NAME "${external_project}" NAME)
+    # check for the cmake having utilities functions
+    if(${PROJECT_NAME} MATCHES "cmake")
+      continue()
     endif()
-  endif()
-endforeach()
+    if(EXISTS "${external_project}/CMakeLists.txt")
+      add_subdirectory("${external_project}")
+    else()
+      file(GLOB_RECURSE PROJECT_FILES "${external_project}/*")
+      set(PROJECT_SOURCES "")
+      foreach(source ${PROJECT_FILES})
+        if(${source} MATCHES "^.*(cpp|c|mm)$")
+          list(APPEND PROJECT_SOURCES ${source})
+        endif()
+      endforeach()
+      if("${PROJECT_NAME}" MATCHES "(^extension_.*)")
+        addOsqueryExtension(external_${PROJECT_NAME} ${PROJECT_SOURCES})
+        add_dependencies(externals external_${PROJECT_NAME})
+      elseif("${PROJECT_NAME}" MATCHES "(^module_.*)")
+        addOsqueryModule(external_${PROJECT_NAME} ${PROJECT_SOURCES})
+        add_dependencies(externals external_${PROJECT_NAME})
+      else()
+        message(WARNING "External project: ${external_project} is incorrectly named")
+      endif()
+    endif()
+  endforeach()
 endfunction()
 
 externalsMain()
