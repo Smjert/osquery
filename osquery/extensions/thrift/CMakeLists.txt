@@ -29,13 +29,6 @@ function(generateOsqueryExtensionsThriftOsquerycpp2)
   )
 
   generateIncludeNamespace(osquery_extensions_thrift_osquerycpp2 "" "FILE_ONLY" ${public_header_files})
-
-  add_custom_target(osquery_extensions_thrift_osquerypy DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/gen-py/osquery/extensions/Extension.py")
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/gen-py/osquery/extensions/Extension.py"
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory gen-py "${CMAKE_CURRENT_BINARY_DIR}/gen-py"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-  )
-  set_target_properties(osquery_extensions_thrift_osquerypy PROPERTIES INTERFACE_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen-py")
 endfunction()
 
 osqueryExtensionsThriftMain()

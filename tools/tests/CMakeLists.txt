@@ -16,7 +16,7 @@ function(osqueryToolsTestsMain)
   endif()
 endfunction()
 
-function(addPython2Test)
+function(addPythonTest)
   set(oneValueArgs NAME SCRIPT)
   set(multiValueArgs EXTRA_ARGS)
   cmake_parse_arguments(PARSE_ARGV 0 osquery_test "" "${oneValueArgs}" "${multiValueArgs}")
@@ -27,7 +27,7 @@ function(addPython2Test)
 
   set(python_test_command
     "${CMAKE_COMMAND}" -E env "PYTHONPATH=${OSQUERY_PYTHON_PATH}"
-    "${Python2_EXECUTABLE}" -u ${script_name} --verbose --build "${CMAKE_BINARY_DIR}" --test-configs-dir "${TEST_CONFIGS_DIR}" "${osquery_test_EXTRA_ARGS}")
+    "${Python3_EXECUTABLE}" -u ${script_name} --verbose --build "${CMAKE_BINARY_DIR}" --test-configs-dir "${TEST_CONFIGS_DIR}" "${osquery_test_EXTRA_ARGS}")
 
   add_test(NAME ${osquery_test_NAME}
     COMMAND ${python_test_command}
@@ -68,7 +68,6 @@ function(preparePythonTestsEnvironment)
   )
 
   set(create_python_modules_tree_target_deps
-    osquery_extensions_thrift_osquerypy
   )
 
   # The test test_example_queries requires to use codegen scripts, let's copy them in the binary dir
@@ -132,21 +131,21 @@ function(generatePythonTests)
   preparePythonTestsEnvironment()
 
   # Tests
-  addPython2Test(NAME tools_tests_testosqueryd SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_osqueryd.py")
+  addPythonTest(NAME tools_tests_testosqueryd SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_osqueryd.py")
 
-  addPython2Test(NAME tools_tests_testosqueryi SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_osqueryi.py")
+  addPythonTest(NAME tools_tests_testosqueryi SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_osqueryi.py")
 
-  addPython2Test(NAME tools_tests_testrelease SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_release.py")
+  addPythonTest(NAME tools_tests_testrelease SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_release.py")
 
   if(DEFINED PLATFORM_WINDOWS)
-    addPython2Test(NAME tools_tests_testwindowsservice SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_windows_service.py")
+    addPythonTest(NAME tools_tests_testwindowsservice SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_windows_service.py")
   else()
-    addPython2Test(NAME tools_tests_testadditional SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_additional.py")
+    addPythonTest(NAME tools_tests_testadditional SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_additional.py")
 
-    addPython2Test(NAME tools_tests_testexamplequeries SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_example_queries.py")
+    addPythonTest(NAME tools_tests_testexamplequeries SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_example_queries.py")
 
     # The following tests need to be restored when extensions work again
-    addPython2Test(NAME tools_tests_testextensions SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_extensions.py" "")
+    addPythonTest(NAME tools_tests_testextensions SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_extensions.py" "")
     set_tests_properties(tools_tests_testextensions PROPERTIES DISABLED TRUE)
   endif()
 endfunction()
