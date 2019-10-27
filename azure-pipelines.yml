@@ -21,7 +21,7 @@ jobs:
 
     container:
       image: trailofbits/osquery:ubuntu-18.04-toolchain-8eefbb14
-      options: --privileged
+      options: --privileged --init
 
     timeoutInMinutes: 120
 
