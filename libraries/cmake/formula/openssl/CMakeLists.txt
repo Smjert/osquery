@@ -97,9 +97,11 @@ function(opensslMain)
 
     get_filename_component(perl_bin_path "${PERL_EXECUTABLE}" DIRECTORY)
 
+    string(REPLACE "/" "\\\\" perl_executable_path "${perl_executable_path}")
+
     set(build_command
       cmake -E env "PATH=${perl_bin_path}" "cmd.exe" "/C" "ms\\do_nt.bat" &&
-      "cmd.exe" "/C" "nmake /f ms\\nt.mak"
+      "cmd.exe" "/C" "nmake /f ms\\nt.mak PERL=${perl_executable_path}"
     )
 
     set(install_command
