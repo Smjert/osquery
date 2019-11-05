@@ -191,6 +191,13 @@ function(add_osquery_executable)
 
   add_executable(${osquery_exe_name} ${osquery_exe_args})
 
+  if(PLATFORM_WINDOWS)
+    target_sources(${osquery_exe_name} PRIVATE "${CMAKE_SOURCE_DIR}/tools/osquery.manifest")
+    target_link_options(${osquery_exe_name} PRIVATE
+      /manifest:embed
+    )
+  endif()
+
   if("${osquery_exe_name}" MATCHES "-test$" AND DEFINED PLATFORM_POSIX)
     target_link_options("${osquery_exe_name}" PRIVATE -Wno-sign-compare)
   endif()
