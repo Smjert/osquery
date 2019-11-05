@@ -87,7 +87,9 @@ function(opensslMain)
     )
 
   elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-    find_package(Perl REQUIRED)
+    find_package(Perl REQUIRED
+      PATHS "C:\\Strawberry\\perl\\bin"
+    )
 
     set(configure_command
       "${CMAKE_COMMAND}" -E env
