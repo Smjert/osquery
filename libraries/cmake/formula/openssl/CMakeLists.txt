@@ -87,14 +87,13 @@ function(opensslMain)
     )
 
   elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-    find_package(Perl REQUIRED
-      PATHS "C:\\Strawberry\\perl\\bin"
-    )
+    set(CMAKE_PREFIX_PATH "C:\\Strawberry\\perl\\bin")
+    find_package(Perl REQUIRED)
 
     set(configure_command
       "${CMAKE_COMMAND}" -E env
       "${PERL_EXECUTABLE}" Configure VC-WIN64A
-        ${common_options}
+      ${common_options}
     )
 
     get_filename_component(perl_bin_path "${PERL_EXECUTABLE}" DIRECTORY)
