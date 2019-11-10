@@ -20,7 +20,7 @@ jobs:
       vmImage: 'Ubuntu-16.04'
 
     container:
-      image: trailofbits/osquery:ubuntu-18.04-toolchain-v5
+      image: trailofbits/osquery:ubuntu-18.04-toolchain-2966e18e
       options: --privileged
 
     timeoutInMinutes: 120
@@ -77,12 +77,6 @@ jobs:
       displayName: "OpenSSL formula output"
       condition: always()
 
-    - task: CMake@1
-      displayName: "Run cppcheck"
-      inputs:
-        workingDirectory: $(BUILD_DIR)
-        cmakeArgs: --build . --target cppcheck
-
     - script: |
         ctest --build-nocmake -V
       displayName: "Run tests"
@@ -105,6 +99,12 @@ jobs:
         cmake --build . --target package -j 3
       displayName: "Run TGZ packaging"
       workingDirectory: $(BUILD_DIR)
+
+    - task: CMake@1
+      displayName: "Run cppcheck"
+      inputs:
+        workingDirectory: $(BUILD_DIR)
+        cmakeArgs: --build . --target cppcheck
 
     - script: |
         echo "##vso[task.setvariable variable=Status;isOutput=true]1"

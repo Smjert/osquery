@@ -23,11 +23,11 @@ RUN make -j$(nproc)
 RUN mkdir ../../cppcheck-1.89-bin && make install DESTDIR=../../cppcheck-1.89-bin
 
 WORKDIR /root
-RUN tar -czf cppcheck-1.89-bin.tar.gz cppcheck-1.89-bin
+RUN tar -C cppcheck-1.89-bin/usr/local -czf cppcheck-1.89-bin.tar.gz .
 
 
 FROM ubuntu:18.04
-WORKDIR ~/
+WORKDIR /root
 COPY *.deb ./
 COPY --from=cppcheck /root/cppcheck-1.89-bin.tar.gz .
 RUN apt update -q -y && apt upgrade -q -y && apt install -q -y --no-install-recommends \
