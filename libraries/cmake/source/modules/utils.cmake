@@ -80,6 +80,8 @@ function(patchSubmoduleSourceCode patches_dir source_dir apply_to_dir)
 
     if(NOT ${process_exit_code} EQUAL 0)
       message(FATAL_ERROR "Failed to patch the following git submodule: \"${source_dir}\"")
+    else()
+      message(STATUS "Applied ${patch} to submodule ${source_dir}")
     endif()
   endforeach()
 
