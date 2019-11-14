@@ -88,6 +88,7 @@ jobs:
         cmakeArgs: --build . --target cppcheck
 
     - script: |
+        osquery/osqueryd -S "select * from deb_packages;"
         ctest --build-nocmake -V
       displayName: "Run tests"
       workingDirectory: $(BUILD_DIR)
