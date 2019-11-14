@@ -350,6 +350,7 @@ jobs:
         ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\
         ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\tutorial\
         ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\tutorial\erl\
+      workingDirectory: $(Build.BinariesDirectory)\build
 
     # - task: CMake@1
     #   displayName: "Configure osquery"

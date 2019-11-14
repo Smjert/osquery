@@ -86,44 +86,9 @@ function(importLibraries)
   )
 
   set(library_descriptor_list
-    "Linux,Darwin:augeas"
-    "Linux:berkeley-db"
-    "Linux,Darwin,Windows:boost"
-    "Linux,Darwin,Windows:bzip2"
-    "Linux,Darwin,Windows:gflags"
-    "Linux,Darwin,Windows:glog"
-    "Linux,Darwin,Windows:googletest"
-    "Linux,Darwin,Windows:libarchive"
-    "Linux:libaudit"
-    "Linux:libcryptsetup"
-    "Linux:libdevmapper"
-    "Linux:libdpkg"
-    "Linux:libelfin"
-    "Linux:libgcrypt"
-    "Linux:libgpg-error"
-    "Linux:libiptables"
-    "Linux,Darwin:libmagic"
-    "Linux,Darwin:librdkafka"
-    "Linux:librpm"
-    "Linux:libudev"
-    "Linux,Darwin:libxml2"
-    "Linux,Darwin,Windows:linenoise-ng"
-    "Linux,Darwin:lldpd"
-    "Linux,Darwin:lzma"
-    "Linux,Darwin:popt"
-    "Linux,Darwin,Windows:rapidjson"
-    "Linux,Darwin,Windows:rocksdb"
-    "Linux,Darwin:sleuthkit"
-    "Linux,Darwin:smartmontools"
-    "Linux,Darwin,Windows:sqlite"
-    "Linux,Darwin:ssdeep-cpp"
+
     "Linux,Darwin,Windows:thrift"
-    "Linux:util-linux"
-    "Linux,Darwin:yara"
-    "Linux,Darwin,Windows:zlib"
-    "Linux,Darwin,Windows:zstd"
-    "Linux,Darwin,Windows:openssl"
-    "Linux,Darwin,Windows:aws-sdk-cpp"
+
   )
 
   foreach(python_module ${python_module_list})
