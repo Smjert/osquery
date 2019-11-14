@@ -324,6 +324,7 @@ jobs:
 
     steps:
     - powershell: |
+        cmake --version
         git config --global core.autocrlf false
 
     - checkout: self
