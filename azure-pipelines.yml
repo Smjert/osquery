@@ -344,6 +344,11 @@ jobs:
 
     - powershell: |
         cmake -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
+        ls -l $(Build.BinariesDirectory)\build\libs\src\
+        ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\
+        ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\
+        ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\
+        ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\tutorial\
         ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\tutorial\erl\
 
     # - task: CMake@1
