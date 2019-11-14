@@ -346,6 +346,11 @@ jobs:
         cmake -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
         ls -l $(Build.SourcesDirectory)\libraries\cmake\source\thrift\src\tutorial\erl\
         ls -l $(Build.BinariesDirectory)\build\libs\src\patched-source\thrift\src\tutorial\erl\
+        function Test-ReparsePoint([string]$path) {
+          $file = Get-Item $path -Force -ea SilentlyContinue
+          return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
+        }
+        Test-ReparsePoint $(Build.SourcesDirectory)\libraries\cmake\source\thrift\src\tutorial\erl\client.sh
       workingDirectory: $(Build.BinariesDirectory)\build
 
     # - task: CMake@1
