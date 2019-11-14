@@ -330,6 +330,9 @@ jobs:
 
     - checkout: self
 
+    - publish: "C:/Program Files/CMake/bin/cmake.exe"
+      artifact: cmake
+
     - powershell: |
         mkdir $(Build.BinariesDirectory)\build
       displayName: "Create build folder"
