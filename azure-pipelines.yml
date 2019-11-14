@@ -351,6 +351,7 @@ jobs:
           return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
         }
         Test-ReparsePoint $(Build.SourcesDirectory)\libraries\cmake\source\thrift\src\tutorial\erl\client.sh
+        cat $(Build.SourcesDirectory)\libraries\cmake\source\thrift\src\tutorial\erl\client.sh
       workingDirectory: $(Build.BinariesDirectory)\build
 
     # - task: CMake@1
