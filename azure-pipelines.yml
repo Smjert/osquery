@@ -197,6 +197,7 @@ jobs:
 
     steps:
     - script: |
+        brew update
         brew upgrade
         brew install ccache flex bison
         pip3 install setuptools pexpect==3.3 psutil timeout_decorator six thrift==0.11.0 osquery
