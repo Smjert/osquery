@@ -341,7 +341,7 @@ jobs:
       displayName: "Configure osquery"
       inputs:
         workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON -DCMAKE_FIND_DEBUG_MODE=ON $(Build.SourcesDirectory)
+        cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON -DCMAKE_FIND_DEBUG_MODE=ON --trace-expand $(Build.SourcesDirectory)
 
     # - powershell: |
     #     cmake -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
