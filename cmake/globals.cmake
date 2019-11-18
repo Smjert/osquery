@@ -51,6 +51,9 @@ endif()
 
 set(TEST_CONFIGS_DIR "${CMAKE_BINARY_DIR}/test_configs")
 
+set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DESC)
+
 # Cache variables
 set(PACKAGING_SYSTEM "" CACHE STRING "Packaging system to generate when building packages")
 if(DEFINED PLATFORM_WINDOWS)
