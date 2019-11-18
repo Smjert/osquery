@@ -339,11 +339,16 @@ jobs:
       displayName: "Installing: Strawberry Perl"
       workingDirectory: $(Build.SourcesDirectory)
 
-    - task: CMake@1
+    # - task: CMake@1
+    #   displayName: "Configure osquery"
+    #   inputs:
+    #     workingDirectory: $(Build.BinariesDirectory)\build
+    #     cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
+
+    - powershell: |
+        cmake -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
       displayName: "Configure osquery"
-      inputs:
-        workingDirectory: $(Build.BinariesDirectory)\build
-        cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
+      workingDirectory: $(Build.BinariesDirectory)\build
 
     - task: CMake@1
       displayName: "Build osquery"
