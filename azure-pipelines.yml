@@ -324,8 +324,6 @@ jobs:
 
     steps:
     - powershell: |
-        Get-Command git
-        git --version
         git config --global core.autocrlf false
 
     - checkout: self
@@ -339,16 +337,16 @@ jobs:
       displayName: "Installing: Strawberry Perl"
       workingDirectory: $(Build.SourcesDirectory)
 
-    # - task: CMake@1
-    #   displayName: "Configure osquery"
-    #   inputs:
-    #     workingDirectory: $(Build.BinariesDirectory)\build
-    #     cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
-
-    - powershell: |
-        cmake -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
+    - task: CMake@1
       displayName: "Configure osquery"
-      workingDirectory: $(Build.BinariesDirectory)\build
+      inputs:
+        workingDirectory: $(Build.BinariesDirectory)\build
+        cmakeArgs: -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON -DCMAKE_FIND_DEBUG_MODE=ON $(Build.SourcesDirectory)
+
+    # - powershell: |
+    #     cmake -G "Visual Studio 15 2017 Win64" -T host=x64 -DOSQUERY_BUILD_TESTS=ON $(Build.SourcesDirectory)
+    #   displayName: "Configure osquery"
+    #   workingDirectory: $(Build.BinariesDirectory)\build
 
     - task: CMake@1
       displayName: "Build osquery"
