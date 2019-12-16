@@ -214,6 +214,7 @@ function(setupBuildFlags)
       /W3
       /guard:cf
       /bigobj
+      /Oy-
     )
 
     set(windows_common_link_options
