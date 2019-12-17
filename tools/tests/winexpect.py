@@ -80,6 +80,8 @@ class WinExpectSpawn(object):
         argv = shlex.split(command, posix=False)
         self.proc = subprocess.Popen(argv, **kwargs)
 
+        print("Started %ld" % self.proc.pid)
+
         # Spawn a new thread for "non-blocking" reads.
         self.out_queue = Queue()
         self.stdout_thread = threading.Thread(
@@ -97,4 +99,12 @@ class WinExpectSpawn(object):
     def read_pipe(self, out, queue):
         for l in iter(out.readline, b''):
             queue.put(l)
+
+        print("Exiting read_pipe")
         out.close()
+
+    def __del__(self):
+        print("Destruct")
+        self.stdout_thread.join()
+        self.proc.stderr.close()
+        self.proc.stdin.close()

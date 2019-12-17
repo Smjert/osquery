@@ -189,6 +189,10 @@ class OsqueryWrapper(REPLWrapper):
         except:
             raise OsqueryUnknownException(
                 'Unexpected output:\n %s' % result_lines)
+    def __del__(self):
+        self.run_command(".q")
+        self.child.proc.wait()
+        self.child = None
 
 
 class ProcRunner(object):
@@ -207,7 +211,7 @@ class ProcRunner(object):
         self.interval = interval
         self.silent = silent
         self.retcode = -1
-        thread = threading.Thread(target=self.run, args=())
+        thread = threading.Thread(target=self.run, args=(), name=name)
         thread.daemon = True
         thread.start()
 
@@ -283,8 +287,10 @@ class ProcRunner(object):
                     pass
         if self.proc:
             try:
+                proc = psutil.Process(pid=self.proc.pid)
+                print("Killing pid {}, with children: {}".format(self.pid, proc.children()))
                 os.kill(self.pid, sig)
-                self.proc.wait()   # == -sig.value on posix
+                print("wait: {}".format(self.proc.wait()))  # == -sig.value on posix
             except:
                 pass
         self.proc = None
@@ -321,7 +327,6 @@ class ProcRunner(object):
             time.sleep(self.interval)
 
         return False
-
 
 def getLatestOsqueryBinary(binary):
 
@@ -420,9 +425,18 @@ class ProcessGenerator(object):
         for generator in self.generators:
             if generator.pid is not None:
                 try:
-                    os.kill(generator.pid, sig)
+                    print("Cleanup process pid {}".format(generator.pid))
+                    generator.kill()
                 except Exception as e:
                     pass
+
+        current_process = psutil.Process()
+        children = current_process.children(recursive=True)
+        for child in children:
+            print('Daemon pid is {} and name {}'.format(child.pid, child.name))
+
+        for thread in threading.enumerate():
+            print("Thread {} running".format(thread.name))
 
 
 class EXClient(object):

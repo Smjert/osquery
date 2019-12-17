@@ -11,10 +11,10 @@ import signal
 import shutil
 import time
 import unittest
+import psutil
 
 # osquery-specific testing utils
 import test_base
-
 
 class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
     @test_base.flaky
@@ -51,6 +51,7 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
 
         # Assign the variable after we have assurances it exists
         info_path = test_base.getLatestInfoLog(logger_path)
+        print("Logs: %s" % info_path)
         self.assertTrue(os.path.exists(info_path))
 
         # Lastly, verify that we have permission to read the file
@@ -87,7 +88,7 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
         self.assertTrue(daemon.isDead(children[0]))
 
     @test_base.flaky
-    def test_3_daemon_lost_worker(self):
+    def test_4_daemon_lost_worker(self):
         # Test that killed workers are respawned by the watcher
         if os.environ.get('SANITIZE') is not None:
             return
@@ -104,6 +105,12 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
         children = daemon.getChildren()
         self.assertTrue(len(children) > 0)
 
+        print("Daemon pid {}".format(daemon.proc.pid))
+        current_process = psutil.Process(daemon.proc.pid)
+        children_proc = current_process.children(recursive=True)
+        for child in children_proc:
+            print('Daemon child pid is {} and name {}'.format(child.pid, child.name))
+
         # Kill only the child worker
         os.kill(children[0], signal.SIGINT)
         self.assertTrue(daemon.isDead(children[0]))
@@ -117,21 +124,24 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
         children = daemon.getChildren()
         self.assertTrue(len(children) > 0)
 
-    @test_base.flaky
-    def test_4_daemon_sighup(self):
+    @unittest.skipIf(os.name == "nt", "Windows doesn't support SIGHUP")
+    def test_5_daemon_sighup(self):
+
         # A hangup signal should not do anything to the daemon.
         daemon = self._run_daemon({
             "disable_watchdog": True,
         })
         self.assertTrue(daemon.isAlive())
 
-        # Send SIGHUP on posix. Windows does not have SIGHUP so we use SIGTERM
-        sig = signal.SIGHUP if os.name != "nt" else signal.SIGTERM
+        # Send SIGHUP on posix.
+        sig = signal.SIGHUP
         os.kill(daemon.proc.pid, sig)
+        time.sleep(2)
+
         self.assertTrue(daemon.isAlive())
 
     @test_base.flaky
-    def test_5_daemon_sigint(self):
+    def test_6_daemon_sigint(self):
         # An interrupt signal will cause the daemon to stop.
         daemon = self._run_daemon({
             "disable_watchdog": True,
@@ -148,7 +158,7 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
             self.assertTrue(daemon.retcode in [128 + signal.SIGINT, -2])
 
     @test_base.flaky
-    def test_6_logger_mode(self):
+    def test_7_logger_mode(self):
         logger_path = test_base.getTestDirectory(test_base.CONFIG_DIR)
         test_mode = 0o754  # Strange mode that should never exist
         daemon = self._run_daemon(
@@ -192,7 +202,7 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
 
         daemon.kill()
 
-    def test_7_logger_stdout(self):
+    def test_8_logger_stdout(self):
         logger_path = test_base.getTestDirectory(test_base.CONFIG_DIR)
         daemon = self._run_daemon({
             "disable_watchdog": True,
@@ -214,7 +224,7 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
         self.assertTrue(pathDoesntExist())
         daemon.kill()
 
-    def test_8_hostid_uuid(self):
+    def test_9_hostid_uuid(self):
         # Test added to test using UUID as hostname ident for issue #3195
         daemon = self._run_daemon({
             "disable_watchdog": True,
@@ -228,7 +238,7 @@ class DaemonTests(test_base.ProcessGenerator, unittest.TestCase):
         self.assertTrue(daemon.isAlive())
         daemon.kill()
 
-    def test_9_hostid_instance(self):
+    def test_10_hostid_instance(self):
         daemon = self._run_daemon({
             "disable_watchdog": True,
             "disable_extensions": True,
