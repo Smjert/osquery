@@ -339,9 +339,9 @@ jobs:
       displayName: Install tests prerequisites
 
     - powershell: |
-        & "C:\Program Files\CMake\bin\cmake.exe" -E env PYTHONPATH=D:/a/1/b/osquery-tests/python_path "C:/hostedtoolcache/windows/Python/3.8.0/x64/python.exe" -u test_osqueryd.py --verbose --build D:/a/1/b/osquery-tests --test-configs-dir D:/a/1/b/osquery-tests/test_configs
+        ctest -V
       displayName: "Run tests"
-      workingDirectory: $(Build.BinariesDirectory)/osquery-tests/tools/tests
+      workingDirectory: $(Build.BinariesDirectory)/osquery-tests
 
     # - powershell: |
     #     git config --global core.autocrlf false
