@@ -339,7 +339,8 @@ jobs:
       displayName: Install tests prerequisites
 
     - powershell: |
-        ctest -V
+        ctest -V | Out-Host;&? &
+        $(sleep 120 | Out-Host;$?) -and (Get-Process | Out-Host;$?)
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/osquery-tests
 
