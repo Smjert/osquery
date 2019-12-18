@@ -319,10 +319,8 @@ jobs:
   - job: WindowsCMake
     displayName: "WindowsCMake Release"
 
-    pool: "Self Hosted"
-
-    workspace:
-      clean: outputs
+    pool:
+      vmImage: vs2017-win2016
 
     timeoutInMinutes: 120
 
@@ -336,7 +334,8 @@ jobs:
 
     - powershell: |
         cmake --version
-        & 'C:\Program Files\Python38\python.exe' -m pip install setuptools psutil timeout_decorator thrift==0.11.0 osquery pywin32
+        $python3_path = ((Get-Item C:\hostedtoolcache\windows\Python\3*\x64) | Sort-Object -Descending)[0].FullName
+        & $python3_path\python -m pip install setuptools psutil timeout_decorator thrift==0.11.0 osquery pywin32
       displayName: Install tests prerequisites
 
     - powershell: |
