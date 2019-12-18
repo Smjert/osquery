@@ -340,6 +340,7 @@ jobs:
 
     - powershell: |
         ctest -V | Out-Host;&? &
+        echo "Test!"
         $(sleep 120 | Out-Host;$?) -and (Get-Process | Out-Host;$?)
       displayName: "Run tests"
       workingDirectory: $(Build.BinariesDirectory)/osquery-tests
