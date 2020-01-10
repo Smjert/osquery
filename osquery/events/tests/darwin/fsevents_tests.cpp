@@ -67,7 +67,9 @@ class FSEventsTests : public testing::Test {
     event_pub_ = std::make_shared<FSEventsEventPublisher>();
     event_pub_->no_defer_ = true;
     event_pub_->no_self_ = false;
-    EventFactory::registerEventPublisher(event_pub_);
+    auto status = EventFactory::registerEventPublisher(event_pub_);
+    ASSERT_TRUE(status.ok());
+    
     FILE* fd = fopen(real_test_path.c_str(), "w+");
     fclose(fd);
 
@@ -256,18 +258,20 @@ class TestFSEventsEventSubscriber
     return Status::success();
   }
 
-  void WaitForEvents(int max, int initial = 0) {
+  bool WaitForEvents(int max, int initial = 0) {
     int delay = 0;
-    while (delay < max * 1000) {
+    while (delay <= max * 1000) {
       {
         WriteLock lock(mutex_);
         if (callback_count_ >= initial) {
-          return;
+          return true;
         }
       }
       delay += 100;
       ::usleep(100);
     }
+
+    return false;
   }
 
  public:
@@ -286,17 +290,21 @@ class TestFSEventsEventSubscriber
 TEST_F(FSEventsTests, test_fsevents_run) {
   // Assume event type is registered.
   event_pub_ = std::make_shared<FSEventsEventPublisher>();
-  EventFactory::registerEventPublisher(event_pub_);
+  auto status = EventFactory::registerEventPublisher(event_pub_);
+  ASSERT_TRUE(status.ok()) << status.getMessage();
 
   // Create a subscriber.
   auto sub = std::make_shared<TestFSEventsEventSubscriber>();
-  EventFactory::registerEventSubscriber(sub);
+  status = EventFactory::registerEventSubscriber(sub);
+  ASSERT_TRUE(status.ok());
 
   // Create a subscriptioning context
   auto mc = std::make_shared<FSEventsSubscriptionContext>();
   mc->path = real_test_path;
-  EventFactory::addSubscription(
+  status = EventFactory::addSubscription(
       "fsevents", Subscription::create("TestFSEventsEventSubscriber", mc));
+  ASSERT_TRUE(status.ok());
+
   event_pub_->configure();
 
   // Create an event loop thread (similar to main)
@@ -324,11 +332,19 @@ TEST_F(FSEventsTests, test_fsevents_fire_event) {
 
   // Simulate registering an event subscriber.
   auto sub = std::make_shared<TestFSEventsEventSubscriber>();
-  EventFactory::registerEventSubscriber(sub);
+  auto status = EventFactory::registerEventSubscriber(sub);
+
+  ASSERT_TRUE(status.ok()) << status.getMessage();
 
   // Create a subscriptioning context, note the added Event to the symbol
   auto sc = sub->GetSubscription(real_test_path, 0);
+  auto num_subs = sub->numSubscriptions();
   sub->subscribe(&TestFSEventsEventSubscriber::SimpleCallback, sc);
+  auto new_num_subs = sub->numSubscriptions();
+
+  // subcribe do not return a Status, but increases the number of subscriptions if it succeeded
+  ASSERT_TRUE(new_num_subs > num_subs);
+
   event_pub_->configure();
   CreateEvents();
 
@@ -348,16 +364,20 @@ TEST_F(FSEventsTests, test_fsevents_event_action) {
   // Simulate registering an event subscriber.
   auto sub = std::make_shared<TestFSEventsEventSubscriber>();
   auto status = sub->init();
+  ASSERT_TRUE(status.ok());
 
   auto sc = sub->GetSubscription(real_test_path, 0);
-  EventFactory::registerEventSubscriber(sub);
+  status = EventFactory::registerEventSubscriber(sub);
+  ASSERT_TRUE(status.ok());
 
   sub->subscribe(&TestFSEventsEventSubscriber::Callback, sc);
   event_pub_->configure();
 
   CreateEvents();
-  sub->WaitForEvents(kMaxEventLatency, count + 1);
+  auto events_generated = sub->WaitForEvents(kMaxEventLatency, count + 1);
   count = event_pub_->numEvents();
+
+  ASSERT_TRUE(events_generated);
 
   // Make sure the fsevents action was expected.
   ASSERT_TRUE(sub->actions_.size() > 0);
@@ -383,14 +403,17 @@ TEST_F(FSEventsTests, test_fsevents_event_action) {
 
   // Generate more events.
   CreateEvents();
-  sub->WaitForEvents(kMaxEventLatency, count + 2);
+  events_generated = sub->WaitForEvents(kMaxEventLatency, count + 2);
   count = event_pub_->numEvents();
+
+  ASSERT_TRUE(events_generated);
 
   bool has_updated = false;
   {
     WriteLock lock(sub->mutex_);
     // We may have triggered several updated events.
     for (const auto& action : sub->actions_) {
+      std::cout << action << std::endl;
       if (action == "UPDATED") {
         has_updated = true;
       }
