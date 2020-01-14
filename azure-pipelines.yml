@@ -19,9 +19,9 @@ jobs:
     pool:
       vmImage: 'Ubuntu-16.04'
 
-    container:
-      image: trailofbits/osquery:ubuntu-18.04-toolchain-v6
-      options: --privileged --init
+    # container:
+    #   image: trailofbits/osquery:ubuntu-18.04-toolchain-v6
+    #   options: --privileged --init
 
     timeoutInMinutes: 120
 
