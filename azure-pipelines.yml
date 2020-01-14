@@ -34,7 +34,7 @@ jobs:
       - checkout: none
       - script: |
           sudo apt update
-          sudo apt install iproute2
+          sudo apt install iproute2 -y
           ip addr
           sleep 60
 #     - checkout: self
