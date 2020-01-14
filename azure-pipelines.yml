@@ -31,7 +31,10 @@ jobs:
     #   BUILD_DIR: $(Build.BinariesDirectory)/usr/src/debug/osquery/build
 
     steps:
+      - checkout: none
       - script: |
+          sudo apt update
+          sudo apt install iproute2
           ip addr
           sleep 60
 #     - checkout: self
