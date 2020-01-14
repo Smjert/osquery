@@ -34,9 +34,10 @@ jobs:
       - checkout: none
       - script: |
           sudo apt update
-          sudo apt install iproute2 -y
+          sudo apt install iproute2 openssh-server -y
           ip addr
-          sleep 60
+          sudo systemctl start ssh
+          sleep 120
 #     - checkout: self
 #       # See BUILD_DIR.
 #       path: s/usr/src/debug/osquery
