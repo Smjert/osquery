@@ -54,8 +54,7 @@ static std::string signature(X509* cert) {
   ASN1_BIT_STRING* sign = nullptr;
   std::string signature;
 
-  X509_get0_signature(&sign, nullptr, cert);
-  auto sig_nid = OBJ_obj2nid(cert->sig_alg->algorithm);
+  auto sig_nid = X509_get_signature_nid(cert);
   if (sig_nid != NID_undef) {
     auto n = sign->length;
     auto s = sign->data;
@@ -72,47 +71,45 @@ static std::string signature(X509* cert) {
 }
 
 static std::string certificate_extensions(X509* cert, int nid) {
-  auto ci = cert->cert_info;
-  if (sk_X509_EXTENSION_num(ci->extensions) <= 0) {
+  auto extensions_stack = X509_get0_extensions(cert);
+
+  if (extensions_stack == nullptr) {
     return {};
   }
 
-  for (auto i = 0; i < sk_X509_EXTENSION_num(ci->extensions); i++) {
-    auto ext_value =
-        (X509_EXTENSION*)sk_X509_EXTENSION_value(ci->extensions, i);
-    if (!ext_value) {
-      break;
-    }
+  auto extension_idx = X509v3_get_ext_by_NID(extensions_stack, nid, -1);
 
-    if (OBJ_obj2nid(ext_value->object) == nid) {
-      auto bio_out = BIO_new(BIO_s_mem());
-      if (!X509V3_EXT_print(bio_out, ext_value, 0, 0)) {
-        M_ASN1_OCTET_STRING_print(bio_out, ext_value->value);
-      }
-
-      BUF_MEM* bio_buf = nullptr;
-      BIO_get_mem_ptr(bio_out, &bio_buf);
-
-      // remove the ending newline from the extension value
-      auto length = bio_buf->length;
-      if (bio_buf->data[length - 1] == '\n' ||
-          bio_buf->data[length - 1] == '\r') {
-        bio_buf->data[length - 1] = '\0';
-      }
-
-      if (bio_buf->data[length] == '\n' || bio_buf->data[length] == '\r') {
-        bio_buf->data[length] = '\0';
-      }
-      auto ident = std::string(bio_buf->data, bio_buf->length);
-
-      // Replace the newline character with the comma
-      std::replace(ident.begin(), ident.end(), '\n', ';');
-      BIO_free(bio_out);
-      return ident;
-    }
+  if (extension_idx < 0) {
+    return {};
   }
 
-  return {};
+  auto extension = X509v3_get_ext(extensions_stack, extension_idx);
+
+  auto bio_out = BIO_new(BIO_s_mem());
+  if (!X509V3_EXT_print(bio_out, extension, 0, 0)) {
+    ASN1_STRING_print(bio_out, X509_EXTENSION_get_data(extension));
+  }
+
+  BUF_MEM* bio_buf = nullptr;
+  BIO_get_mem_ptr(bio_out, &bio_buf);
+
+  // remove the ending newline from the extension value
+  auto length = bio_buf->length;
+  if (bio_buf->data[length - 1] == '\n' || bio_buf->data[length - 1] == '\r') {
+    bio_buf->data[length - 1] = '\0';
+  }
+
+  if (bio_buf->data[length] == '\n' || bio_buf->data[length] == '\r') {
+    bio_buf->data[length] = '\0';
+  }
+  auto ident = std::string(bio_buf->data, bio_buf->length);
+
+  // Replace the newline character with the comma
+  std::replace(ident.begin(), ident.end(), '\n', ';');
+  BIO_free(bio_out);
+
+  return ident;
+
 } // namespace tables
 
 bool has_cert_expired(X509* cert) {
