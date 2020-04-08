@@ -62,13 +62,24 @@ TEST_F(ProcessesTest, test_sanity) {
        [&now, &boot_time](auto value) {
          auto start_time_exp = tryTo<std::time_t>(value);
          if (start_time_exp.isError()) {
+           std::cerr << "Failed to convert start_time_exp: " << value
+                     << " to time_t";
            return false;
          }
          auto const start_time = start_time_exp.take();
          if (start_time == -1) {
            return true;
          }
-         return start_time <= now && boot_time <= start_time;
+         auto valid = start_time <= now && boot_time <= start_time;
+
+         if (!valid) {
+           std::cerr << "start_time <= now && boot_time <= start_time is "
+                        "false, start_time: "
+                     << start_time << ", now: " << now
+                     << ", boot_time: " << boot_time;
+         }
+
+         return valid;
        }},
 
       {"parent", IntType},
