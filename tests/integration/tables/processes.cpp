@@ -32,7 +32,8 @@ TEST_F(ProcessesTest, test_sanity) {
   ASSERT_GE(data.size(), 2ul);
 
   auto const now = std::time(nullptr);
-  auto const boot_time = now - getUptime() - 1;
+  auto const uptime = getUptime();
+  auto const boot_time = now - uptime - 1;
 
   EXPECT_GE(now, boot_time);
 
@@ -59,7 +60,7 @@ TEST_F(ProcessesTest, test_sanity) {
       {"disk_bytes_read", NormalType},
       {"disk_bytes_written", NormalType},
       {"start_time",
-       [&now, &boot_time](auto value) {
+       [&now, &boot_time, &uptime](auto value) {
          auto start_time_exp = tryTo<std::time_t>(value);
          if (start_time_exp.isError()) {
            std::cerr << "Failed to convert start_time_exp: " << value
@@ -76,7 +77,8 @@ TEST_F(ProcessesTest, test_sanity) {
            std::cerr << "start_time <= now && boot_time <= start_time is "
                         "false, start_time: "
                      << start_time << ", now: " << now
-                     << ", boot_time: " << boot_time;
+                     << ", boot_time: " << boot_time << " uptime: " << uptime
+                     << std::endl;
          }
 
          return valid;
