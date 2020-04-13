@@ -71,7 +71,7 @@ TEST_F(ProcessesTest, test_sanity) {
          if (start_time == -1) {
            return true;
          }
-         auto valid = start_time <= now && boot_time <= start_time;
+         bool valid = start_time <= now && boot_time <= start_time;
 
          if (!valid) {
            std::cerr << "start_time <= now && boot_time <= start_time is "
