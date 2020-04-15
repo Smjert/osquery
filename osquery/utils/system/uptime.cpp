@@ -15,7 +15,10 @@
 #elif defined(__linux__)
 #include <sys/sysinfo.h>
 #elif defined(WIN32)
-#include <osquery/utils/system/system.h>
+#include <Windows.h>
+#include <winperf.h>
+#include <cstdint>
+#include <iostream>
 #endif
 
 namespace osquery {
@@ -43,7 +46,71 @@ long getUptime() {
 
   return sys_info.uptime;
 #elif defined(WIN32)
-  return static_cast<long>(GetTickCount64() / 1000);
+
+  PERF_DATA_BLOCK *dataBlock = NULL;
+  PERF_OBJECT_TYPE *objType;
+  PERF_COUNTER_DEFINITION *counterDef;
+  PERF_COUNTER_DEFINITION *counterDefUptime = NULL;
+  DWORD dataSize = 4096;
+  DWORD getSize;
+  LONG lError = ERROR_MORE_DATA;
+  uint64_t upsec;
+  unsigned int i;
+  BYTE *counterData;
+
+  while (lError == ERROR_MORE_DATA) {
+    std::cout << "Enter Loop!" << std::endl;
+    if (dataBlock) {
+      delete[] dataBlock;
+    }
+    dataBlock = new PERF_DATA_BLOCK[dataSize];
+    if (!dataBlock) {
+      std::cerr << "Out of memory!" << std::endl;
+      return -1;
+    }
+    getSize = dataSize;
+
+    lError = RegQueryValueExW(HKEY_PERFORMANCE_DATA, L"2", NULL, NULL,
+                             (BYTE*)dataBlock, &getSize);
+    if (lError != ERROR_SUCCESS && getSize > 0) {
+      if (wcsncmp(dataBlock->Signature, L"PERF", 4) == 0) {
+        break;
+      }
+    } else if (lError != ERROR_SUCCESS && lError != ERROR_MORE_DATA) {
+      std::cerr << GetLastError() << std::endl;
+      goto done;
+    }
+
+    dataSize += 1024;
+    std::cout << "Loop!" << std::endl;
+  }
+
+  RegCloseKey(HKEY_PERFORMANCE_DATA);
+
+  objType = (PERF_OBJECT_TYPE*)((BYTE*)dataBlock + dataBlock->HeaderLength);
+  counterDef = (PERF_COUNTER_DEFINITION*)((BYTE*)objType + objType->HeaderLength);
+
+  for (i = 0; i < objType->NumCounters; ++i) {
+    if (counterDef->CounterNameTitleIndex == 674) {
+      counterDefUptime = counterDef;
+      break;
+    }
+    counterDef = (PERF_COUNTER_DEFINITION*)((BYTE*)counterDef + counterDef->ByteLength);
+  }
+
+  counterData = (BYTE*)objType + objType->DefinitionLength;
+  counterData += counterDefUptime->CounterOffset;
+
+  upsec = *((uint64_t*)counterData);
+  auto uptime = ((objType->PerfTime.QuadPart - upsec) / objType->PerfFreq.QuadPart);
+
+done:
+  if (dataBlock) {
+    delete[] dataBlock;
+  }
+
+  return uptime;
+ // return static_cast<long>(GetTickCount64() / 1000);
 #endif
 
   return -1;

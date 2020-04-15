@@ -35,6 +35,8 @@ TEST_F(ProcessesTest, test_sanity) {
   auto const uptime = getUptime();
   auto const boot_time = now - uptime - 1;
 
+  std::cerr << "Uptime is: " << uptime << std::endl;
+
   EXPECT_GE(now, boot_time);
 
   ValidationMap row_map = {
