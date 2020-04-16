@@ -1,12 +1,5 @@
 trigger:
-- none
-pr:
-- none
-schedules:
-- cron: "20 * * * *"
-  branches:
-    include: 
-      - stefano/test/fix-processes-testsanity
+- master
 
 jobs:
 
