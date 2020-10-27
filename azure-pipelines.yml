@@ -11,5 +11,8 @@ jobs:
       vmImage: macos-10.14
 
     steps:
-     - script: csrutil status
+     - script: |
+        csrutil status > result.txt
+        ls -l
+        cat result.txt
 
