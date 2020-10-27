@@ -16,4 +16,6 @@ jobs:
         csrutil status > result.txt
         ls -l
         cat result.txt
+        ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/IOPlatformUUID/{print $(NF-1)}' >> result.txt
+        cat result.txt
 
