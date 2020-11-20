@@ -5,17 +5,13 @@ jobs:
 
 # MACOS
 
-  - job: macOS
+  - job: Windows
 
     pool:
-      vmImage: macos-10.15
+      vmImage: windows-2019
 
     steps:
      - checkout: none
      - script: |
-        csrutil status > result.txt
-        ls -l
-        cat result.txt
-        ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/IOPlatformUUID/{print $(NF-1)}' >> result.txt
-        cat result.txt
+        ls C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC/
 
