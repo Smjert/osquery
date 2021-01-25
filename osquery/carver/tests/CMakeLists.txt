@@ -15,10 +15,11 @@ function(generateOsqueryCarverTestsTest)
   target_link_libraries(osquery_carver_tests-test PRIVATE
     osquery_cxx_settings
     osquery_carver
+    osquery_core
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_hashing
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_conversions
     osquery_utils_info
     tests_helper

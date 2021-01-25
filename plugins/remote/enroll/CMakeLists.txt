@@ -22,6 +22,7 @@ function(generatePluginsRemoteEnrollTlsenroll)
 
   target_link_libraries(plugins_remote_enroll_tlsenroll PUBLIC
     osquery_cxx_settings
+    osquery_sql
     osquery_remote_enroll_tlsenroll
   )
 

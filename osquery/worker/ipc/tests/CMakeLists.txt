@@ -20,14 +20,12 @@ function(generateOsqueryWorkerIpcTestsJsonConversionsTest)
     osquery_cxx_settings
     osquery_core
     osquery_core_sql
-    osquery_database
     osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_status
     osquery_worker_ipc_tableipc
     osquery_worker_ipc_tableipcjsonconverter
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

@@ -20,13 +20,14 @@ endfunction()
 function(generateOsqueryExtensions)
   add_osquery_library(osquery_extensions EXCLUDE_FROM_ALL extensions.cpp)
 
-  enableLinkWholeArchive(osquery_extensions)
+  #enableLinkWholeArchive(osquery_extensions)
 
   target_link_libraries(osquery_extensions PUBLIC
     osquery_cxx_settings
     osquery_extensions_extensionsinterface
     osquery_core
     osquery_process
+    osquery_sql
     osquery_utils
     osquery_utils_conversions
   )
@@ -43,7 +44,7 @@ endfunction()
 function(generateOsqueryExtensionsImplthrift)
   add_osquery_library(osquery_extensions_implthrift EXCLUDE_FROM_ALL impl_thrift.cpp)
 
-  enableLinkWholeArchive(osquery_extensions_implthrift)
+  #enableLinkWholeArchive(osquery_extensions_implthrift)
 
   if(DEFINED PLATFORM_FREEBSD)
     target_link_options(osquery_extensions_implthrift PUBLIC -lthrift)
@@ -72,6 +73,7 @@ function(generateOsqueryExtensionsExtensionsinterface)
     osquery_dispatcher
     osquery_filesystem
     osquery_registry
+    osquery_sql
   )
 
   generateIncludeNamespace(osquery_extensions_extensionsinterface "osquery/extensions" "FILE_ONLY" ${public_header_files})

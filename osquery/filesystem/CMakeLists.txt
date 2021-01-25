@@ -63,7 +63,6 @@ function(generateOsqueryFilesystem)
   target_link_libraries(osquery_filesystem PUBLIC
     osquery_cxx_settings
     osquery_process
-    osquery_sql
     osquery_utils_conversions
     osquery_utils_status
     osquery_utils_system_env
@@ -134,13 +133,12 @@ function(generateOsqueryFilesystemTest)
     osquery_cxx_settings
     osquery_config_tests_testutils
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_process
-    osquery_registry
     osquery_filesystem_mockfilestructure
     osquery_filesystem
-    tests_helper
+    osquery_process
+    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     thirdparty_googletest
   )
 endfunction()

@@ -21,11 +21,14 @@ function(generateOsqueryRemoteEnrollTlsenroll)
   target_link_libraries(osquery_remote_enroll_tlsenroll PUBLIC
     osquery_cxx_settings
     osquery_core
+    osquery_database
     osquery_process
     osquery_remote_httpclient
     osquery_remote_requests
     osquery_remote_serializers_serializerjson
     osquery_remote_transports_transportstls
+    osquery_sql
+    specs_tables
     osquery_utils_json
     osquery_utils_system_time
     thirdparty_boost
@@ -63,16 +66,12 @@ function(generateOsqueryRemoteenrolltestsTest)
 
   target_link_libraries(osquery_remote_enroll_remoteenrolltests-test PRIVATE
     osquery_cxx_settings
-    osquery_config_tests_testutils
+    osquery_core
     osquery_database
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_process
     osquery_remote_enroll_tlsenroll
-    osquery_remote_tests_remotetestutils
-    osquery_utils_conversions
-    osquery_utils_info
+    osquery_sdk_emptyregisterforeigntables
+    osquery_sql
     plugins_config_tlsconfig
     tests_helper
     thirdparty_googletest

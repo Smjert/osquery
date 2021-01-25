@@ -81,7 +81,11 @@ function(generateOsqueryCore)
     osquery_cxx_settings
     osquery_core_plugins
     osquery_core_sql
+    osquery_core_init
+    osquery_database
     osquery_filesystem
+    osquery_logger
+    osquery_logger_datalogger
     osquery_process
     osquery_registry
     osquery_utils
@@ -90,7 +94,6 @@ function(generateOsqueryCore)
     osquery_utils_system_env
     osquery_utils_system_systemutils
     osquery_utils_system_time
-    osquery_logger
     thirdparty_gflags
     thirdparty_glog
     thirdparty_openssl

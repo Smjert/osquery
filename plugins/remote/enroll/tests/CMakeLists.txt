@@ -10,11 +10,17 @@ function(pluginsRemoteEnrollTestsMain)
 
   target_link_libraries(plugins_remote_enroll_tlsenrolltests-test PRIVATE
     osquery_cxx_settings
+    osquery_core
     osquery_config
     osquery_database
-    osquery_sql
+    osquery_remote_requests
+    osquery_remote_serializers_serializerjson
     osquery_remote_tests_remotetestutils
+    osquery_remote_transports_transportstls
+    osquery_sdk_emptyregisterforeigntables
+    osquery_sql
     plugins_remote_enroll_tlsenroll
+    tests_helper
     thirdparty_googletest
     thirdparty_gflags
   )

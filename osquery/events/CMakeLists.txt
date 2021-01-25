@@ -73,6 +73,7 @@ function(generateOsqueryEvents)
     osquery_events_eventsregistry
     osquery_hashing
     osquery_sql
+    osquery_tables_events_eventstable
     osquery_utils_conversions
     osquery_utils_expected
     osquery_utils_system_time

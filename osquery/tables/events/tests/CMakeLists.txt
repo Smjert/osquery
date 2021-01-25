@@ -45,15 +45,16 @@ function(generateOsqueryTablesEventsTestsFileeventstestsTest)
 
   target_link_libraries(osquery_tables_events_tests_fileeventstests-test PRIVATE
     osquery_cxx_settings
+    osquery_core
     osquery_config
     osquery_config_tests_testutils
+    osquery_events
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_logger
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_events_eventstable
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -63,14 +64,10 @@ function(generateOsqueryTablesEventsTestsSelinuxeventstestsTest)
 
   target_link_libraries(osquery_tables_events_tests_selinuxeventstests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_database
-    osquery_extensions
+    osquery_events
     osquery_extensions_implthrift
-    osquery_logger
-    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_events_eventstable
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -80,14 +77,10 @@ function(generateOsqueryTablesEventsTestsProcesseventstestsTest)
 
   target_link_libraries(osquery_tables_events_tests_processeventstests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_database
-    osquery_extensions
+    osquery_events
     osquery_extensions_implthrift
-    osquery_logger
-    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_events_eventstable
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -100,14 +93,10 @@ function(generateOsqueryTablesEventsTestsBPFtestsTest)
 
   target_link_libraries(osquery_tables_events_tests_bpftests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_database
-    osquery_extensions
+    osquery_events
     osquery_extensions_implthrift
-    osquery_logger
-    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_events_eventstable
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -117,14 +106,11 @@ function(generateOsqueryTablesEventsTestsPowershelleventstestsTest)
 
   target_link_libraries(osquery_tables_events_tests_powershelleventstests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_database
-    osquery_extensions
+    osquery_events
     osquery_extensions_implthrift
-    osquery_logger
-    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_events_eventstable
-    tests_helper
+    osquery_utils_conversions
     thirdparty_googletest
   )
 endfunction()
@@ -139,13 +125,11 @@ function(generateOsqueryTablesEventsTestsWindowseventstestsTest)
 
   target_link_libraries(osquery_tables_events_tests_windowseventstests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_database
-    osquery_extensions
+    osquery_events
     osquery_extensions_implthrift
-    osquery_logger
-    osquery_registry
     osquery_tables_events_eventstable
+    osquery_sdk_emptyregisterforeigntables
+    osquery_utils_conversionsnts_eventstable
     tests_helper
     thirdparty_googletest
   )

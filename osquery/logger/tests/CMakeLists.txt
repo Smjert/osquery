@@ -21,6 +21,7 @@ function(generateOsqueryLoggerTestsTest)
     osquery_extensions_implthrift
     osquery_logger_datalogger
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_info
     osquery_utils_system_time
     tests_helper

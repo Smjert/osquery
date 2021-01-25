@@ -20,18 +20,11 @@ function(generatePluginsConfigParsersTestsDecoratorstestsTest)
     osquery_cxx_settings
     osquery_config_tests_testutils
     osquery_core
-    osquery_database
-    osquery_dispatcher
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
     osquery_registry
-    osquery_remote_enroll_tlsenroll
-    osquery_utils_json
-    plugins_config_tlsconfig
+    osquery_sdk_emptyregisterforeigntables
     plugins_config_parsers
-    specs_tables
     thirdparty_googletest
   )
 endfunction()
@@ -45,18 +38,13 @@ function(generatePluginsConfigParsersTestsEventsparsertestsTest)
     osquery_config_tests_testutils
     osquery_core
     osquery_database
-    osquery_dispatcher
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
     osquery_registry
-    osquery_remote_enroll_tlsenroll
-    osquery_utils_json
-    plugins_config_tlsconfig
+    osquery_sdk_emptyregisterforeigntables
     plugins_config_parsers
-    specs_tables
     thirdparty_googletest
+    thirdparty_gflags
   )
 endfunction()
 
@@ -69,17 +57,12 @@ function(generatePluginsConfigParsersTestsFilepathstestsTest)
     osquery_core
     osquery_database
     osquery_dispatcher
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
     osquery_registry
-    osquery_remote_enroll_tlsenroll
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_conversions
-    osquery_utils_json
-    plugins_config_tlsconfig
     plugins_config_parsers
-    specs_tables
     thirdparty_googletest
   )
 endfunction()
@@ -94,17 +77,10 @@ function(generatePluginsConfigParsersTestsOptionstestsTest)
     osquery_core
     osquery_database
     osquery_dispatcher
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_filesystem
     osquery_registry
-    osquery_remote_enroll_tlsenroll
-    osquery_utils_conversions
-    osquery_utils_json
-    plugins_config_tlsconfig
+    osquery_sdk_emptyregisterforeigntables
     plugins_config_parsers
-    specs_tables
     thirdparty_googletest
   )
 endfunction()
@@ -117,18 +93,10 @@ function(generatePluginsConfigParsersTestsViewstestsTest)
     osquery_config_tests_testutils
     osquery_core
     osquery_database
-    osquery_dispatcher
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_filesystem
     osquery_registry
-    osquery_remote_enroll_tlsenroll
-    osquery_utils_conversions
-    osquery_utils_json
-    plugins_config_tlsconfig
+    osquery_sdk_emptyregisterforeigntables
     plugins_config_parsers
-    specs_tables
     thirdparty_googletest
   )
 endfunction()

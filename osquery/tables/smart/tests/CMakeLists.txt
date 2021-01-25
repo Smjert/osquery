@@ -23,6 +23,7 @@ function(generateOsqueryTablesSmartTestsSmartdrivestestsTest)
     osquery_logger
     osquery_registry
     tests_helper
+    specs_tables
     thirdparty_smartmontools
     thirdparty_googletest
   )

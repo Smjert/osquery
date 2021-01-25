@@ -16,12 +16,9 @@ function(generateOsqueryTablesApplicationsPosixTestsPrometheusmetricstestsTest)
 
   target_link_libraries(osquery_tables_applications_posix_tests_prometheusmetricstests-test PRIVATE
     osquery_cxx_settings
-    osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
     osquery_tables_applications
-    tests_helper
+    osquery_sdk_emptyregisterforeigntables
     thirdparty_googletest
   )
 endfunction()

@@ -18,9 +18,9 @@ function(generateOsqueryDatabaseTestsTest)
     osquery_cxx_settings
     osquery_core
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_json
     tests_helper
     thirdparty_googletest
@@ -35,9 +35,9 @@ function(generateOsqueryDatabaseTestsResultsTest)
     osquery_core_sql
     osquery_core
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_json
     osquery_sql_tests_sqltestutils
     tests_helper

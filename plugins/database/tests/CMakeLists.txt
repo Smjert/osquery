@@ -15,15 +15,10 @@ function(generatePluginsDatabaseTestsSqliteplugintestsTest)
 
   target_link_libraries(plugins_database_tests_sqliteplugintests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_database
     osquery_database_tests_databasetestutils
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
-    osquery_utils_json
+    osquery_sdk_emptyregisterforeigntables
     plugins_database_sqliteplugin
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -36,12 +31,9 @@ function(generatePluginsDatabaseTestsRocksdbtestsTest)
     osquery_core
     osquery_database
     osquery_database_tests_databasetestutils
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
-    osquery_utils_json
+    osquery_sdk_emptyregisterforeigntables
     plugins_database_rocksdbplugin
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

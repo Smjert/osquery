@@ -24,9 +24,9 @@ function(generateOsqueryCoreTestsFlagstestsTest)
   target_link_libraries(osquery_core_tests_flagstests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_info
     tests_helper
     thirdparty_googletest
@@ -39,11 +39,8 @@ function(generateOsqueryCoreTestsSystemtestsTest)
   target_link_libraries(osquery_core_tests_systemtests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
-    osquery_utils_info
-    tests_helper
+    osquery_sdk_emptyregisterforeigntables
     thirdparty_googletest
   )
 endfunction()
@@ -54,9 +51,9 @@ function(generateOsqueryCoreTestsTablestestsTest)
   target_link_libraries(osquery_core_tests_tablestests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     osquery_utils_info
     thirdparty_googletest
@@ -78,10 +75,10 @@ function(generateOsqueryCoreTestsWatcherpermissionstestsTest)
   target_link_libraries(osquery_core_tests_watcherpermissionstests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_process
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     osquery_utils_info
     thirdparty_googletest
@@ -94,10 +91,10 @@ function(generateOsqueryCoreTestsQuerytestsTest)
   target_link_libraries(osquery_core_tests_querytests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
     osquery_sql_tests_sqltestutils
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     osquery_utils_info
     thirdparty_googletest
@@ -112,6 +109,7 @@ function(generateOsqueryCoreTestsWmitestsTest)
     osquery_config_tests_testutils
     osquery_core
     osquery_sql_tests_sqltestutils
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_info
     tests_helper
     thirdparty_googletest
@@ -123,10 +121,9 @@ function(generateOsqueryCoreTestsProcesstestsTest)
 
   target_link_libraries(osquery_core_tests_processtests-test PRIVATE
     osquery_cxx_settings
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_main
     osquery_process
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     thirdparty_googletest
   )

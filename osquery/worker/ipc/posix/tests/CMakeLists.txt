@@ -19,14 +19,10 @@ function(generateOsqueryWorkerIpcPosixTestsIpcPipeChannelTest)
 
   target_link_libraries(osquery_worker_ipc_posix_tests_pipechannel-test PRIVATE
     osquery_cxx_settings
-    osquery_dispatcher
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
-    osquery_registry
-    osquery_sql
+    osquery_sdk_emptyregisterforeigntables
     osquery_worker_ipc_posix_pipechannel
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

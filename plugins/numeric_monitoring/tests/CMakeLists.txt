@@ -15,12 +15,12 @@ function(pluginsNumericmonitoringTestsFilesystemtestsTest)
 
   target_link_libraries(plugins_numericmonitoring_tests_filesystem-test PRIVATE
     osquery_cxx_settings
-    osquery_database
-    osquery_extensions
+    osquery_core
+    osquery_registry
     osquery_extensions_implthrift
-    osquery_numericmonitoring
+    osquery_sdk_emptyregisterforeigntables
+    osquery_utils_conversions
     plugins_numericmonitoring_filesystem
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

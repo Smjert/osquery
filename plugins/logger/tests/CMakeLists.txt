@@ -28,18 +28,17 @@ function(generatePluginsLoggerTestsFilesystemloggertestsTest)
   target_link_libraries(plugins_logger_tests_filesystemloggertests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_plugins
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_logger_datalogger
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_conversions
     osquery_utils_info
     osquery_utils_system_time
     plugins_logger_filesystemlogger
-    tests_helper
     thirdparty_googletest
+    thirdparty_boost
   )
 endfunction()
 
@@ -49,18 +48,19 @@ function(generatePluginsLoggerTestsBufferedloggertestsTest)
   target_link_libraries(plugins_logger_tests_bufferedloggertests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_plugins
     osquery_database
-    osquery_extensions
+    osquery_dispatcher
     osquery_extensions_implthrift
-    osquery_logger_datalogger
+    osquery_logger
     osquery_registry
-    osquery_utils_conversions
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_info
+    osquery_utils_json
     osquery_utils_system_time
     plugins_logger_buffered
     tests_helper
     thirdparty_googletest
+    thirdparty_boost
   )
 endfunction()
 
@@ -70,19 +70,14 @@ function(generatePluginsLoggerTestsKafkaproducerloggertestsTest)
   target_link_libraries(plugins_logger_tests_kafkaproducerloggertests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_plugins
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_logger_datalogger
     osquery_registry
-    osquery_utils_conversions
-    osquery_utils_info
-    osquery_utils_system_time
+    osquery_sdk_emptyregisterforeigntables
+    osquery_utils_status
     plugins_logger_kafkaproducer
-    tests_helper
     thirdparty_googletest
-    thirdparty_gflags
+    thirdparty_boost
   )
 endfunction()
 
@@ -92,20 +87,14 @@ function(generatePluginsLoggerTestsAwskinesisloggertestsTest)
   target_link_libraries(plugins_logger_tests_awskinesisloggertests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_plugins
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_logger_datalogger
+    osquery_logger
     osquery_registry
-    osquery_utils_conversions
-    osquery_utils_info
-    osquery_utils_system_time
+    osquery_sdk_emptyregisterforeigntables
     plugins_logger_awskinesis
-    plugins_logger_buffered
-    tests_helper
     thirdparty_googletest
-    thirdparty_gflags
+    thirdparty_boost
   )
 endfunction()
 
@@ -115,21 +104,14 @@ function(generatePluginsLoggerTestsTlsloggertestsTest)
   target_link_libraries(plugins_logger_tests_tlsloggertests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_plugins
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_logger_datalogger
     osquery_registry
-    osquery_remote_enroll_tlsenroll
     osquery_remote_tests_remotetestutils
-    osquery_utils_conversions
-    osquery_utils_info
-    osquery_utils_system_time
+    osquery_sdk_emptyregisterforeigntables
     plugins_logger_tlslogger
-    tests_helper
     thirdparty_googletest
-    thirdparty_gflags
   )
 endfunction()
 
@@ -139,19 +121,12 @@ function(generatePluginsLoggerTestsSyslogloggertestsTest)
   target_link_libraries(plugins_logger_tests_syslogloggertests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_plugins
-    osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_logger_datalogger
+    osquery_logger
     osquery_registry
-    osquery_utils_conversions
-    osquery_utils_info
-    osquery_utils_system_time
+    osquery_sdk_emptyregisterforeigntables
     plugins_logger_syslog
-    tests_helper
     thirdparty_googletest
-    thirdparty_gflags
   )
 endfunction()
 

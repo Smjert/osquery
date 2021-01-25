@@ -11,11 +11,16 @@ function(osquerySdkMain)
     add_subdirectory("tests")
   endif()
 
+  generateOsquerySdkEmptyRegisterForeignTables()
   generateOsquerySdkPluginsdk()
 endfunction()
 
+function(generateOsquerySdkEmptyRegisterForeignTables)
+  add_osquery_library(osquery_sdk_emptyregisterforeigntables EXCLUDE_FROM_ALL empty_register_foreign_tables.cpp)
+endfunction()
+
 function(generateOsquerySdkPluginsdk)
-  add_osquery_library(osquery_sdk_pluginsdk EXCLUDE_FROM_ALL empty_register_foreign_tables.cpp)
+  add_library(osquery_sdk_pluginsdk INTERFACE)
 
   target_link_libraries(osquery_sdk_pluginsdk INTERFACE
     osquery_cxx_settings
@@ -29,6 +34,7 @@ function(generateOsquerySdkPluginsdk)
     osquery_logger_datalogger
     osquery_numericmonitoring
     osquery_remote_enroll_tlsenroll
+    osquery_sdk_emptyregisterforeigntables
     osquery_sql
     osquery_utils_conversions
     osquery_utils_debug
@@ -46,8 +52,6 @@ function(generateOsquerySdkPluginsdk)
     osquery_utils
     plugins_config_parsers
   )
-
-  enableLinkWholeArchive(osquery_sdk_pluginsdk)
 
   set(public_headers
     plugin_sdk.h

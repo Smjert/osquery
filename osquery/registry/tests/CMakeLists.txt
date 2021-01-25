@@ -14,12 +14,10 @@ function(osqueryRegistryTestsTest)
 
   target_link_libraries(osquery_registry_tests-test PRIVATE
     osquery_cxx_settings
-    osquery_database
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
+    osquery_logger
     osquery_registry
-    tests_helper
+    osquery_sdk_emptyregisterforeigntables
     thirdparty_googletest
   )
 endfunction()

@@ -21,13 +21,11 @@ function(generateOsqueryWorkerIpcLinuxTestsTableContainerTest)
   target_link_libraries(osquery_worker_ipc_linux_tests_tablecontainer-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_status
     osquery_worker_ipc_linux_tablecontaineripc
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

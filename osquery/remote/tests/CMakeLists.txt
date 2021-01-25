@@ -21,15 +21,15 @@ function(generateOsqueryRemoteTestsRemotetestsutils)
 
   target_link_libraries(osquery_remote_tests_remotetestutils PUBLIC
     osquery_cxx_settings
+    osquery_core
     osquery_config_tests_testutils
     osquery_database
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_remote_enroll_tlsenroll
+    osquery_logger
+    osquery_sql
+    specs_tables
     osquery_utils_conversions
     osquery_utils_info
-    plugins_config_tlsconfig
     tests_helper
   )
 endfunction()
@@ -39,17 +39,11 @@ function(generateOsqueryRemoteTestsRequeststestsTest)
 
   target_link_libraries(osquery_remote_tests_requeststests-test PRIVATE
     osquery_cxx_settings
-    osquery_config_tests_testutils
-    osquery_database
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_remote_enroll_tlsenroll
-    osquery_remote_tests_remotetestutils
+    osquery_remote_transports_transportstls
+    osquery_remote_serializers_serializerjson
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_conversions
-    osquery_utils_info
-    plugins_config_tlsconfig
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

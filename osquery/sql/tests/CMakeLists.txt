@@ -58,8 +58,10 @@ function(generateOsquerySqlTestsVirtualtableTestsTest)
     osquery_database
     osquery_extensions
     osquery_extensions_implthrift
+    osquery_logger
     osquery_registry
     osquery_sql
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     thirdparty_googletest
   )

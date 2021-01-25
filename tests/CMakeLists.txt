@@ -29,12 +29,12 @@ function(generateTestsHelper)
     osquery_config
     osquery_database
     osquery_filesystem
+    osquery_logger
     osquery_process
     osquery_sql
     osquery_utils
     osquery_utils_conversions
     osquery_utils_system_time
-    specs_tables
     thirdparty_boost
     thirdparty_googletest_headers
   )

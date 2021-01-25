@@ -42,15 +42,13 @@ function(generateOsqueryTablesSystemLinuxTests)
     osquery_cxx_settings
     osquery_config_tests_testutils
     osquery_core
-    osquery_core_sql
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -67,17 +65,11 @@ function(generateOsqueryTablesSystemPosixTests)
 
   target_link_libraries(osquery_tables_system_posix_tests-test PRIVATE
     osquery_cxx_settings
-    osquery_core
-    osquery_core_sql
-    osquery_database
-    osquery_extensions
-    osquery_extensions_implthrift
-    osquery_filesystem
     osquery_tables_system_systemtable
-    osquery_utils
-    osquery_utils_conversions
-    tests_helper
+    osquery_extensions_implthrift
+    osquery_sdk_emptyregisterforeigntables
     thirdparty_googletest
+    thirdparty_boost
   )
 endfunction()
 
@@ -91,15 +83,21 @@ function(generateOsqueryTablesSystemTestsSystemtablestestsTest)
     osquery_core
     osquery_core_sql
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
-    osquery_utils_conversions
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
+
+  if(DEFINED PLATFORM_WINDOWS)
+    target_link_libraries(osquery_tables_system_tests_systemtablestests-test PRIVATE
+      osquery_utils_conversions
+    )
+  endif()
 endfunction()
 
 function(generateOsqueryTablesSystemDarwinTests)
@@ -128,10 +126,10 @@ function(generateOsqueryTablesSystemDarwinTests)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -155,7 +153,6 @@ function(generateOsqueryTablesSystemWindowsTests)
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -173,7 +170,7 @@ function(generateOsqueryTablesSystemTestsAugeasTestsTest)
     osquery_extensions_implthrift
     osquery_registry
     osquery_sql
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
 

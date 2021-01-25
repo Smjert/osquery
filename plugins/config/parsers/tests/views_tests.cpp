@@ -7,7 +7,6 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
-#include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
 #include <osquery/config/config.h>
@@ -77,4 +76,4 @@ TEST_F(ViewsConfigParserPluginTests, test_update_view) {
 
   c.reset();
 }
-}
+} // namespace osquery

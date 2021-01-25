@@ -27,7 +27,7 @@
 #include <osquery/core/system.h>
 #include <osquery/filesystem/filesystem.h>
 #include <osquery/logger/logger.h>
-#include <osquery/sql/sql.h>
+//#include <osquery/sql/sql.h>
 #if WIN32
 #include <osquery/utils/conversions/windows/strings.h>
 #endif
@@ -488,12 +488,13 @@ Status createDirectory(const boost::filesystem::path& dir_path,
 std::set<fs::path> getHomeDirectories() {
   std::set<fs::path> results;
 
-  auto users = SQL::selectAllFrom("users");
-  for (const auto& user : users) {
-    if (user.at("directory").size() > 0) {
-      results.insert(user.at("directory"));
-    }
-  }
+  // TODO: Reimplement me
+  // auto users = SQL::selectAllFrom("users");
+  // for (const auto& user : users) {
+  //   if (user.at("directory").size() > 0) {
+  //     results.insert(user.at("directory"));
+  //   }
+  // }
 
   return results;
 }

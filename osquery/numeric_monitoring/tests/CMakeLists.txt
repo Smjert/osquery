@@ -15,11 +15,12 @@ function(osqueryNumericmonitoringTestsTest)
 
   target_link_libraries(osquery_numericmonitoring_tests-test PRIVATE
     osquery_cxx_settings
+    osquery_core
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_numericmonitoring
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     thirdparty_googletest
   )
@@ -30,11 +31,12 @@ function(osqueryNumericmonitoringTestsPreaggregationcacheTest)
 
   target_link_libraries(osquery_numericmonitoring_tests_preaggregationcache-test PRIVATE
     osquery_cxx_settings
+    osquery_core
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_numericmonitoring
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     tests_helper
     thirdparty_googletest
   )

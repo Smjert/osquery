@@ -15,12 +15,10 @@ function(generateOsquerySystemNetworkTestsHostnamehostidentitytestsTest)
   target_link_libraries(osquery_system_network_tests_hostnamehostidentitytests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_system_network_hostname
-    osquery_utils_info
-    tests_helper
     thirdparty_googletest
     thirdparty_boost
   )

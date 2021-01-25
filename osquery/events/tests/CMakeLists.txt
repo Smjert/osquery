@@ -43,6 +43,7 @@ function(generateOsqueryEventsTestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
@@ -66,6 +67,7 @@ function(generateOsqueryEventsTestsEventsdatabasetestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
@@ -85,6 +87,7 @@ function(generateOsqueryEventsTestsSyslogtestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils
     osquery_utils_conversions
     tests_helper
@@ -104,6 +107,7 @@ function(generateOsqueryEventsTestsAudittestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
@@ -125,6 +129,7 @@ function(generateOsqueryEventsTestsProcessfileeventstestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
@@ -151,7 +156,10 @@ function(generateOsqueryEventsTestsBpftestsTest)
 
   target_link_libraries(osquery_events_tests_bpftests-test PRIVATE
     osquery_cxx_settings
-    osquery_remote_tests_remotetestutils
+    osquery_events
+    osquery_extensions_implthrift
+    osquery_sdk_emptyregisterforeigntables
+    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -164,12 +172,11 @@ function(generateOsqueryEventsTestsInotifytestsTest)
     osquery_core
     osquery_database
     osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
-    osquery_utils
-    osquery_utils_conversions
-    tests_helper
+    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
+    osquery_utils_info
     thirdparty_googletest
   )
 endfunction()
@@ -185,6 +192,7 @@ function(generateOsqueryEventsTestsFseventstestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils
     osquery_utils_conversions
     specs_tables
@@ -204,6 +212,7 @@ function(generateOsqueryEventsTestsWindowsusnjournalreadertestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils
     osquery_utils_conversions
     specs_tables

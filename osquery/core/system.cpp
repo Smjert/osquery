@@ -54,7 +54,6 @@
 #include <osquery/logger/data_logger.h>
 #include <osquery/logger/logger.h>
 #include <osquery/process/process.h>
-#include <osquery/sql/sql.h>
 
 #ifdef WIN32
 #include "osquery/core/windows/wmi.h"
@@ -306,42 +305,43 @@ std::string getHostIdentifier() {
 }
 
 Status checkStalePid(const std::string& content) {
-  int pid;
-  try {
-    pid = boost::lexical_cast<int>(content);
-  } catch (const boost::bad_lexical_cast& /* e */) {
-    return Status::success();
-  }
+  // TODO: reimplement without SQL
+  // int pid;
+  // try {
+  //   pid = boost::lexical_cast<int>(content);
+  // } catch (const boost::bad_lexical_cast& /* e */) {
+  //   return Status::success();
+  // }
 
-  PlatformProcess target(pid);
-  int status = 0;
+  // PlatformProcess target(pid);
+  // int status = 0;
 
-  // The pid is running, check if it is an osqueryd process by name.
-  std::stringstream query_text;
+  // // The pid is running, check if it is an osqueryd process by name.
+  // std::stringstream query_text;
 
-  query_text << "SELECT name FROM processes WHERE pid = " << pid
-             << " AND name LIKE 'osqueryd%';";
+  // query_text << "SELECT name FROM processes WHERE pid = " << pid
+  //            << " AND name LIKE 'osqueryd%';";
 
-  SQL q(query_text.str());
-  if (!q.ok()) {
-    return Status(1, "Error querying processes: " + q.getMessageString());
-  }
+  // SQL q(query_text.str());
+  // if (!q.ok()) {
+  //   return Status(1, "Error querying processes: " + q.getMessageString());
+  // }
 
-  if (q.rows().size() > 0) {
-    // If the process really is osqueryd, return an "error" status.
-    if (FLAGS_force) {
-      // The caller may choose to abort the existing daemon with --force.
-      // Do not use SIGQUIT as it will cause a crash on OS X.
-      status = target.kill() ? 0 : -1;
-      sleepFor(1000);
+  // if (q.rows().size() > 0) {
+  //   // If the process really is osqueryd, return an "error" status.
+  //   if (FLAGS_force) {
+  //     // The caller may choose to abort the existing daemon with --force.
+  //     // Do not use SIGQUIT as it will cause a crash on OS X.
+  //     status = target.kill() ? 0 : -1;
+  //     sleepFor(1000);
 
-      return Status(status, "Tried to force remove the existing osqueryd");
-    }
+  //     return Status(status, "Tried to force remove the existing osqueryd");
+  //   }
 
-    return Status(1, "osqueryd (" + content + ") is already running");
-  } else {
-    VLOG(1) << "Found stale process for osqueryd (" << content << ")";
-  }
+  //   return Status(1, "osqueryd (" + content + ") is already running");
+  // } else {
+  //   VLOG(1) << "Found stale process for osqueryd (" << content << ")";
+  // }
 
   return Status::success();
 }
@@ -418,41 +418,46 @@ DropPrivilegesRef DropPrivileges::get() {
 
 bool DropPrivileges::dropToParent(const fs::path& path) {
   auto parent = path.parent_path().string();
-  auto result = SQL::selectAllFrom("file", "path", EQUALS, parent);
-  if (result.empty()) {
+
+  if (!pathExists(parent).ok()) {
     return false;
   }
+  // auto result = SQL::selectAllFrom("file", "path", EQUALS, parent);
+  // if (result.empty()) {
+  //   return false;
+  // }
 
-  if (result.front().at("symlink") == "1") {
+  if (fs::is_symlink(fs::symlink_status(parent))) {
     // The file is a symlink, inspect the owner of the link.
     struct stat link_stat;
-    if (lstat(parent.c_str(), &link_stat) != 0) {
+    auto status = platformLstat(parent, link_stat);
+    if (!status.ok()) {
       return false;
     }
 
     return dropTo(link_stat.st_uid, link_stat.st_gid);
   }
 
-  long uid = 0;
-  long gid = 0;
-  if (!ownerFromResult(result.front(), uid, gid)) {
+  struct stat file_stat;
+  if (stat(parent.c_str(), &file_stat) < 0) {
     return false;
   }
 
-  return dropTo(static_cast<uid_t>(uid), static_cast<gid_t>(gid));
+  return dropTo(file_stat.st_uid, file_stat.st_gid);
 }
 
 bool DropPrivileges::dropTo(const std::string& user) {
-  auto result = SQL::selectAllFrom("users", "username", EQUALS, user);
-  if (result.empty()) {
-    return false;
-  }
+  // TODO: reimplement me
+  // auto result = SQL::selectAllFrom("users", "username", EQUALS, user);
+  // if (result.empty()) {
+  //   return false;
+  // }
 
   long uid = 0;
   long gid = 0;
-  if (!ownerFromResult(result.front(), uid, gid)) {
-    return false;
-  }
+  // if (!ownerFromResult(result.front(), uid, gid)) {
+  //   return false;
+  // }
 
   return dropTo(static_cast<uid_t>(uid), static_cast<gid_t>(gid));
 }

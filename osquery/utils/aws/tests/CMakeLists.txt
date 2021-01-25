@@ -15,13 +15,12 @@ function(generateOsqueryUtilsAwsTestsTest)
   target_link_libraries(osquery_utils_aws_tests-test PRIVATE
     osquery_cxx_settings
     osquery_config_tests_testutils
-    osquery_database
-    osquery_extensions
+    osquery_core
     osquery_extensions_implthrift
     osquery_process
+    osquery_sdk_emptyregisterforeigntables
     osquery_utils_aws
     osquery_utils_info
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
