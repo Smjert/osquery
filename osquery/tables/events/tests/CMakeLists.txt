@@ -53,7 +53,7 @@ function(generateOsqueryTablesEventsTestsFileeventstestsTest)
     osquery_extensions_implthrift
     osquery_logger
     osquery_registry
-    osquery_sdk_emptyregisterforeigntables
+    specs_tables
     osquery_tables_events_eventstable
     thirdparty_googletest
   )

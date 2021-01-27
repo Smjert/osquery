@@ -18,12 +18,12 @@ function(generateOsqueryCarverTestsTest)
     osquery_core
     osquery_database
     osquery_extensions_implthrift
+    osquery_filesystem
     osquery_hashing
+    osquery_registry
     osquery_sdk_emptyregisterforeigntables
-    osquery_utils_conversions
-    osquery_utils_info
-    tests_helper
     thirdparty_googletest
+    thirdparty_boost
   )
 endfunction()
 

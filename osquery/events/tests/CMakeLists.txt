@@ -107,7 +107,6 @@ function(generateOsqueryEventsTestsAudittestsTest)
     osquery_extensions
     osquery_extensions_implthrift
     osquery_filesystem
-    osquery_sdk_emptyregisterforeigntables
     osquery_tables_system_systemtable
     osquery_utils
     osquery_utils_conversions
@@ -123,17 +122,10 @@ function(generateOsqueryEventsTestsProcessfileeventstestsTest)
   target_link_libraries(osquery_events_tests_processfileeventstests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_core_sql
     osquery_database
     osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_filesystem
     osquery_sdk_emptyregisterforeigntables
-    osquery_tables_system_systemtable
-    osquery_utils
-    osquery_utils_conversions
-    specs_tables
     thirdparty_googletest
   )
 endfunction()

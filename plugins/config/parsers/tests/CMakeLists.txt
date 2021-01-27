@@ -23,8 +23,8 @@ function(generatePluginsConfigParsersTestsDecoratorstestsTest)
     osquery_extensions_implthrift
     osquery_filesystem
     osquery_registry
-    osquery_sdk_emptyregisterforeigntables
     plugins_config_parsers
+    specs_tables
     thirdparty_googletest
   )
 endfunction()

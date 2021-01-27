@@ -32,15 +32,12 @@ function(generateOsqueryDatabaseTestsResultsTest)
 
   target_link_libraries(osquery_database_tests_results-test PRIVATE
     osquery_cxx_settings
-    osquery_core_sql
     osquery_core
-    osquery_database
     osquery_extensions_implthrift
     osquery_registry
     osquery_sdk_emptyregisterforeigntables
     osquery_utils_json
     osquery_sql_tests_sqltestutils
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

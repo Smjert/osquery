@@ -17,13 +17,9 @@ function(generateOsqueryTablesSmartTestsSmartdrivestestsTest)
   target_link_libraries(osquery_tables_smart_tests_smartdrivestests-test PRIVATE
     osquery_cxx_settings
     osquery_core
-    osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_logger
-    osquery_registry
-    tests_helper
-    specs_tables
+    osquery_sdk_emptyregisterforeigntables
+    osquery_tables_smart
     thirdparty_smartmontools
     thirdparty_googletest
   )

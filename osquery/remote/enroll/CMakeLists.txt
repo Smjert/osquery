@@ -18,6 +18,10 @@ function(generateOsqueryRemoteEnrollTlsenroll)
     enroll.cpp
   )
 
+  # NOTE: Although this library expects to be able to query some tables like os_version, osquery_info etc.
+  # we should not make it depend from specs_tables, because the library is also used for the extensions
+  # which should not directly link to the tables implementations.
+  # So any library or executable that links this library, has to decide if they need to link against specs_tables or not.
   target_link_libraries(osquery_remote_enroll_tlsenroll PUBLIC
     osquery_cxx_settings
     osquery_core
@@ -28,7 +32,6 @@ function(generateOsqueryRemoteEnrollTlsenroll)
     osquery_remote_serializers_serializerjson
     osquery_remote_transports_transportstls
     osquery_sql
-    specs_tables
     osquery_utils_json
     osquery_utils_system_time
     thirdparty_boost
@@ -73,6 +76,7 @@ function(generateOsqueryRemoteenrolltestsTest)
     osquery_sdk_emptyregisterforeigntables
     osquery_sql
     plugins_config_tlsconfig
+    specs_tables
     tests_helper
     thirdparty_googletest
   )

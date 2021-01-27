@@ -24,6 +24,7 @@ function(generatePluginsRemoteEnrollTlsenroll)
     osquery_cxx_settings
     osquery_sql
     osquery_remote_enroll_tlsenroll
+    specs_tables
   )
 
   set(public_header_files

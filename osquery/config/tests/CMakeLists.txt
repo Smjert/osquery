@@ -41,9 +41,8 @@ function(generateOsqueryConfigTestsTest)
     osquery_extensions_implthrift
     osquery_filesystem_mockfilestructure
     osquery_registry
-    osquery_sdk_emptyregisterforeigntables
     osquery_utils_system_time
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
 
@@ -62,9 +61,8 @@ function(generateOsqueryConfigTestsPacksTest)
     osquery_extensions_implthrift
     osquery_filesystem_mockfilestructure
     osquery_registry
-    osquery_sdk_emptyregisterforeigntables
     osquery_utils_system_time
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
 

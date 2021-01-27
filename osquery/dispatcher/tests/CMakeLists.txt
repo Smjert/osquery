@@ -15,13 +15,10 @@ function(generateOsqueryDispatcherTestsTest)
 
   target_link_libraries(osquery_dispatcher_tests-test PRIVATE
     osquery_cxx_settings
-    osquery_database
     osquery_dispatcher
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
+    osquery_utils_status
     osquery_sdk_emptyregisterforeigntables
-    tests_helper
     thirdparty_googletest
   )
 endfunction()
@@ -31,14 +28,16 @@ function(generateOsqueryDispatcherTestsSchedulerTest)
 
     target_link_libraries(osquery_dispatcher_tests_scheduler-test PRIVATE
     osquery_cxx_settings
+    osquery_config
+    osquery_core
     osquery_database
     osquery_dispatcher_scheduler
-    osquery_extensions
     osquery_extensions_implthrift
+    osquery_logger
     osquery_registry
     osquery_sdk_emptyregisterforeigntables
+    osquery_sql
     osquery_utils_system_time
-    tests_helper
     thirdparty_googletest
   )
 endfunction()

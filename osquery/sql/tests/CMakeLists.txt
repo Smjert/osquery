@@ -24,13 +24,8 @@ function(generateOsquerySqlTestsSqltestutils)
 
   target_link_libraries(osquery_sql_tests_sqltestutils PUBLIC
     osquery_cxx_settings
-    osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_registry
     osquery_sql
-    tests_helper
-    specs_tables
   )
 endfunction()
 
@@ -39,13 +34,12 @@ function(generateOsquerySqlTestsTest)
 
   target_link_libraries(osquery_sql_tests-test PRIVATE
     osquery_cxx_settings
-    osquery_database
-    osquery_extensions
+    osquery_core
     osquery_extensions_implthrift
     osquery_registry
     osquery_sql
     osquery_sql_tests_sqltestutils
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
 endfunction()
@@ -56,13 +50,11 @@ function(generateOsquerySqlTestsVirtualtableTestsTest)
   target_link_libraries(osquery_sql_tests_virtualtabletests-test PRIVATE
     osquery_cxx_settings
     osquery_database
-    osquery_extensions
     osquery_extensions_implthrift
     osquery_logger
     osquery_registry
     osquery_sql
-    osquery_sdk_emptyregisterforeigntables
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
 endfunction()
@@ -72,13 +64,12 @@ function(generateOsquerySqlTestsSqliteutiltestsTest)
 
   target_link_libraries(osquery_sql_tests_sqliteutilstests-test PRIVATE
     osquery_cxx_settings
-    osquery_database
-    osquery_extensions
+    osquery_core
     osquery_extensions_implthrift
     osquery_registry
     osquery_sql
     osquery_sql_tests_sqltestutils
-    tests_helper
+    specs_tables
     thirdparty_googletest
   )
 endfunction()
@@ -88,9 +79,13 @@ function(generateOsquerySqlTestsSqlitehashingtestsTest)
 
   target_link_libraries(osquery_sql_tests_sqlitehashingtests-test PRIVATE
     osquery_cxx_settings
+    osquery_core
     osquery_database
+    osquery_extensions_implthrift
+    osquery_registry
+    osquery_sdk_emptyregisterforeigntables
     osquery_sql
-    osquery_sql_tests_sqltestutils
+    specs_tables
     thirdparty_googletest
   )
 endfunction()
