@@ -1062,8 +1062,8 @@ bool AuditSyscallRecordHandler(AuditdFimContext& fim_context,
   }
 
   switch (syscall_context.syscall_number) {
-  // The following syscalls are only handled to duplicate and/or create the fd
-  // map
+    // The following syscalls are only handled to duplicate and/or create the fd
+    // map
 #ifdef __x86_64__
   case __NR_fork:
   case __NR_vfork:
@@ -1160,7 +1160,9 @@ bool AuditSyscallRecordHandler(AuditdFimContext& fim_context,
         fim_context, syscall_context, record);
   }
 
-  default: { return false; }
+  default: {
+    return false;
+  }
   }
 }
 } // namespace

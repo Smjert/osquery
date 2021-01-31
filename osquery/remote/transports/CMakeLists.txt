@@ -57,17 +57,14 @@ function(generateOsqueryRemoteTransportsRemotetransportstlstestsTest)
 
   target_link_libraries(osquery_remote_transports_remotetransportstlstests-test PRIVATE
     osquery_cxx_settings
+    osquery_core
     osquery_config_tests_testutils
-    osquery_database
-    osquery_events
-    osquery_extensions
     osquery_extensions_implthrift
-    osquery_remote_enroll_tlsenroll
+    osquery_remote_requests
+    osquery_remote_serializers_serializerjson
     osquery_remote_tests_remotetestutils
-    osquery_utils_conversions
+    osquery_remote_transports_transportstls
     osquery_utils_info
-    plugins_config_tlsconfig
-    specs_tables
     thirdparty_googletest
   )
 endfunction()

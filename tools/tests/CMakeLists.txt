@@ -71,6 +71,7 @@ function(generatePythonTests)
   addPythonTest(NAME tools_tests_testosqueryi SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_osqueryi.py")
   if(PLATFORM_LINUX)
     addPythonTest(NAME tools_tests_testfschangestable SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/test_docker_container_fs_changes_table.py")
+    set_tests_properties(tools_tests_testfschangestable PROPERTIES LABELS "root-required")
   endif()
 endfunction()
 
