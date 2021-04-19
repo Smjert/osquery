@@ -158,6 +158,8 @@ void signalHandler(int num) {
     rc = 128 + num;
   }
 
+  std::cout << "Received signal!" << std::endl;
+
   Initializer::requestShutdown(rc);
 }
 } // namespace
@@ -691,4 +693,4 @@ void Initializer::shutdownNow(int retcode) {
   platformTeardown();
   _Exit(retcode);
 }
-}
+} // namespace osquery

@@ -26,6 +26,7 @@
 #include <osquery/remote/requests.h>
 #include <osquery/remote/serializers/json.h>
 #include <osquery/utils/info/platform_type.h>
+#include <osquery/core/shutdown.h>
 
 namespace osquery {
 
@@ -67,16 +68,19 @@ std::string TLSEnrollPlugin::enroll() {
   }
 
   std::string node_key;
+  bool should_shutdown = false;
   VLOG(1) << "TLSEnrollPlugin requesting a node enroll key from: " << uri;
-  for (size_t i = 1; i <= FLAGS_tls_enroll_max_attempts; i++) {
+  for (size_t i = 1; i <= FLAGS_tls_enroll_max_attempts && !should_shutdown;
+       i++) {
     auto status = requestKey(uri, node_key);
     if (status.ok() || i == FLAGS_tls_enroll_max_attempts) {
       break;
     }
-
     LOG(WARNING) << "Failed enrollment request to " << uri << " ("
                  << status.what() << ") retrying...";
-    sleepFor(i * i * 1000);
+
+    should_shutdown =
+        waitTimeoutOrShutdown(std::chrono::milliseconds(i * i * 1000));
   }
 
   return node_key;

@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <csignal>
 #include <string>
 
@@ -38,6 +39,8 @@ void setShutdownExitCode(int retcode);
  * This method should be called before Initializer::shutdown.
  */
 void waitForShutdown();
+
+bool waitTimeoutOrShutdown(std::chrono::milliseconds timeout);
 
 /**
  * @brief Check if something has requested a shutdown.
