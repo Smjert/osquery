@@ -12,6 +12,7 @@
 #endif
 
 #include <algorithm>
+#include <fstream>
 #include <future>
 #include <queue>
 #include <thread>
@@ -549,6 +550,10 @@ void relayStatusLogs(bool async) {
 void systemLog(const std::string& line) {
 #ifndef WIN32
   syslog(LOG_NOTICE, "%s", line.c_str());
+#else
+  std::fstream file("C:\\osq\\logs\\osquery.logs",
+                    std::fstream::out | std::fstream::app);
+  file << getpid() << " " << line;
 #endif
 }
 } // namespace osquery
