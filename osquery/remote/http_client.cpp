@@ -6,6 +6,7 @@
  *
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
+#include <chrono>
 
 #include <osquery/logger/logger.h>
 #include <osquery/remote/http_client.h>
@@ -23,6 +24,7 @@ const long kSSLShortReadError{0x140000dbL};
 
 void Client::callNetworkOperation(std::function<void()> callback) {
   if (client_options_.timeout_) {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
     timer_.async_wait(
         std::bind(&Client::timeoutHandler, this, std::placeholders::_1));
   }
@@ -41,6 +43,7 @@ void Client::callNetworkOperation(std::function<void()> callback) {
 
 void Client::cancelTimerAndSetError(boost::system::error_code const& ec) {
   if (client_options_.timeout_) {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
     timer_.cancel();
   }
 
@@ -96,6 +99,7 @@ void Client::writeHandler(boost::system::error_code const& ec, size_t) {
 
 void Client::readHandler(boost::system::error_code const& ec, size_t) {
   if (client_options_.timeout_) {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
     timer_.cancel();
   }
   postResponseHandler(ec);
@@ -228,7 +232,7 @@ void Client::encryptConnection() {
                              boost::asio::ssl::context::pem);
   }
 
-  ssl_sock_ = std::make_shared<ssl_stream>(sock_, ctx);
+  ssl_sock_ = std::make_unique<ssl_stream>(sock_, ctx);
   ::SSL_set_tlsext_host_name(ssl_sock_->native_handle(),
                              client_options_.remote_hostname_->c_str());
 
@@ -269,6 +273,7 @@ void Client::sendRequest(STREAM_TYPE& stream,
   req.keep_alive(true);
 
   if (client_options_.timeout_) {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
     timer_.async_wait(
         [=](boost::system::error_code const& ec) { timeoutHandler(ec); });
   }
@@ -367,6 +372,7 @@ bool Client::initHTTPRequest(Request& req) {
 
 Response Client::sendHTTPRequest(Request& req) {
   if (client_options_.timeout_) {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
     timer_.expires_from_now(
         boost::posix_time::seconds(client_options_.timeout_));
   }
@@ -510,6 +516,24 @@ Response Client::head(Request& req) {
 Response Client::delete_(Request& req) {
   req.method(beast_http::verb::delete_);
   return sendHTTPRequest(req);
+}
+
+void HTTPClientWatcher::start() {
+  while (!interrupted()) {
+    pause(std::chrono::milliseconds(5000));
+  }
+
+  cancelTimers();
+}
+
+void HTTPClientWatcher::stop() {}
+
+void HTTPClientWatcher::cancelTimers() {
+  std::unique_lock<std::mutex> lock(clients_mutex_);
+
+  for (const auto client : clients_to_watch_) {
+    client.get().cancelTimerAndSetError(boost::asio::error::timed_out);
+  }
 }
 } // namespace http
 } // namespace osquery

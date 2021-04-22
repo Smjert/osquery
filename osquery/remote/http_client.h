@@ -20,10 +20,9 @@
 #define OPENSSL_NO_MD5 1
 #define OPENSSL_NO_DEPRECATED 1
 
-#ifdef WIN32
-// For std:call_once, used below
 #include <mutex>
-#endif
+#include <optional>
+#include <thread>
 
 // clang-format off
 // Keep it on top of all other includes to fix double include WinSock.h header file
@@ -42,6 +41,7 @@
 #include <openssl/ssl.h>
 
 #include <osquery/remote/uri.h>
+#include <osquery/dispatcher/dispatcher.h>
 
 namespace beast_http = boost::beast::http;
 
@@ -77,6 +77,25 @@ typedef HTTP_Response<beast_http_response> Response;
  * It uses a state variable `Options::ssl_connection_` to determine if the
  * connection should be wrapped in a TLS socket.
  */
+
+class Client;
+class HTTPClientWatcher final : public InternalRunnable {
+ public:
+  HTTPClientWatcher& instance();
+  ~HTTPClientWatcher();
+
+  void start() override;
+  void stop() override;
+
+  std::size_t watchClient(const Client& client);
+  void unwatchClient(std::size_t client_index);
+  void cancelTimers();
+
+ private:
+  HTTPClientWatcher();
+  std::vector<std::reference_wrapper<Client>> clients_to_watch_;
+  std::mutex clients_mutex_;
+};
 class Client {
  public:
   /**
@@ -202,8 +221,14 @@ class Client {
   };
 
  public:
-  Client(Options const& opts = Options())
-      : client_options_(opts), r_(ioc_), sock_(ioc_), timer_(ioc_) {
+  Client() : Client({}, Options());
+  Client(Options const& opts) : Client({}, opts) {}
+  Client(std::optional<uint32_t> client_watcher_index, Options const& opts)
+      : client_options_(opts),
+        r_(ioc_),
+        sock_(ioc_),
+        timer_(ioc_),
+        client_watcher_index_(client_watcher_index) {
 // Fix #4235, #5341: Boost on Windows requires notification that it should
 // let windows manage thread cleanup. *Do not remove this on Windows*
 #ifdef WIN32
@@ -214,6 +239,9 @@ class Client {
     });
 #endif
   }
+
+  Client(const Client& client) = delete;
+  Client& operator=(const Client& client) = delete;
 
   void setOptions(Options const& opts) {
     new_client_options_ = !(client_options_ == opts);
@@ -330,9 +358,12 @@ class Client {
   boost::asio::ip::tcp::resolver r_;
   boost::asio::ip::tcp::socket sock_;
   boost::asio::deadline_timer timer_;
-  std::shared_ptr<ssl_stream> ssl_sock_;
+  std::unique_ptr<ssl_stream> ssl_sock_;
   boost::system::error_code ec_;
   bool new_client_options_{true};
+  std::mutex timer_mutex_;
+  std::optional<uint32_t> client_watcher_index_;
+  friend class HTTPClientWatcher;
 };
 
 /**
@@ -480,7 +511,7 @@ class HTTP_Response<T>::Iterator {
     return (iter_ != it.iter_);
   }
 
-  auto operator-> () {
+  auto operator->() {
     return std::make_shared<std::pair<std::string, std::string>>(
         std::string(iter_->name_string()), std::string(iter_->value()));
   }
