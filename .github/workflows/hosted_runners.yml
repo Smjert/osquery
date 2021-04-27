@@ -14,13 +14,7 @@
 # builds on the x86 platform.
 name: build_x86
 
-on:
-  push:
-    branches:
-      - 'stefano/ci/add-msvc-compiler-version-to-cache-key'
-
-    tags:
-      - '*'
+on: push
 
   pull_request:
     branches:
