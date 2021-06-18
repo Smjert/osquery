@@ -32,6 +32,19 @@ std::shared_ptr<Client> Client::create(const Options& options) {
   return client;
 }
 
+Client::Client(Options const& opts, PrivateConstructorTag tag)
+    : client_options_(opts), r_(ioc_), sock_(ioc_), timer_(ioc_) {
+// Fix #4235, #5341: Boost on Windows requires notification that it should
+// let windows manage thread cleanup. *Do not remove this on Windows*
+#ifdef WIN32
+  // Need to call set_terminate_threads only once
+  static std::once_flag flag;
+  std::call_once(flag, []() {
+    boost::asio::detail::win_thread::set_terminate_threads(true);
+  });
+#endif
+}
+
 void Client::callNetworkOperation(std::function<void()> callback) {
   if (client_options_.timeout_) {
     std::unique_lock<std::mutex> lock(timer_mutex_);
@@ -547,9 +560,11 @@ Response Client::delete_(Request& req) {
 }
 
 void Client::stop() {
-  std::unique_lock<std::mutex> lock(timer_mutex_);
-  std::cout << "Expire timer now" << std::endl;
-  sock_.cancel();
-}
+  {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
+    std::cout << "Expire timer now" << std::endl;
+    ec_ = boost::asio::error::timed_out;
+    ioc_.stop();
+  }
 } // namespace http
-} // namespace osquery
+} // namespace http

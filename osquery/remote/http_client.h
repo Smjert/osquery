@@ -207,18 +207,8 @@ class Client : public InterruptibleRunnable {
 
  public:
   Client() = delete;
-  Client(Options const& opts, PrivateConstructorTag tag)
-      : client_options_(opts), r_(ioc_), sock_(ioc_), timer_(ioc_) {
-// Fix #4235, #5341: Boost on Windows requires notification that it should
-// let windows manage thread cleanup. *Do not remove this on Windows*
-#ifdef WIN32
-    // Need to call set_terminate_threads only once
-    static std::once_flag flag;
-    std::call_once(flag, []() {
-      boost::asio::detail::win_thread::set_terminate_threads(true);
-    });
-#endif
-  }
+  Client(Options const& opts, PrivateConstructorTag tag);
+
   Client(const Client& client) = delete;
   Client& operator=(const Client& client) = delete;
 
