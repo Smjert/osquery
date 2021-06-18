@@ -52,13 +52,13 @@ void parseScrapeResults(
 
 void scrapeTargets(std::map<std::string, PrometheusResponseData>& scrapeResults,
                    size_t timeoutS) {
-  http::Client client(
+  auto client = http::Client::create(
       http::Client::Options().follow_redirects(true).timeout(timeoutS));
 
   for (auto& target : scrapeResults) {
     try {
       http::Request request(target.first);
-      http::Response response(client.get(request));
+      http::Response response(client->get(request));
 
       target.second.timestampMS =
           std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -113,5 +113,5 @@ QueryData genPrometheusMetrics(QueryContext& context) {
 
   return result;
 }
-}
-}
+} // namespace tables
+} // namespace osquery

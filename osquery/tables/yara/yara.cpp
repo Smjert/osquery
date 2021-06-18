@@ -135,11 +135,11 @@ Status getRuleFromURL(const std::string& url, std::string& rule) {
       return Status::failure("YARA signature url not allowed");
     }
 
-    http::Client client(TLSTransport().getInternalOptions());
+    auto client = http::Client::create(TLSTransport().getInternalOptions());
     http::Response response;
     http::Request request(url);
 
-    response = client.get(request);
+    response = client->get(request);
     // Check for the status code and update the rule string on success
     // and result has been transmitted to the message body
     if (response.status() == 200) {

@@ -16,6 +16,7 @@ function(osqueryRemoteMain)
 
   generateOsqueryRemoteRequests()
   generateOsqueryRemoteHttpclient()
+  generateOsqueryRemoteHttpClientWatcher()
   generateOsqueryRemoteUtility()
 endfunction()
 
@@ -42,6 +43,7 @@ endfunction()
 function(generateOsqueryRemoteHttpclient)
   add_osquery_library(osquery_remote_httpclient EXCLUDE_FROM_ALL
     http_client.cpp
+
     uri.cpp
   )
 
@@ -50,7 +52,9 @@ function(generateOsqueryRemoteHttpclient)
     osquery_core
     osquery_dispatcher
     osquery_logger
+    osquery_remote_httpclientwatcher
     osquery_utils_status
+    
     thirdparty_boost
     thirdparty_openssl
   )
@@ -82,6 +86,24 @@ function(generateOsqueryRemoteUtility)
   generateIncludeNamespace(osquery_remote_utility "osquery/remote" "FILE_ONLY" ${public_header_files})
 
   add_test(NAME osquery_remote_tests_requeststests-test COMMAND osquery_remote_tests_requeststests-test)
+endfunction()
+
+function(generateOsqueryRemoteHttpClientWatcher)
+  add_osquery_library(osquery_remote_httpclientwatcher
+    http_client_watcher.cpp
+  )
+
+  set(public_header_files
+    http_client_watcher.h
+  )
+
+  generateIncludeNamespace(osquery_remote_httpclientwatcher "osquery/remote" "FILE_ONLY" ${public_header_files})
+
+  target_link_libraries(osquery_remote_httpclientwatcher PUBLIC
+    osquery_cxx_settings
+    osquery_core
+    osquery_dispatcher
+  )
 endfunction()
 
 osqueryRemoteMain()

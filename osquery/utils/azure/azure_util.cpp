@@ -84,12 +84,12 @@ Status fetchAzureMetadata(JSON& doc) {
   http::Response response;
 
   opts.timeout(kAzureMetadataTimeout);
-  http::Client client(opts);
+  auto client = http::Client::create(opts);
 
   request << http::Request::Header("Metadata", "true");
 
   try {
-    response = client.get(request);
+    response = client->get(request);
   } catch (const std::system_error& e) {
     return Status(
         1, "Couldn't request " + kAzureMetadataEndpoint + ": " + e.what());

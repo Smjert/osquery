@@ -7,9 +7,11 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 #include <chrono>
+#include <iostream>
 
 #include <osquery/logger/logger.h>
 #include <osquery/remote/http_client.h>
+#include <osquery/remote/http_client_watcher.h>
 
 #include <boost/asio/connect.hpp>
 
@@ -22,11 +24,22 @@ const std::string kProxyDefaultPort{"3128"};
 
 const long kSSLShortReadError{0x140000dbL};
 
+std::shared_ptr<Client> Client::create(const Options& options) {
+  auto client = std::make_shared<Client>(options, PrivateConstructorTag{});
+
+  HTTPClientWatcher::instance()->watchClient(client);
+
+  return client;
+}
+
 void Client::callNetworkOperation(std::function<void()> callback) {
   if (client_options_.timeout_) {
     std::unique_lock<std::mutex> lock(timer_mutex_);
+    std::cout << __func__ << "(" << __LINE__ << ") "
+              << std::this_thread::get_id() << std::endl;
     timer_.async_wait(
         std::bind(&Client::timeoutHandler, this, std::placeholders::_1));
+    std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
   }
 
   callback();
@@ -44,6 +57,8 @@ void Client::callNetworkOperation(std::function<void()> callback) {
 void Client::cancelTimerAndSetError(boost::system::error_code const& ec) {
   if (client_options_.timeout_) {
     std::unique_lock<std::mutex> lock(timer_mutex_);
+    std::cout << __func__ << "(" << __LINE__ << ") "
+              << std::this_thread::get_id() << std::endl;
     timer_.cancel();
   }
 
@@ -78,6 +93,8 @@ void Client::closeSocket() {
 }
 
 void Client::timeoutHandler(boost::system::error_code const& ec) {
+  std::cout << __func__ << "(" << __LINE__ << ") " << std::this_thread::get_id()
+            << std::endl;
   if (!ec) {
     closeSocket();
     ec_ = boost::asio::error::make_error_code(boost::asio::error::timed_out);
@@ -121,8 +138,10 @@ void Client::createConnection() {
   }
 
   // We can resolve async, but there is a handle leak in Windows.
+  std::cout << "Resolve" << std::endl;
   auto results = r_.resolve(connect_host, port, ec_);
   if (!ec_) {
+    std::cout << "Connect" << std::endl;
     callNetworkOperation([&]() {
       boost::asio::async_connect(sock_,
                                  results,
@@ -239,11 +258,13 @@ void Client::encryptConnection() {
   ssl_sock_->set_verify_callback(boost::asio::ssl::rfc2818_verification(
       *client_options_.remote_hostname_));
 
+  std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
   callNetworkOperation([&]() {
     ssl_sock_->async_handshake(
         boost::asio::ssl::stream_base::client,
         std::bind(&Client::handshakeHandler, this, std::placeholders::_1));
   });
+  std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
 
   if (ec_) {
     throw std::system_error(ec_);
@@ -381,25 +402,32 @@ Response Client::sendHTTPRequest(Request& req) {
   bool init_request = true;
   do {
     bool create_connection = true;
+    std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
     if (init_request) {
       create_connection = initHTTPRequest(req);
     }
+    std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
 
     try {
       beast_http_response_parser resp;
       if (create_connection) {
+        std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
         createConnection();
+        std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
 
         if (client_options_.ssl_connection_) {
           encryptConnection();
         }
+        std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
       }
 
+      std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
       if (client_options_.ssl_connection_) {
         sendRequest(*ssl_sock_, req, resp);
       } else {
         sendRequest(sock_, req, resp);
       }
+      std::cout << __func__ << "(" << __LINE__ << ")" << std::endl;
 
       switch (resp.get().result()) {
       case beast_http::status::moved_permanently:
@@ -518,22 +546,10 @@ Response Client::delete_(Request& req) {
   return sendHTTPRequest(req);
 }
 
-void HTTPClientWatcher::start() {
-  while (!interrupted()) {
-    pause(std::chrono::milliseconds(5000));
-  }
-
-  cancelTimers();
-}
-
-void HTTPClientWatcher::stop() {}
-
-void HTTPClientWatcher::cancelTimers() {
-  std::unique_lock<std::mutex> lock(clients_mutex_);
-
-  for (const auto client : clients_to_watch_) {
-    client.get().cancelTimerAndSetError(boost::asio::error::timed_out);
-  }
+void Client::stop() {
+  std::unique_lock<std::mutex> lock(timer_mutex_);
+  std::cout << "Expire timer now" << std::endl;
+  sock_.cancel();
 }
 } // namespace http
 } // namespace osquery

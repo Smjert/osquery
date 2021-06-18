@@ -29,7 +29,7 @@ const std::string kOsqueryUserAgent{"osquery"};
 
 Status processRequest(Row& r) {
   try {
-    osquery::http::Client client(TLSTransport().getOptions());
+    auto client = http::Client::create(TLSTransport().getOptions());
     osquery::http::Response response;
     osquery::http::Request request(r["url"]);
 
@@ -38,7 +38,7 @@ Status processRequest(Row& r) {
 
     // Measure the rtt using the system clock
     auto time_start = std::chrono::system_clock::now();
-    response = client.get(request);
+    response = client->get(request);
     auto time_end = std::chrono::system_clock::now();
 
     r["response_code"] = INTEGER(static_cast<int>(response.status()));

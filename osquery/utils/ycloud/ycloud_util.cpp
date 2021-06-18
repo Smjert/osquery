@@ -100,12 +100,12 @@ Status fetchYCloudMetadata(JSON& doc, const std::string& endpoint) {
   http::Response response;
 
   opts.timeout(kYCloudMetadataTimeout);
-  http::Client client(opts);
+  auto client = http::Client::create(opts);
 
   request << http::Request::Header("Metadata-Flavor", "Google");
 
   try {
-    response = client.get(request);
+    response = client->get(request);
   } catch (const std::system_error& e) {
     return Status(1, "Couldn't request " + endpoint + ": " + e.what());
   }

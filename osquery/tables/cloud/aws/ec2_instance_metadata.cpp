@@ -134,10 +134,10 @@ std::string Ec2MetaData::doGet() const {
   }
   http::Client::Options options;
   options.timeout(3);
-  http::Client client(options);
+  auto client = http::Client::create(options);
 
   try {
-    http::Response res = client.get(req);
+    http::Response res = client->get(req);
     boost::uint16_t http_status_code = res.status();
 
     // Silently ignore 404

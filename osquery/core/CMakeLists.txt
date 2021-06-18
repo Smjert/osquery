@@ -34,11 +34,10 @@ function(generateOsqueryCoreInit)
     osquery_numericmonitoring
     osquery_extensions
     osquery_distributed
+    osquery_remote_httpclientwatcher
   )
 
   target_link_libraries(osquery_core_init PUBLIC
-    osquery_cxx_settings
-
     ${dependencies}
   )
 

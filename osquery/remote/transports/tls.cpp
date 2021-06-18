@@ -187,7 +187,7 @@ static auto getClient() {
     client = tl_client;
 
     if (client.get() == nullptr) {
-      tl_client = client = std::make_shared<http::Client>();
+      tl_client = client = http::Client::create();
     }
 
     if (FLAGS_tls_session_timeout > 0 &&
@@ -198,7 +198,7 @@ static auto getClient() {
       last_time_reseted = std::chrono::system_clock::now();
     }
   } else {
-    client = std::make_shared<http::Client>();
+    client = http::Client::create();
   }
   return client;
 }

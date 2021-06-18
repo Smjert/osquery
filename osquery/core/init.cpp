@@ -44,6 +44,7 @@
 #include <osquery/numeric_monitoring/numeric_monitoring.h>
 #include <osquery/process/process.h>
 #include <osquery/registry/registry.h>
+#include <osquery/remote/http_client_watcher.h>
 #include <osquery/utils/config/default_paths.h>
 #include <osquery/utils/info/platform_type.h>
 #include <osquery/utils/info/version.h>
@@ -553,6 +554,11 @@ void Initializer::start() const {
       requestShutdown(retcode, "Failed to upgrade database");
       return;
     }
+
+    Dispatcher::addService(http::HTTPClientWatcher::instance());
+    std::thread shutdown_listener =
+        std::thread(http::HTTPClientWatcher::ShutdownListener::run);
+    shutdown_listener.detach();
   }
 
   // Bind to an extensions socket and wait for registry additions.

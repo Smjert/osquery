@@ -152,7 +152,7 @@ std::shared_ptr<Aws::Http::HttpResponse> OsqueryHttpClient::MakeRequest(
   uri.SetPath(Aws::Http::URI::URLEncodePath(uri.GetPath()));
   Aws::String url = uri.GetURIString();
 
-  http::Client client(TLSTransport().getInternalOptions());
+  auto client = http::Client::create(TLSTransport().getInternalOptions());
   http::Request req(url);
 
   for (const auto& requestHeader : request.GetHeaders()) {
@@ -172,23 +172,23 @@ std::shared_ptr<Aws::Http::HttpResponse> OsqueryHttpClient::MakeRequest(
 
     switch (request.GetMethod()) {
     case Aws::Http::HttpMethod::HTTP_GET:
-      resp = client.get(req);
+      resp = client->get(req);
       break;
     case Aws::Http::HttpMethod::HTTP_POST:
-      resp = client.post(req, body, request.GetContentType());
+      resp = client->post(req, body, request.GetContentType());
       break;
     case Aws::Http::HttpMethod::HTTP_PUT:
-      resp = client.put(req, body, request.GetContentType());
+      resp = client->put(req, body, request.GetContentType());
       break;
     case Aws::Http::HttpMethod::HTTP_HEAD:
-      resp = client.head(req);
+      resp = client->head(req);
       break;
     case Aws::Http::HttpMethod::HTTP_PATCH:
       LOG(ERROR) << "osquery-http_client does not support HTTP PATCH";
       return nullptr;
       break;
     case Aws::Http::HttpMethod::HTTP_DELETE:
-      resp = client.delete_(req);
+      resp = client->delete_(req);
       break;
     default:
       LOG(ERROR) << "Unrecognized HTTP Method used: "
@@ -400,10 +400,10 @@ void getInstanceIDAndRegion(std::string& instance_id, std::string& region) {
     }
     http::Client::Options options;
     options.timeout(3);
-    http::Client client(options);
+    auto client = http::Client::create(options);
 
     try {
-      http::Response res = client.get(req);
+      http::Response res = client->get(req);
       if (res.status() == 200) {
         pt::ptree tree;
         std::stringstream ss(res.body());
@@ -429,11 +429,11 @@ std::string getIMDSToken() {
   http::Request req(kEc2MetadataUrl + kImdsTokenResource);
   http::Client::Options options;
   options.timeout(3);
-  http::Client client(options);
+  auto client = http::Client::create(options);
   req << http::Request::Header(kImdsTokenTtlHeader, kImdsTokenTtlDefaultValue);
 
   try {
-    http::Response res = client.put(req, "", "");
+    http::Response res = client->put(req, "", "");
     token = res.status() == 200 ? res.body() : "";
   } catch (const std::system_error& e) {
     VLOG(1) << "Request for " << kImdsTokenResource << " failed:" << e.what();
@@ -467,10 +467,10 @@ bool isEc2Instance() {
     }
     http::Client::Options options;
     options.timeout(3);
-    http::Client client(options);
+    auto client = http::Client::create(options);
 
     try {
-      http::Response res = client.get(req);
+      http::Response res = client->get(req);
       if (res.status() == 200) {
         is_ec2_instance = true;
       }

@@ -78,25 +78,7 @@ typedef HTTP_Response<beast_http_response> Response;
  * connection should be wrapped in a TLS socket.
  */
 
-class Client;
-class HTTPClientWatcher final : public InternalRunnable {
- public:
-  HTTPClientWatcher& instance();
-  ~HTTPClientWatcher();
-
-  void start() override;
-  void stop() override;
-
-  std::size_t watchClient(const Client& client);
-  void unwatchClient(std::size_t client_index);
-  void cancelTimers();
-
- private:
-  HTTPClientWatcher();
-  std::vector<std::reference_wrapper<Client>> clients_to_watch_;
-  std::mutex clients_mutex_;
-};
-class Client {
+class Client : public InterruptibleRunnable {
  public:
   /**
    * @brief Client options class.
@@ -220,15 +202,13 @@ class Client {
     friend class Client;
   };
 
+ private:
+  struct PrivateConstructorTag {};
+
  public:
-  Client() : Client({}, Options());
-  Client(Options const& opts) : Client({}, opts) {}
-  Client(std::optional<uint32_t> client_watcher_index, Options const& opts)
-      : client_options_(opts),
-        r_(ioc_),
-        sock_(ioc_),
-        timer_(ioc_),
-        client_watcher_index_(client_watcher_index) {
+  Client() = delete;
+  Client(Options const& opts, PrivateConstructorTag tag)
+      : client_options_(opts), r_(ioc_), sock_(ioc_), timer_(ioc_) {
 // Fix #4235, #5341: Boost on Windows requires notification that it should
 // let windows manage thread cleanup. *Do not remove this on Windows*
 #ifdef WIN32
@@ -239,9 +219,10 @@ class Client {
     });
 #endif
   }
-
   Client(const Client& client) = delete;
   Client& operator=(const Client& client) = delete;
+
+  static std::shared_ptr<Client> create(const Options& opts = {});
 
   void setOptions(Options const& opts) {
     new_client_options_ = !(client_options_ == opts);
@@ -278,6 +259,8 @@ class Client {
 
   /// HTTP delete_ request method.
   Response delete_(Request& req);
+
+  void stop() override;
 
   ~Client() {
     closeSocket();
@@ -352,7 +335,6 @@ class Client {
    */
   void cancelTimerAndSetError(boost::system::error_code const& ec);
 
- private:
   Options client_options_;
   boost::asio::io_context ioc_;
   boost::asio::ip::tcp::resolver r_;
@@ -362,8 +344,6 @@ class Client {
   boost::system::error_code ec_;
   bool new_client_options_{true};
   std::mutex timer_mutex_;
-  std::optional<uint32_t> client_watcher_index_;
-  friend class HTTPClientWatcher;
 };
 
 /**
@@ -511,7 +491,7 @@ class HTTP_Response<T>::Iterator {
     return (iter_ != it.iter_);
   }
 
-  auto operator->() {
+  auto operator-> () {
     return std::make_shared<std::pair<std::string, std::string>>(
         std::string(iter_->name_string()), std::string(iter_->value()));
   }
