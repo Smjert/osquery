@@ -560,11 +560,10 @@ Response Client::delete_(Request& req) {
 }
 
 void Client::stop() {
-  {
-    std::unique_lock<std::mutex> lock(timer_mutex_);
-    std::cout << "Expire timer now" << std::endl;
-    ec_ = boost::asio::error::timed_out;
-    ioc_.stop();
-  }
+  std::unique_lock<std::mutex> lock(timer_mutex_);
+  std::cout << "Expire timer now" << std::endl;
+  ec_ = boost::asio::error::timed_out;
+  ioc_.post([this]() { sock_.cancel(); });
+}
 } // namespace http
-} // namespace http
+} // namespace osquery
