@@ -43,9 +43,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
-      with:
-        path: 'osquery'
+      uses: actions/checkout@v1
 
     # - name: Select the build job count
     #   shell: bash
@@ -101,7 +99,6 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
-        source-root: .
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
@@ -110,8 +107,11 @@ jobs:
     - name: "Build code to analyze"
       run: |
         pwd
+        echo "--------"
         ls
+        echo "--------"
         ls osquery
+        echo "--------"
         echo "Workspace: $GITHUB_WORKSPACE"
         echo "LIB: $LIB"
         echo "PLATFORM: $PLATFORM"
