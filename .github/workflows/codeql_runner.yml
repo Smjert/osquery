@@ -1,0 +1,177 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+#
+# ******** NOTE ********
+# We have attempted to detect the languages in your repository. Please check
+# the `language` matrix defined below to confirm you have the correct set of
+# supported CodeQL languages.
+#
+name: "CodeQL"
+
+on: push
+
+env:
+  SUBMODULE_CACHE_VERSION: 1
+
+jobs:
+  analyze:
+    name: Analyze
+
+    runs-on: ubuntu-22.04
+
+    container:
+      image: osquery/builder18.04:a4961d234
+      options: --privileged --init -v /var/run/docker.sock:/var/run/docker.sock
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        # Learn more about CodeQL language support at https://git.io/codeql-language-support
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+
+    - name: Create a build folder
+      id: build_paths
+      run: |
+        build_path=`realpath $GITHUB_WORKSPACE/../build`
+        ccache_path=`realpath $GITHUB_WORKSPACE/../ccache`
+
+        mkdir $build_path
+        mkdir $ccache_path
+
+        echo ::set-output name=BINARY::$build_path
+        echo ::set-output name=SOURCE::$GITHUB_WORKSPACE
+        echo ::set-output name=CCACHE::$ccache_path
+
+
+    # - name: Fix CodeQL shared library name
+    #   run: |
+    #     versions=`find /__t/CodeQL/ -maxdepth 1 -mindepth 1 -type d`
+    #     versions=`echo "$versions" | sort -r`
+    #     most_recent_codeql=`echo "$versions" | head -n 1 | tr -d '\n'`
+    #     ln -s $most_recent_codeql/x64/codeql/tools/linux64/lib64_haswell_trace.so \
+    #           $most_recent_codeql/x64/codeql/tools/linux64/x86_64-linux-gnu_haswell_trace.so
+
+    - name: Select the build job count
+      shell: bash
+      id: build_job_count
+      run: |
+        echo ::set-output name=VALUE::$(($(nproc) + 1))
+
+    - name: Update the cache (ccache)
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.build_paths.outputs.CCACHE }}
+
+        key: |
+          ccache_ubuntu-18.04_Release_${{ github.sha }}
+
+        restore-keys: |
+          ccache_ubuntu-18.04_Release
+
+    - name: Update the cache (git submodules)
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.build_paths.outputs.SOURCE }}/.git/modules
+
+        key: |
+          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}_${{ github.sha }}
+
+        restore-keys: |
+          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}
+
+    - name: Update the git submodules
+      working-directory: ${{ steps.build_paths.outputs.SOURCE }}
+      run: |
+        git submodule sync --recursive
+
+    - name: Configure the project
+      working-directory: ${{ steps.build_paths.outputs.BINARY }}
+
+      env:
+        CCACHE_DIR: ${{ steps.build_paths.outputs.CCACHE }}
+
+      run: |
+        cmake -G "Unix Makefiles" \
+          -DOSQUERY_TOOLCHAIN_SYSROOT:PATH="/usr/local/osquery-toolchain" \
+          -DCMAKE_BUILD_TYPE:STRING="Release" \
+          -DOSQUERY_BUILD_TESTS=OFF \
+          "${{ steps.build_paths.outputs.SOURCE }}"
+
+    - name: Build third party libraries
+
+      env:
+        CCACHE_DIR: ${{ steps.build_paths.outputs.CCACHE }}
+
+      run: |
+        cmake --build ${{ steps.build_paths.outputs.BINARY }} -j ${{ steps.build_job_count.outputs.VALUE }} --target thirdparty_libraries
+      
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        config-file: ./tools/ci/codeql/codeql.yml
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+        # queries: ./path/to/local/query, your-org/your-repo/queries@main
+
+    - name: "Build code to analyze"
+      env:
+        CCACHE_DISABLE: "true"
+
+      run: |
+        cmake --build ${{ steps.build_paths.outputs.BINARY }} -j ${{ steps.build_job_count.outputs.VALUE }} --target osqueryd
+
+    # - name: "Build code to analyze"
+    #   run: |
+    #     apt update
+    #     apt install -y strace
+    #     pwd
+    #     echo "--------"
+    #     ls
+    #     echo "--------"
+    #     ls osquery
+    #     echo "--------"
+    #     ls /__t/CodeQL/0.0.0-20211208/x64/codeql/tools/linux64/
+    #     echo "--------"
+    #     echo "Workspace: $GITHUB_WORKSPACE"
+    #     echo "LIB: $LIB"
+    #     echo "PLATFORM: $PLATFORM"
+    #     LD_PRELOAD='/foo/$LIB/$PLATFORM/bar.so' strace -f /bin/true 2>&1 | grep '^open.*foo'
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        upload: False
+        output: sarif-results
+
+    - name: Filter out third party headers
+      uses: advanced-security/filter-sarif@v1
+      with:
+        patterns: |
+          -**/libraries/cmake/source/**
+          -**/build/libs/**
+          -**/build/openssl/**
+          -**/build/installed_formulas/**
+        input: sarif-results/cpp.sarif
+        output: sarif-results/cpp.sarif
+
+    - name: Upload Sarif
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: sarif-results/cpp.sarif
