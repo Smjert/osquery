@@ -106,15 +106,20 @@ jobs:
 
     - name: "Build code to analyze"
       run: |
+        apt update
+        apt install strace
         pwd
         echo "--------"
         ls
         echo "--------"
         ls osquery
         echo "--------"
+        ls /__t/CodeQL/0.0.0-20211208/x64/codeql/tools/linux64/
+        echo "--------"
         echo "Workspace: $GITHUB_WORKSPACE"
         echo "LIB: $LIB"
         echo "PLATFORM: $PLATFORM"
+        LD_PRELOAD='/foo/$LIB/$PLATFORM/bar.so' strace -f /bin/true 2>&1 | grep '^open.*foo'
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
