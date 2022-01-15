@@ -14,21 +14,21 @@
 # builds on the x86 platform.
 name: build_x86
 
-on:
-  # Run this workflow once every 6 hours against the master branch
-  schedule:
-   - cron: "0 */6 * * *"
+# on:
+#   # Run this workflow once every 6 hours against the master branch
+#   schedule:
+#    - cron: "0 */6 * * *"
 
-  push:
-    branches:
-      - 'master'
+#   push:
+#     branches:
+#       - 'master'
 
-    tags:
-      - '*'
+#     tags:
+#       - '*'
 
-  pull_request:
-    branches:
-      - '*'
+#   pull_request:
+#     branches:
+#       - '*'
 
 # Please remember to update values for both x86 and aarch64 workflows.
 env:
