@@ -1,4 +1,3 @@
-# The Security Assurance Case for osquery
 
 This document details the basic security principles of osquery's development, the specific threat cases that the team
 of maintainers have thought about, and how we have attempted to mitigate them.
