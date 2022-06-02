@@ -34,7 +34,7 @@ on:
 env:
   PACKAGING_REPO: https://github.com/osquery/osquery-packaging
   PACKAGING_COMMIT: 8168fd7213b23447f1bfbe0b54d4e8b61730b08d
-  SUBMODULE_CACHE_VERSION: 1
+  SUBMODULE_CACHE_VERSION: 2
 
 # If the initial code sanity checks are passing, then one job
 # per [`platform` * `build_type`] will start, building osquery
@@ -224,7 +224,7 @@ jobs:
 
     strategy:
       matrix:
-        build_type: [Release, RelWithDebInfo, Debug]
+        build_type: [Release]
         os: [ubuntu-18.04]
 
     steps:
@@ -367,122 +367,16 @@ jobs:
         CCACHE_DIR: ${{ steps.build_paths.outputs.CCACHE }}
 
       run: |
-        cmake --build . -j ${{ steps.build_job_count.outputs.VALUE }}
+        cmake --build . -j ${{ steps.build_job_count.outputs.VALUE }} --target osquery_dispatcher_tests_scheduler-test
 
     # Only run the tests on Debug and Release configurations; skip RelWithDebInfo
     - name: Run the tests as normal user
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
       if: matrix.build_type != 'RelWithDebInfo'
-      run: |
-        sudo -u ${{ steps.unprivileged_user.outputs.NAME }} ctest --build-nocmake -LE "root-required" -V
-
-    - name: Run the tests as root user
-      working-directory: ${{ steps.build_paths.outputs.BINARY }}
-      if: matrix.build_type != 'RelWithDebInfo'
-      run: |
-        sudo -u root ctest --build-nocmake -L "root-required" -V
-
-    - name: Run the install target
-      if: matrix.build_type == 'RelWithDebInfo'
-      working-directory: ${{ steps.build_paths.outputs.BINARY }}
-
       env:
-        CCACHE_DIR: ${{ steps.build_paths.outputs.CCACHE }}
-        DESTDIR: ${{ steps.build_paths.outputs.PACKAGE_DATA }}
-
+        GLOG_v: 1
       run: |
-        cmake \
-          --build . \
-          --target install \
-          -j ${{ steps.build_job_count.outputs.VALUE }}
-
-    # Since we need to run CMake to create the packages with osquery-packaging, the
-    # configuration will fail unless the C and C++ compilers are found
-    - name: Install packaging dependencies
-      if: matrix.build_type == 'RelWithDebInfo'
-      run: |
-        sudo apt update
-        sudo apt install build-essential gcc g++ -y
-
-    - name: Create the packages
-      if: matrix.build_type == 'RelWithDebInfo'
-      working-directory: ${{ steps.build_paths.outputs.PACKAGE_BUILD }}
-
-      shell: bash
-
-      run: |
-        osquery_version=$(cd ${{ steps.build_paths.outputs.SOURCE }} && git describe --tags --always )
-
-        tar pcvzf package_data.tar.gz \
-          ${{ steps.build_paths.outputs.PACKAGE_DATA }}
-
-        package_format_list=( "DEB" "RPM" "TGZ" )
-
-        for package_format in "${package_format_list[@]}" ; do
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DCPACK_GENERATOR=${package_format} \
-            -DOSQUERY_PACKAGE_VERSION=${osquery_version} \
-            -DOSQUERY_DATA_PATH=${{ steps.build_paths.outputs.PACKAGE_DATA }} \
-            -DOSQUERY_SOURCE_DIRECTORY_LIST="${{ steps.build_paths.outputs.SOURCE }};${{ steps.build_paths.outputs.BINARY }}" \
-            ${{ steps.build_paths.outputs.PACKAGING }}
-
-          cmake --build . \
-            --target package
-        done
-
-    - name: Locate the packages
-      if: matrix.build_type == 'RelWithDebInfo'
-      id: packages
-      shell: bash
-      run: |
-        echo ::set-output name=REL_UNSIGNED_RELEASE_PACKAGE_DATA_PATH::${{ steps.build_paths.outputs.REL_PACKAGE_BUILD }}/package_data.tar.gz
-        echo ::set-output name=REL_UNSIGNED_RELEASE_DEB_PATH::$(ls ${{ steps.build_paths.outputs.REL_PACKAGE_BUILD }}/*.deb)
-        echo ::set-output name=REL_UNSIGNED_DEBUG_DEB_PATH::$(ls ${{ steps.build_paths.outputs.REL_PACKAGE_BUILD }}/*.ddeb)
-        echo ::set-output name=REL_UNSIGNED_RELEASE_RPM_PATH::$(ls ${{ steps.build_paths.outputs.REL_PACKAGE_BUILD }}/osquery-?.*.rpm)
-        echo ::set-output name=REL_UNSIGNED_DEBUG_RPM_PATH::$(ls ${{ steps.build_paths.outputs.REL_PACKAGE_BUILD }}/osquery-debuginfo-*.rpm)
-        echo ::set-output name=REL_UNSIGNED_RELEASE_TGZ_PATH::$(ls ${{ steps.build_paths.outputs.REL_PACKAGE_BUILD }}/*linux_x86_64.tar.gz)
-
-    - name: Store the unsigned release package data artifact
-      if: matrix.build_type == 'RelWithDebInfo'
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux_unsigned_release_package_data
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_PACKAGE_DATA_PATH }}
-
-    - name: Store the unsigned release DEB artifact
-      if: matrix.build_type == 'RelWithDebInfo'
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux_unsigned_release_deb
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_DEB_PATH }}
-
-    - name: Store the unsigned debug DEB artifact
-      if: matrix.build_type == 'RelWithDebInfo'
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux_unsigned_debug_deb
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_DEBUG_DEB_PATH }}
-
-    - name: Store the unsigned release RPM artifact
-      if: matrix.build_type == 'RelWithDebInfo'
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux_unsigned_release_rpm
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_RPM_PATH }}
-
-    - name: Store the unsigned debug RPM artifact
-      if: matrix.build_type == 'RelWithDebInfo'
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux_unsigned_debug_rpm
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_DEBUG_RPM_PATH }}
-
-    - name: Store the unsigned release TGZ artifact
-      if: matrix.build_type == 'RelWithDebInfo'
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux_unsigned_release_tgz
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_TGZ_PATH }}
+        sudo -E -u ${{ steps.unprivileged_user.outputs.NAME }} ctest --build-nocmake -LE "root-required" -V -R osquery_dispatcher_tests_scheduler-test
 
     # Before we terminate this job, delete the build folder. The cache
     # actions will require the disk space to create the archives.
