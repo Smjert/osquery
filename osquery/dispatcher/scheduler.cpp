@@ -196,12 +196,16 @@ Status launchQuery(const std::string& name, const ScheduledQuery& query) {
 
 void SchedulerRunner::calculateTimeDriftAndMaybePause(
     std::chrono::milliseconds loop_step_duration) {
+  VLOG(1) << "Loop step duration: " << loop_step_duration.count();
   if (loop_step_duration + time_drift_ < interval_) {
     pause(interval_ - loop_step_duration - time_drift_);
     time_drift_ = std::chrono::milliseconds::zero();
   } else {
     time_drift_ += loop_step_duration - interval_;
+    VLOG(1) << "Current drift: " << time_drift_.count();
     if (time_drift_ > max_time_drift_) {
+      VLOG(1) << "Too much drift!";
+
       // giving up
       time_drift_ = std::chrono::milliseconds::zero();
     }
