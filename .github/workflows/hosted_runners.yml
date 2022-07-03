@@ -22,6 +22,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'stefano/test/permissions'
 
     tags:
       - '*'
@@ -64,6 +65,7 @@ jobs:
     - name: Check the copyright headers
       run: |
         ./tools/ci/scripts/check_copyright_headers.py
+        ls -ld /__w/osquery/osquery
 
     - name: Setup the build paths
       shell: bash
@@ -91,8 +93,9 @@ jobs:
     # a Linux machine.
     - name: Check code formatting
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
-      run:
+      run: |
         cmake --build . --target format_check
+        whoami
 
 
 
