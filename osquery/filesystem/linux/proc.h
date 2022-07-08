@@ -274,4 +274,7 @@ Status procEnumerateProcessDescriptors(const std::string& pid,
 enum class ProcError { GenericError };
 Expected<std::uint64_t, ProcError> getProcRSS(const std::string& process);
 
+Expected<std::uint64_t, ProcError> getProcUsedMemory(
+    const std::string& process);
+
 } // namespace osquery

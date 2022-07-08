@@ -429,4 +429,6 @@ Expected<std::uint64_t, ProcError> getProcRSS(const std::string& process) {
   return rss_pages_res.take() * kMemoryPageSize;
 }
 
+Expected<std::uint64_t, ProcError>
+
 } // namespace osquery
