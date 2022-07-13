@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <ctime>
+#include <future>
 
 #include <boost/format.hpp>
 #include <boost/io/quoted.hpp>
@@ -31,6 +32,8 @@
 #include <osquery/utils/system/time.h>
 #include <osquery/worker/system/memory.h>
 #include <plugins/config/parsers/decorators.h>
+
+#include <osquery/filesystem/linux/proc.h>
 
 namespace osquery {
 
@@ -63,6 +66,42 @@ DECLARE_bool(events_optimize);
 DECLARE_bool(enable_numeric_monitoring);
 DECLARE_bool(verbose);
 
+namespace {
+bool memory_thread_has_started;
+std::atomic<bool> memory_thread_should_quit;
+std::mutex memory_thread_mutex;
+std::condition_variable memory_thread_cond;
+
+void memoryProfilingThread(std::promise<std::uint64_t> peak_memory_promise) {
+  {
+    std::unique_lock lock(memory_thread_mutex);
+    memory_thread_has_started = true;
+    memory_thread_cond.notify_one();
+  }
+
+  std::uint64_t peak_memory = 0;
+
+  while (!memory_thread_should_quit) {
+    std::uint64_t memory = osquery::getProcUsedMemory("self").takeOr(
+        static_cast<std::uint64_t>(0));
+
+    if (memory > peak_memory) {
+      peak_memory = memory;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  // If the loop above has never run, ensure that we get at least one read
+  if (peak_memory == 0) {
+    peak_memory = osquery::getProcUsedMemory("self").takeOr(
+        static_cast<std::uint64_t>(0));
+  }
+
+  peak_memory_promise.set_value(peak_memory);
+}
+} // namespace
+
 SQLInternal monitor(const std::string& name, const ScheduledQuery& query) {
   if (FLAGS_enable_numeric_monitoring) {
     CodeProfiler profiler(
@@ -90,8 +129,28 @@ SQLInternal monitor(const std::string& name, const ScheduledQuery& query) {
 
     using namespace std::chrono;
     auto t0 = steady_clock::now();
+
+    memory_thread_has_started = memory_thread_should_quit = false;
+    std::promise<std::uint64_t> peak_memory_promise;
+    auto peak_memory_future = peak_memory_promise.get_future();
+
+    auto memory_profiling_thread =
+        std::thread(memoryProfilingThread, std::move(peak_memory_promise));
+
+    {
+      // We want to give a chance to the thread to start
+      std::unique_lock lock(memory_thread_mutex);
+      memory_thread_cond.wait(lock, [] { return memory_thread_has_started; });
+    }
+
     Config::get().recordQueryStart(name);
     SQLInternal sql(query.query, true);
+
+    memory_thread_should_quit = true;
+    auto peak_memory = peak_memory_future.get();
+    memory_profiling_thread.join();
+
+    VLOG(1) << "Peak memory: " << peak_memory;
 
     // Snapshot the performance after, and compare.
     auto t1 = steady_clock::now();
@@ -288,8 +347,8 @@ void SchedulerRunner::start() {
   }
 }
 
-std::chrono::milliseconds SchedulerRunner::getCurrentTimeDrift() const
-    noexcept {
+std::chrono::milliseconds SchedulerRunner::getCurrentTimeDrift()
+    const noexcept {
   return time_drift_;
 }
 

@@ -12,6 +12,21 @@
 #include <cctype>
 
 namespace osquery {
+std::string_view ltrim(std::string_view input) {
+  std::size_t start = 0;
+  for (;; ++start) {
+    if (start == input.size()) {
+      return {};
+    }
+
+    if (!std::isspace(input[start])) {
+      break;
+    }
+  }
+
+  return std::string_view(&input[start], input.size() - start);
+}
+
 std::string_view trim(std::string_view input) {
   std::size_t start = 0;
   for (;; ++start) {

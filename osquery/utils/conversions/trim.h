@@ -12,6 +12,15 @@
 #include <string_view>
 
 namespace osquery {
+
+/**
+ * @brief Adjusts the string_view so that all leading spaces are out
+ *
+ * @param input
+ * @return std::string_view
+ */
+std::string_view ltrim(std::string_view input);
+
 /**
  * @brief Adjusts the string_view so that all leading
  * and trailing spaces are out

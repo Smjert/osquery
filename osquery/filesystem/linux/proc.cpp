@@ -10,12 +10,16 @@
 #include <linux/limits.h>
 #include <unistd.h>
 
+#include <charconv>
+
 #include <boost/filesystem.hpp>
+#include <boost/optional/optional.hpp>
 
 #include <osquery/filesystem/filesystem.h>
 #include <osquery/filesystem/linux/proc.h>
 #include <osquery/logger/logger.h>
 #include <osquery/utils/conversions/split.h>
+#include <osquery/utils/conversions/trim.h>
 
 namespace osquery {
 const std::vector<std::string> kUserNamespaceList = {
@@ -23,6 +27,42 @@ const std::vector<std::string> kUserNamespaceList = {
 
 constexpr std::uint64_t kStatmElementsCount = 7;
 constexpr std::uint64_t kMemoryPageSize = 4096;
+
+namespace {
+boost::optional<std::pair<std::size_t, std::uint64_t>> extractValueAndPos(
+    const std::string_view key, std::string_view input) {
+  auto key_pos = input.find(key);
+
+  if (key_pos == std::string::npos) {
+    return {};
+  }
+
+  auto value_end = input.find("\n", key_pos);
+
+  if (value_end == std::string::npos) {
+    return {};
+  }
+
+  auto value_start = key_pos + key.size() + 1;
+
+  if (value_start >= value_end) {
+    return {};
+  }
+
+  std::string_view value_line(&input[value_start], value_end - value_start);
+  value_line = osquery::ltrim(value_line);
+
+  std::uint64_t value;
+  auto [ptr, ec] = std::from_chars(
+      value_line.data(), value_line.data() + value_line.size(), value, 10);
+
+  if (ec != std::errc()) {
+    return {};
+  }
+
+  return {{value_end + 1, value}};
+}
+} // namespace
 
 Status procGetNamespaceInode(ino_t& inode,
                              const std::string& namespace_name,
@@ -412,23 +452,67 @@ Expected<std::uint64_t, ProcError> getProcRSS(const std::string& process) {
         "Failed to read statm: " + status.getMessage());
   }
 
-  auto statm_elements = osquery::split(statm_content, " ");
+  const auto statm_elements = osquery::vsplit(statm_content, ' ');
 
   if (statm_elements.size() != kStatmElementsCount) {
     return ProcExpected::failure(ProcError::GenericError,
                                  "statm has an unexpected format");
   }
 
-  auto rss_pages_res = tryTo<std::uint64_t>(statm_elements[1]);
+  const auto& rss_pages_str = statm_elements[1];
+  std::uint64_t rss_pages;
+  auto result =
+      std::from_chars(rss_pages_str.begin(), rss_pages_str.end(), rss_pages);
 
-  if (rss_pages_res.isError()) {
+  if (result.ec != std::errc{}) {
     return ProcExpected::failure(ProcError::GenericError,
                                  "Failed to convert rss pages to a number");
   }
 
-  return rss_pages_res.take() * kMemoryPageSize;
+  return rss_pages * kMemoryPageSize;
 }
 
-Expected<std::uint64_t, ProcError>
+Expected<std::uint64_t, ProcError> getProcUsedMemory(
+    const std::string& process) {
+  using ProcExpected = Expected<std::uint64_t, ProcError>;
+
+  std::string status_content;
+  auto status = osquery::readFile(kLinuxProcPath + "/" + process + "/status",
+                                  status_content);
+
+  if (!status.ok()) {
+    return ProcExpected::failure(
+        ProcError::GenericError,
+        "Failed to read status: " + status.getMessage());
+  }
+
+  auto opt_result = extractValueAndPos("VmSwap", status_content);
+
+  if (!opt_result.has_value()) {
+    return ProcExpected::failure(ProcError::GenericError,
+                                 "Failed to extract the VmSwap value");
+  }
+
+  auto [next_pos, swap] = *opt_result;
+
+  if (next_pos >= status_content.size()) {
+    return ProcExpected::failure(ProcError::GenericError,
+                                 "Could not find the VmRSS value");
+  }
+
+  std::string_view input(&status_content[next_pos],
+                         status_content.size() - next_pos);
+  opt_result = extractValueAndPos("VmRSS", status_content);
+
+  if (!opt_result.has_value()) {
+    return ProcExpected::failure(ProcError::GenericError,
+                                 "Failed to extract the VmRSS value");
+  }
+
+  auto rss = (*opt_result).second * 1024;
+  swap *= 1024;
+
+  return rss + swap;
+}
 
 } // namespace osquery
