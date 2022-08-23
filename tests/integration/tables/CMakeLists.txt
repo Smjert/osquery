@@ -32,56 +32,56 @@ endfunction()
 
 function(generateTestsIntegrationTablesTestsTest)
   set(source_files
-    carbon_black_info.cpp
-    carves.cpp
-    certificates.cpp
-    chrome_extensions.cpp
-    curl.cpp
-    curl_certificate.cpp
-    etc_hosts.cpp
-    etc_protocols.cpp
-    etc_services.cpp
-    file.cpp
-    firefox_addons.cpp
-    groups.cpp
-    hash.cpp
-    interface_addresses.cpp
-    interface_details.cpp
-    listening_ports.cpp
-    logged_in_users.cpp
-    memory_devices.cpp
-    npm_packages.cpp
-    os_version.cpp
-    osquery_events.cpp
-    osquery_extensions.cpp
-    osquery_flags.cpp
-    osquery_info.cpp
-    osquery_packs.cpp
-    osquery_registry.cpp
-    osquery_schedule.cpp
-    platform_info.cpp
-    process_memory_map.cpp
-    process_open_sockets.cpp
-    processes.cpp
-    python_packages.cpp
-    routes.cpp
-    system_info.cpp
-    time.cpp
-    uptime.cpp
-    user_groups.cpp
-    users.cpp
-    ssh_configs.cpp
-    user_ssh_keys.cpp
-    device_file.cpp
-    device_hash.cpp
-    device_partitions.cpp
-    ycloud_instance_metadata.cpp
+
+    # carbon_black_info.cpp
+    # carves.cpp
+    # certificates.cpp
+    # chrome_extensions.cpp
+    # curl.cpp
+    # curl_certificate.cpp
+    # etc_hosts.cpp
+    # etc_protocols.cpp
+    # etc_services.cpp
+    # file.cpp
+    # firefox_addons.cpp
+    # groups.cpp
+    # hash.cpp
+    # interface_addresses.cpp
+    # interface_details.cpp
+    # listening_ports.cpp
+    # logged_in_users.cpp
+    # memory_devices.cpp
+    # npm_packages.cpp
+    # os_version.cpp
+    # osquery_events.cpp
+    # osquery_extensions.cpp
+    # osquery_flags.cpp
+    # osquery_info.cpp
+    # osquery_packs.cpp
+    # osquery_registry.cpp
+    # osquery_schedule.cpp
+    # platform_info.cpp
+    # process_memory_map.cpp
+    # process_open_sockets.cpp
+    # processes.cpp
+    # python_packages.cpp
+    # routes.cpp
+    # system_info.cpp
+    # time.cpp
+    # uptime.cpp
+    # user_groups.cpp
+    # users.cpp
+    # ssh_configs.cpp
+    # user_ssh_keys.cpp
+    # device_file.cpp
+    # device_hash.cpp
+    # device_partitions.cpp
+    # ycloud_instance_metadata.cpp
   )
 
-  if(TARGET_PROCESSOR STREQUAL "x86_64")
-    list(APPEND source_files cpuid.cpp)
-  endif()
-
+  # if(TARGET_PROCESSOR STREQUAL "x86_64")
+  # list(APPEND source_files cpuid.cpp)
+  # endif()
   if(DEFINED PLATFORM_POSIX)
     set(platform_source_files
       acpi_tables.cpp
@@ -140,13 +140,12 @@ function(generateTestsIntegrationTablesTestsTest)
     list(APPEND source_files ${platform_source_files})
   endif()
 
-  if(OSQUERY_BUILD_AWS AND(DEFINED PLATFORM_LINUX OR DEFINED PLATFORM_WINDOWS))
-    list(APPEND source_files
-      ec2_instance_metadata.cpp
-      ec2_instance_tags.cpp
-    )
-  endif()
-
+  # if(OSQUERY_BUILD_AWS AND(DEFINED PLATFORM_LINUX OR DEFINED PLATFORM_WINDOWS))
+  # list(APPEND source_files
+  # ec2_instance_metadata.cpp
+  # ec2_instance_tags.cpp
+  # )
+  # endif()
   if(DEFINED PLATFORM_LINUX)
     set(platform_source_files
       apt_sources.cpp
@@ -270,59 +269,61 @@ function(generateTestsIntegrationTablesTestsTest)
 
   elseif(DEFINED PLATFORM_WINDOWS)
     set(platform_source_files
-      appcompat_shims.cpp
-      arp_cache.cpp
-      authenticode.cpp
-      autoexec.cpp
-      background_activities_moderator.cpp
-      bitlocker_info.cpp
-      connectivity.cpp
-      windows_firewall_rules.cpp
-      chassis_info.cpp
-      chocolatey_packages.cpp
-      cpu_info.cpp
-      default_environment.cpp
-      disk_info.cpp
-      drivers.cpp
-      ie_extensions.cpp
-      intel_me_info.cpp
-      logon_sessions.cpp
-      kernel_info.cpp
-      kva_speculative_info.cpp
-      logical_drives.cpp
-      office_mru.cpp
-      ntdomains.cpp
-      ntfs_acl_permissions.cpp
-      patches.cpp
-      physical_disk_performance.cpp
-      pipes.cpp
-      powershell_events.cpp
-      prefetch.cpp
-      programs.cpp
-      registry.cpp
-      scheduled_tasks.cpp
+
+      # appcompat_shims.cpp
+      # arp_cache.cpp
+      # authenticode.cpp
+      # autoexec.cpp
+      # background_activities_moderator.cpp
+      # bitlocker_info.cpp
+      # connectivity.cpp
+      # windows_firewall_rules.cpp
+      # chassis_info.cpp
+      # chocolatey_packages.cpp
+      # cpu_info.cpp
+      # default_environment.cpp
+      # disk_info.cpp
+      # drivers.cpp
+      # ie_extensions.cpp
+      # intel_me_info.cpp
+      # logon_sessions.cpp
+      # kernel_info.cpp
+      # kva_speculative_info.cpp
+      # logical_drives.cpp
+      # office_mru.cpp
+      # ntdomains.cpp
+      # ntfs_acl_permissions.cpp
+      # patches.cpp
+      # physical_disk_performance.cpp
+      # pipes.cpp
+      # powershell_events.cpp
+      # prefetch.cpp
+      # programs.cpp
+      # registry.cpp
+      # scheduled_tasks.cpp
       secureboot.cpp
-      services.cpp
-      shared_resources.cpp
-      shellbags.cpp
-      shimcache.cpp
-      startup_items.cpp
-      userassist.cpp
-      video_info.cpp
-      winbaseobj.cpp
-      windows_crashes.cpp
-      windows_events.cpp
-      windows_eventlog.cpp
-      windows_security_products.cpp
-      windows_update_history.cpp
-      wmi_bios_info.cpp
-      wmi_cli_event_consumers.cpp
-      wmi_event_filters.cpp
-      wmi_filter_consumer_binding.cpp
-      wmi_script_event_consumers.cpp
-      hvci_status.cpp
-      yara.cpp
-      tpm_info.cpp
+
+      # services.cpp
+      # shared_resources.cpp
+      # shellbags.cpp
+      # shimcache.cpp
+      # startup_items.cpp
+      # userassist.cpp
+      # video_info.cpp
+      # winbaseobj.cpp
+      # windows_crashes.cpp
+      # windows_events.cpp
+      # windows_eventlog.cpp
+      # windows_security_products.cpp
+      # windows_update_history.cpp
+      # wmi_bios_info.cpp
+      # wmi_cli_event_consumers.cpp
+      # wmi_event_filters.cpp
+      # wmi_filter_consumer_binding.cpp
+      # wmi_script_event_consumers.cpp
+      # hvci_status.cpp
+      # yara.cpp
+      # tpm_info.cpp
     )
 
     list(APPEND source_files ${platform_source_files})
@@ -359,6 +360,7 @@ function(generateTestsIntegrationTablesTestsTest)
     )
 
     set(gtest_filter "")
+
     foreach(root_test_name ${root_test_name_list})
       if(NOT gtest_filter STREQUAL "")
         set(gtest_filter "${gtest_filter}:")
@@ -386,20 +388,20 @@ function(generateTestsIntegrationTablesTestsTest)
       )
 
       set_tests_properties(
-          tests_integration_tables_root-test
-          PROPERTIES ENVIRONMENT "TEST_CONF_FILES_DIR=${TEST_CONFIGS_DIR}"
+        tests_integration_tables_root-test
+        PROPERTIES ENVIRONMENT "TEST_CONF_FILES_DIR=${TEST_CONFIGS_DIR}"
       )
     endif()
 
   else()
-      add_test(NAME tests_integration_tables-test
-        COMMAND tests_integration_tables-test
-      )
+    add_test(NAME tests_integration_tables-test
+      COMMAND tests_integration_tables-test
+    )
 
-      set_tests_properties(
-        tests_integration_tables-test
-        PROPERTIES ENVIRONMENT "TEST_CONF_FILES_DIR=${TEST_CONFIGS_DIR}"
-      )
+    set_tests_properties(
+      tests_integration_tables-test
+      PROPERTIES ENVIRONMENT "TEST_CONF_FILES_DIR=${TEST_CONFIGS_DIR}"
+    )
   endif()
 endfunction()
 

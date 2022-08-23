@@ -1093,6 +1093,7 @@ jobs:
           -DCMAKE_C_COMPILER_LAUNCHER="sccache.exe" ^
           -DCMAKE_CXX_COMPILER_LAUNCHER="sccache.exe" ^
           -DPython3_ROOT_DIR=${{ steps.python_root_directory.outputs.VALUE }} ^
+          -DOSQUERY_BUILD_AWS=OFF ^
           ${{ steps.build_paths.outputs.SOURCE }}
 
     - name: Determine compiler version
