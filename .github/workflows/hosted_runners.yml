@@ -1162,6 +1162,8 @@ jobs:
     - name: Run the tests
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
       shell: cmd
+      env:
+        TEST_CONF_FILES_DIR: ${{ steps.build_paths.outputs.BINARY }}\test_configs
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.bitness }}.bat"
         .\tests\integration\tables\tests_integration_tables-test.exe --gtest_filter=-RoutesTest.test_sanity
