@@ -1154,7 +1154,7 @@ jobs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.bitness }}.bat"
 
-        cmake --build . -j 3
+        cmake --build . --target tests_integration_tables-test -j 3
 
         if %errorlevel% neq 0 exit /b %errorlevel%
         sccache.exe --stop-server
@@ -1164,88 +1164,89 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.bitness }}.bat"
-        ctest --build-nocmake -C Release -V
+        .\tests\integration\tables\tests_integration_tables-test.exe --gtest_filter=-RoutesTest.test_sanity
+    #    ctest --build-nocmake -C Release -V
 
-    - name: Run the install target
-      working-directory: ${{ steps.build_paths.outputs.BINARY }}
+    # - name: Run the install target
+    #   working-directory: ${{ steps.build_paths.outputs.BINARY }}
 
-      env:
-        CCACHE_DIR: ${{ steps.build_paths.outputs.SCCACHE }}
-        DESTDIR: ${{ steps.build_paths.outputs.PACKAGE_DATA }}
+    #   env:
+    #     CCACHE_DIR: ${{ steps.build_paths.outputs.SCCACHE }}
+    #     DESTDIR: ${{ steps.build_paths.outputs.PACKAGE_DATA }}
 
-      run: |
-        cmake --build . --target install -j 3
+    #   run: |
+    #     cmake --build . --target install -j 3
 
-    - name: Create the packages
-      shell: cmd
+    # - name: Create the packages
+    #   shell: cmd
 
-      run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.bitness }}.bat"
+    #   run: |
+    #     call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.bitness }}.bat"
 
-        cd ${{ steps.build_paths.outputs.PACKAGE_BUILD }}
+    #     cd ${{ steps.build_paths.outputs.PACKAGE_BUILD }}
 
-        7z ^
-          a windows_package_data.zip ^
-          ${{ steps.build_paths.outputs.PACKAGE_DATA }}
+    #     7z ^
+    #       a windows_package_data.zip ^
+    #       ${{ steps.build_paths.outputs.PACKAGE_DATA }}
 
-        if %errorlevel% neq 0 exit /b %errorlevel%
+    #     if %errorlevel% neq 0 exit /b %errorlevel%
 
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
-          -DCPACK_GENERATOR=WIX ^
-          -DOSQUERY_PACKAGE_VERSION=${{ steps.osquery_version.outputs.VALUE }} ^
-          -DOSQUERY_DATA_PATH=${{ steps.build_paths.outputs.PACKAGE_DATA }} ^
-          -DOSQUERY_BITNESS=${{ matrix.bitness }} ^
-          ${{ steps.build_paths.outputs.PACKAGING }}
+    #     cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
+    #       -DCPACK_GENERATOR=WIX ^
+    #       -DOSQUERY_PACKAGE_VERSION=${{ steps.osquery_version.outputs.VALUE }} ^
+    #       -DOSQUERY_DATA_PATH=${{ steps.build_paths.outputs.PACKAGE_DATA }} ^
+    #       -DOSQUERY_BITNESS=${{ matrix.bitness }} ^
+    #       ${{ steps.build_paths.outputs.PACKAGING }}
 
-        if %errorlevel% neq 0 exit /b %errorlevel%
+    #     if %errorlevel% neq 0 exit /b %errorlevel%
 
-        cmake --build . ^
-          --config Release ^
-          --target package
+    #     cmake --build . ^
+    #       --config Release ^
+    #       --target package
 
-        if %errorlevel% neq 0 exit /b %errorlevel%
+    #     if %errorlevel% neq 0 exit /b %errorlevel%
 
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
-          -DCPACK_GENERATOR=NuGet ^
-          -DOSQUERY_PACKAGE_VERSION=${{ steps.osquery_version.outputs.VALUE }} ^
-          -DOSQUERY_DATA_PATH=${{ steps.build_paths.outputs.PACKAGE_DATA }} ^
-          -DOSQUERY_BITNESS=${{ matrix.bitness }} ^
-          ${{ steps.build_paths.outputs.PACKAGING }}
+    #     cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
+    #       -DCPACK_GENERATOR=NuGet ^
+    #       -DOSQUERY_PACKAGE_VERSION=${{ steps.osquery_version.outputs.VALUE }} ^
+    #       -DOSQUERY_DATA_PATH=${{ steps.build_paths.outputs.PACKAGE_DATA }} ^
+    #       -DOSQUERY_BITNESS=${{ matrix.bitness }} ^
+    #       ${{ steps.build_paths.outputs.PACKAGING }}
 
-        if %errorlevel% neq 0 exit /b %errorlevel%
+    #     if %errorlevel% neq 0 exit /b %errorlevel%
 
-        cmake --build . ^
-          --config Release ^
-          --target package
+    #     cmake --build . ^
+    #       --config Release ^
+    #       --target package
 
-        if %errorlevel% neq 0 exit /b %errorlevel%
+    #     if %errorlevel% neq 0 exit /b %errorlevel%
 
-    - name: Locate the packages
-      working-directory: ${{ steps.build_paths.outputs.PACKAGE_BUILD }}
-      id: packages
-      shell: bash
-      run: |
-        echo ::set-output name=REL_UNSIGNED_RELEASE_PACKAGE_DATA_PATH::$(ls *.zip)
-        echo ::set-output name=REL_UNSIGNED_RELEASE_MSI_PATH::$(ls *.msi)
-        echo ::set-output name=REL_UNSIGNED_RELEASE_NUPKG_PATH::$(ls *.nupkg)
+    # - name: Locate the packages
+    #   working-directory: ${{ steps.build_paths.outputs.PACKAGE_BUILD }}
+    #   id: packages
+    #   shell: bash
+    #   run: |
+    #     echo ::set-output name=REL_UNSIGNED_RELEASE_PACKAGE_DATA_PATH::$(ls *.zip)
+    #     echo ::set-output name=REL_UNSIGNED_RELEASE_MSI_PATH::$(ls *.msi)
+    #     echo ::set-output name=REL_UNSIGNED_RELEASE_NUPKG_PATH::$(ls *.nupkg)
 
-    - name: Store the unsigned release package data artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: windows${{ matrix.bitness }}_unsigned_release_package_data
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_PACKAGE_DATA_PATH }}
+    # - name: Store the unsigned release package data artifact
+    #   uses: actions/upload-artifact@v1
+    #   with:
+    #     name: windows${{ matrix.bitness }}_unsigned_release_package_data
+    #     path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_PACKAGE_DATA_PATH }}
 
-    - name: Store the unsigned release MSI artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: windows${{ matrix.bitness }}_unsigned_release_msi
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_MSI_PATH }}
+    # - name: Store the unsigned release MSI artifact
+    #   uses: actions/upload-artifact@v1
+    #   with:
+    #     name: windows${{ matrix.bitness }}_unsigned_release_msi
+    #     path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_MSI_PATH }}
 
-    - name: Store the unsigned release NUPKG artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: windows${{ matrix.bitness }}_unsigned_release_nupkg
-        path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_NUPKG_PATH }}
+    # - name: Store the unsigned release NUPKG artifact
+    #   uses: actions/upload-artifact@v1
+    #   with:
+    #     name: windows${{ matrix.bitness }}_unsigned_release_nupkg
+    #     path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_NUPKG_PATH }}
 
     # Before we terminate this job, delete the build folder. The cache
     # actions will require the disk space to create the archives.
