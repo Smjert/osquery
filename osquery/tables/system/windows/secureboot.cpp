@@ -64,6 +64,7 @@ boost::optional<bool> readFirmwareBooleanVariable(
 }
 
 bool enableSystemEnvironmentNamePrivilege() {
+  return false;
   TOKEN_PRIVILEGES token_privileges{};
   token_privileges.PrivilegeCount = 1;
 
