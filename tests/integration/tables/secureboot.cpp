@@ -26,7 +26,7 @@ class Secureboot : public testing::Test {
   }
 };
 
-static std::string getStack(CONTEXT& context) {
+static std::string getStack(CONTEXT& context_in) {
   BOOL result;
   HANDLE process;
   HANDLE thread;
@@ -41,6 +41,9 @@ static std::string getStack(CONTEXT& context) {
   std::string out;
   out += "Crash callstack:\n";
   memset(&stack, 0, sizeof(STACKFRAME64));
+
+  CONTEXT context;
+  memcpy(&context, context_in, sizeof(CONTEXT));
 
   process = GetCurrentProcess();
   thread = GetCurrentThread();
@@ -77,39 +80,59 @@ static std::string getStack(CONTEXT& context) {
                          NULL);
 
     symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-    symbol->MaxNameLength = symbol_name_size - 1;
+    symbol->MaxNameLength = symbol_name_size;
 
     if (stack.AddrPC.Offset != 0) {
-      SymGetSymFromAddr64(
+      auto res_sym = SymGetSymFromAddr64(
           process, (ULONG64)stack.AddrPC.Offset, &displacement, symbol);
       // UnDecorateSymbolName(
       //     symbol->Name, (PSTR)&name[0], name.size(), UNDNAME_COMPLETE);
 
+      if(res_sym == FALSE) {
+        std::cerr << "Failed to get symbol information" << std::endl;
+        std::cerr << "Stack Frame: " << std::endl;
+        std::cerr << "\tOffset: 0x" << std::hex << stack.AddrPC.Offset << std::endl;
+        std::cerr << "\tReturn: 0x" << std::hex << stack.AddrReturn.Offset << std::endl;
+        std::cerr << "\tFrame: 0x" << std::hex << stack.AddrFrame.Offset << std::endl;
+        std::cerr << "\tStack: 0x" << std::hex << stack.AddrStack.Offset << std::endl;
+        std::cerr << "\tBStore: 0x" <<  std::hex << stack.AddrBStore.Offset << std::endl;
+        std::cerr << "--------------" << std::endl;
+        continue;
+      }
+
       IMAGEHLP_LINE64 line{};
       line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
       DWORD line_displacement = 0;
-      auto res = SymGetLineFromAddr64(
+      auto res_line = SymGetLineFromAddr64(
           process, (ULONG64)stack.AddrPC.Offset, &line_displacement, &line);
 
-      if (res) {
+      if (res_line == TRUE) {
         out += line.FileName;
         out += '|';
       }
 
       out += symbol->Name;
 
-      if (res) {
+      if (res_line == TRUE) {
         out += std::to_string(line.LineNumber);
         out += ':';
         out += std::to_string(line_displacement);
       }
       
       out += '|';
-      out += (boost::format("0x%x") % (ULONG64)stack.AddrPC.Offset).str();
-      out += '+';
-      out += (boost::format("0x%x") % displacement).str();
+      out += (boost::format("0x%x") % (symbol->Address).str();
 
       out += '\n';
+    } else {
+        std::cerr << "--------------" << std::endl;
+        std::cerr << "PC Offset Zero" << std::endl;
+        std::cerr << "Stack Frame: " << std::endl;
+        std::cerr << "\tOffset: 0x" << std::hex << stack.AddrPC.Offset << std::endl;
+        std::cerr << "\tReturn: 0x" << std::hex << stack.AddrReturn.Offset << std::endl;
+        std::cerr << "\tFrame: 0x" << std::hex << stack.AddrFrame.Offset << std::endl;
+        std::cerr << "\tStack: 0x" << std::hex << stack.AddrStack.Offset << std::endl;
+        std::cerr << "\tBStore: 0x" <<  std::hex << stack.AddrBStore.Offset << std::endl;
+        std::cerr << "--------------" << std::endl;
     }
 
   } while (result);
