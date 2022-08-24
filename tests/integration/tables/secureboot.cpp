@@ -89,16 +89,24 @@ static std::string getStack(CONTEXT& context) {
       auto res = SymGetLineFromAddr64(
           process, (ULONG64)stack.AddrPC.Offset, &line_displacement, &line);
 
+      if (res) {
+        out += line.FileName;
+        out += '|';
+      }
+
       out += symbol->Name;
 
       if (res) {
-        out += ':';
         out += std::to_string(line.LineNumber);
         out += ':';
         out += std::to_string(line_displacement);
-        out += " in ";
-        out += line.FileName;
       }
+      
+      out += '|';
+      out += std::to_string((ULONG64)stack.AddrPC.Offset);
+      out += '+';
+      out += displacement;
+
       out += '\n';
     }
 

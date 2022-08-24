@@ -883,7 +883,7 @@ jobs:
 
     strategy:
       matrix:
-        build_type: [RelWithDebInfo]
+        build_type: [Release]
         bitness: [32, 64]
         os: [windows-2019]
 
@@ -1155,6 +1155,14 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.bitness }}.bat"
         .\tests\integration\tables\tests_integration_tables-test.exe --gtest_filter=-RoutesTest.test_sanity --gtest_catch_exceptions=0
     #    ctest --build-nocmake -C Release -V
+
+
+    - name: Upload test
+      uses: actions/upload-artifact@v1
+      with:
+        name: windows${{ matrix.bitness }}_integration_test
+        path: ${{ steps.build_paths.outputs.BINARY }}\tests\integration\tables\tests_integration_tables-test.exe
+
 
     # - name: Run the install target
     #   working-directory: ${{ steps.build_paths.outputs.BINARY }}
