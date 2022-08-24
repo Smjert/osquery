@@ -15,6 +15,8 @@
 
 #include <DbgHelp.h>
 
+#include <boost/format.hpp>
+
 namespace osquery::table_tests {
 
 class Secureboot : public testing::Test {
@@ -103,9 +105,9 @@ static std::string getStack(CONTEXT& context) {
       }
       
       out += '|';
-      out += std::to_string((ULONG64)stack.AddrPC.Offset);
+      out += (boost::format("0x%x") % (ULONG64)stack.AddrPC.Offset).str();
       out += '+';
-      out += displacement;
+      out += (boost::format("0x%x") % displacement).str();
 
       out += '\n';
     }
