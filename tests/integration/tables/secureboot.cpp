@@ -43,7 +43,7 @@ static std::string getStack(CONTEXT& context_in) {
   memset(&stack, 0, sizeof(STACKFRAME64));
 
   CONTEXT context;
-  memcpy(&context, context_in, sizeof(CONTEXT));
+  memcpy(&context, &context_in, sizeof(CONTEXT));
 
   process = GetCurrentProcess();
   thread = GetCurrentThread();
