@@ -30,6 +30,7 @@ jobs:
   # This job performs basic source code check, looking for formatting
   # issues and missing copyright headers
   check_code_style:
+    if: ${{ false }}
     runs-on: ubuntu-20.04
 
     container:
@@ -85,6 +86,7 @@ jobs:
 
   # This job runs source code analysis tools (currently, just cppcheck)
   check_source_code:
+    if: ${{ false }}
     needs: check_code_style
 
     runs-on: ${{ matrix.os }}
@@ -200,6 +202,7 @@ jobs:
   # The Linux build will only start once we know that the code
   # has been properly formatted
   build_linux:
+    if: ${{ false }}
     needs: check_code_style
 
     runs-on: ${{ matrix.os }}
@@ -482,6 +485,7 @@ jobs:
   # The macOS build will only start once we know that the code
   # has been properly formatted
   build_macos:
+    if: ${{ false }}
     needs: check_code_style
 
     runs-on: ${{ matrix.os }}
@@ -784,6 +788,7 @@ jobs:
 
   # This job builds the universal macOS artifacts
   build_universal_macos_artifacts:
+    if: ${{ false }}
     # TODO: This has to be changed back to the job test after we update to Monterey
     needs: build_macos
     # needs: test_macos_bigsur
@@ -877,7 +882,7 @@ jobs:
   # The Windows build will only start once we know that the code
   # has been properly formatted
   build_windows:
-    needs: check_code_style
+    #needs: check_code_style
 
     runs-on: ${{ matrix.os }}
 
@@ -1259,8 +1264,8 @@ jobs:
     steps:
       - run: true
     needs:
-      - build_macos
-      - build_linux
+      # - build_macos
+      # - build_linux
       - build_windows
-      - build_universal_macos_artifacts
-      - check_source_code
+      # - build_universal_macos_artifacts
+      # - check_source_code
