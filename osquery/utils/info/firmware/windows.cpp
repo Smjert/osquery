@@ -25,6 +25,8 @@ enum class WindowsFirmwareType : std::uint32_t {
   Uefi = 2,
 };
 
+// using GetFirmwareTypePtr = bool (WINAPI *)(WindowsFirmwareType*
+// firmware_type);
 using GetFirmwareTypePtr = bool (*)(WindowsFirmwareType* firmware_type);
 
 GetFirmwareTypePtr locateGetFirmwareTypeProc() {

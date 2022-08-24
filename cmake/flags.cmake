@@ -294,7 +294,7 @@ function(setupBuildFlags)
 
     set(osquery_windows_compile_options
       /W3
-      "$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/Z7>"
+      "$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/Zi>"
     )
 
     set(windows_common_link_options
@@ -412,6 +412,9 @@ function(setupBuildFlags)
 
     string(REPLACE "/Zi" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
     string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    string(REPLACE "/Ob1" "/Ob2" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+    string(REPLACE "/Ob1" "/Ob2" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    string(REPLACE "/INCREMENTAL" "" CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}")
 
     string(REPLACE "/EHsc" "/EHs" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
@@ -424,6 +427,7 @@ function(setupBuildFlags)
     overwrite_cache_variable("CMAKE_CXX_FLAGS_RELWITHDEBINFO" STRING "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     overwrite_cache_variable("CMAKE_C_FLAGS" STRING "${CMAKE_C_FLAGS}")
     overwrite_cache_variable("CMAKE_CXX_FLAGS" STRING "${CMAKE_CXX_FLAGS}")
+    overwrite_cache_variable("CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO" STRING "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}")
   else()
     message(FATAL_ERROR "Platform not supported!")
   endif()
