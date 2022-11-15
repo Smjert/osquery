@@ -254,6 +254,7 @@ QueryData genOsquerySchedule(QueryContext& context) {
         r["average_memory"] = "0";
         r["last_memory"] = "0";
         r["last_executed"] = "0";
+        r["last_memory_peak"] = "0";
 
         // Report optional performance information.
         Config::get().getPerformanceStats(
@@ -270,6 +271,7 @@ QueryData genOsquerySchedule(QueryContext& context) {
               r["last_system_time"] = BIGINT(perf.last_system_time);
               r["average_memory"] = BIGINT(perf.average_memory);
               r["last_memory"] = BIGINT(perf.last_memory);
+              r["last_memory_peak"] = BIGINT(perf.last_memory_peak);
             });
 
         results.push_back(r);

@@ -20,8 +20,6 @@
 namespace osquery {
 DECLARE_bool(disable_watchdog);
 
-#ifdef OSQUERY_LINUX
-
 void releaseRetainedMemory() {
   /* The logic used for choosing the limit at which malloc_trim is called is as
      follows: Verify if the flag has been set by the user or not
@@ -83,6 +81,5 @@ void releaseRetainedMemory() {
     malloc_trim(0);
   }
 }
-#endif
 
 } // namespace osquery

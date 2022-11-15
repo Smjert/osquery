@@ -53,6 +53,10 @@ struct QueryPerformance {
   /// of the latest execution
   std::uint64_t last_memory{0};
 
+  /// Peak memory usage, swap + resident memory,
+  // detected during query execution
+  std::uint64_t last_memory_peak{0};
+
   /// Total bytes for the query
   std::uint64_t output_size{0};
 };

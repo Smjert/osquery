@@ -21,6 +21,7 @@ schema([
     Column("last_system_time", BIGINT, "System time in milliseconds of the latest execution"),
     Column("average_memory", BIGINT, "Average of the bytes of resident memory left allocated after collecting results"),
     Column("last_memory", BIGINT, "Resident memory in bytes left allocated after collecting results of the latest execution"),
+    Column("last_memory_peak", BIGINT, "Peak memory usage (swap + resident memory) in bytes during the query execution"),
 ])
 attributes(utility=True)
 implementation("osquery@genOsquerySchedule")

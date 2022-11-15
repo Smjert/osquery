@@ -1019,8 +1019,9 @@ void ConfigParserPlugin::reset() {
 }
 
 void Config::recordQueryPerformance(const std::string& name,
-                                    uint64_t delay_ms,
-                                    uint64_t size,
+                                    std::uint64_t delay_ms,
+                                    std::uint64_t size,
+                                    std::uint64_t memory_peak,
                                     const Row& r0,
                                     const Row& r1) {
   RecursiveLock lock(config_performance_mutex_);
@@ -1068,6 +1069,7 @@ void Config::recordQueryPerformance(const std::string& name,
   query.output_size += size;
   query.executions += 1;
   query.last_executed = getUnixTime();
+  query.last_memory_peak = memory_peak;
 
   /* Clear the executing query only if a resource limit has not been hit.
      This is used by the next worker execution to denylist a query

@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
 
 function(osqueryWorkerSystemMain)
+
+  generateOsqueryWorkerSystem()
   generateOsqueryWorkerSystemLinuxMemory()
 endfunction()
 
@@ -32,5 +34,18 @@ function(generateOsqueryWorkerSystemLinuxMemory)
 
   generateIncludeNamespace(osquery_worker_system_linux_memory "osquery/worker/system" "FULL_PATH" ${public_header_files})
 endfunction()
+
+function(generateOsqueryWorkerSystem)
+  add_osquery_library(osquery_worker_system_linux_memory
+    memory.cpp
+  )
+
+  set(public_header_files
+    memory.h
+  )
+
+  generateIncludeNamespace(osquery_worker_system_linux_memory "osquery/worker/system" "FULL_PATH" ${public_header_files})
+endfunction()
+
 
 osqueryWorkerSystemMain()

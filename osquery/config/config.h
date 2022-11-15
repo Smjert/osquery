@@ -91,8 +91,9 @@ class Config : private boost::noncopyable {
    * @param r1 the process row after the query
    */
   void recordQueryPerformance(const std::string& name,
-                              uint64_t delay_ms,
-                              uint64_t size,
+                              std::uint64_t delay_ms,
+                              std::uint64_t size,
+                              std::uint64_t memory_peak,
                               const Row& r0,
                               const Row& r1);
 
