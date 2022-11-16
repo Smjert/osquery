@@ -27,8 +27,7 @@ class MemoryPeakProfiler {
   std::uint64_t getMemoryPeak();
 
  private:
-  std::uint64_t interval_ms_;
-  bool memory_thread_has_started_;
+  std::atomic<bool> memory_thread_is_running_;
   std::mutex memory_thread_mutex_;
   std::condition_variable memory_thread_cond_;
   std::future<std::uint64_t> memory_peak_;

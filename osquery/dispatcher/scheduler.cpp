@@ -101,6 +101,7 @@ SQLInternal monitor(const std::string& name, const ScheduledQuery& query) {
 
     auto peak_memory = memory_peak_profiler.getMemoryPeak();
 
+    VLOG(1) << "Previous reading: " << r0[0]["resident_size"];
     VLOG(1) << "Peak memory: " << peak_memory;
 
     // Snapshot the performance after, and compare.

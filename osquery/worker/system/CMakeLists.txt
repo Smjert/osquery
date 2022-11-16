@@ -36,7 +36,7 @@ function(generateOsqueryWorkerSystemLinuxMemory)
 endfunction()
 
 function(generateOsqueryWorkerSystem)
-  add_osquery_library(osquery_worker_system_linux_memory
+  add_osquery_library(osquery_worker_system_memory
     memory.cpp
   )
 
@@ -44,7 +44,13 @@ function(generateOsqueryWorkerSystem)
     memory.h
   )
 
-  generateIncludeNamespace(osquery_worker_system_linux_memory "osquery/worker/system" "FULL_PATH" ${public_header_files})
+  target_link_libraries(osquery_worker_system_memory PRIVATE
+      osquery_cxx_settings
+      osquery_logger
+      osquery_utils_system_resources
+  )
+
+  generateIncludeNamespace(osquery_worker_system_memory "osquery/worker/system" "FULL_PATH" ${public_header_files})
 endfunction()
 
 

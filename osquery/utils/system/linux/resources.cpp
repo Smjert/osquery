@@ -20,20 +20,16 @@ const std::string kProcStatusVmRSSField = "VmRSS:";
 constexpr std::size_t kProcStatusKBSuffixSize = 3;
 
 std::optional<std::uint64_t> extractValue(std::string_view input) {
-  auto value_end = input.size() - 1;
-
   // The line is malformed if there aren't enough characters
   // for the suffix and at least one digit.
-  if (value_end < (kProcStatusKBSuffixSize + 1)) {
+  if (input.size() < (kProcStatusKBSuffixSize + 1)) {
     return std::nullopt;
   }
 
-  // Skip the suffix
-  value_end -= kProcStatusKBSuffixSize;
+  // The line should end with a suffix we want to skip
+  auto value_end_pos = input.size() - 1 - kProcStatusKBSuffixSize;
 
-  auto value_start = 0;
-
-  std::string_view value_line(&input[value_start], value_end - value_start);
+  std::string_view value_line(&input[0], value_end_pos + 1);
   value_line = osquery::ltrim(value_line);
 
   std::uint64_t value;
@@ -47,9 +43,6 @@ std::optional<std::uint64_t> extractValue(std::string_view input) {
   return {value};
 }
 } // namespace
-
-// a:aaaa
-//
 
 Expected<std::uint64_t, ResourceError> getProcessTotalMemoryUsage(
     const std::uint32_t process_id) {
