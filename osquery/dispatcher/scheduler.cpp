@@ -33,8 +33,6 @@
 #include <osquery/worker/system/memory.h>
 #include <plugins/config/parsers/decorators.h>
 
-#include <osquery/filesystem/linux/proc.h>
-
 namespace osquery {
 
 FLAG(uint64,
@@ -300,8 +298,8 @@ void SchedulerRunner::start() {
   }
 }
 
-std::chrono::milliseconds SchedulerRunner::getCurrentTimeDrift() const
-    noexcept {
+std::chrono::milliseconds SchedulerRunner::getCurrentTimeDrift()
+    const noexcept {
   return time_drift_;
 }
 

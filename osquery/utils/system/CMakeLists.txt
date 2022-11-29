@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
 
 function(osqueryUtilsSystemMain)
-
   if(DEFINED PLATFORM_LINUX)
     add_subdirectory("linux")
   endif()
@@ -125,7 +124,6 @@ function(generateOsqueryUtilsSystemErrno)
   generateIncludeNamespace(osquery_utils_system_errno "osquery/utils/system" "FULL_PATH" ${public_header_files})
 
   add_test(NAME osquery_utils_system_errno_errnotests-test COMMAND osquery_utils_system_errno_errnotests-test)
-
 endfunction()
 
 function(generateOsqueryUtilsSystemCputopology)
@@ -190,7 +188,6 @@ function(generateOsqueryUtilsSystemTime)
   generateIncludeNamespace(osquery_utils_system_time "osquery/utils/system" "FILE_ONLY" ${public_header_files})
 
   add_test(NAME osquery_utils_system_time_timetest-test COMMAND osquery_utils_system_time_timetest-test)
-
 endfunction()
 
 function(generateOsqueryUtilsSystem)
@@ -228,7 +225,7 @@ function(generateOsqueryUtilsSystem)
       posix/system.h
     )
   elseif(DEFINED PLATFORM_WINDOWS)
-      list(APPEND public_header_files
+    list(APPEND public_header_files
       windows/system.h
     )
   endif()
@@ -254,7 +251,6 @@ function(generateOsqueryUtilsSystemUptime)
 endfunction()
 
 function(generateOsqueryUtilsSystemBoottime)
-
   if(DEFINED PLATFORM_LINUX)
     set(source_files
       linux/boottime.cpp
@@ -295,9 +291,10 @@ function(generateOsqueryUtilsSystemUsersGroups)
 endfunction()
 
 function(generateOsqueryUtilsSystemResources)
-
-  if (DEFINED PLATFORM_LINUX)
+  if(DEFINED PLATFORM_LINUX)
     set(sources "linux/resources.cpp")
+  elseif(DEFINED PLATFORM_WINDOWS)
+    set(sources "windows/resources.cpp")
   endif()
 
   add_osquery_library(osquery_utils_system_resources EXCLUDE_FROM_ALL
