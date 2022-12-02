@@ -25,7 +25,7 @@ void memoryProfilingThread(
   std::uint64_t peak_memory = 0;
 
   do {
-    auto memory_expected = osquery::getProcessTotalMemoryUsage(getpid());
+    auto memory_expected = osquery::getProcessMemoryFootprint(getpid());
 
     std::uint64_t memory = 0;
     if (memory_expected.isError()) {
@@ -42,7 +42,7 @@ void memoryProfilingThread(
 
   // If the loop above has never run, ensure that we get at least one read
   if (peak_memory == 0) {
-    peak_memory = osquery::getProcessTotalMemoryUsage(getpid()).takeOr(
+    peak_memory = osquery::getProcessMemoryFootprint(getpid()).takeOr(
         static_cast<std::uint64_t>(0));
   }
 

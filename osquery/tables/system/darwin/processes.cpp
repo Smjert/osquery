@@ -16,6 +16,7 @@
 #include <array>
 #include <map>
 #include <set>
+#include <thread>
 
 #include <boost/algorithm/string.hpp>
 
@@ -527,6 +528,8 @@ TableRows genProcesses(QueryContext& context) {
     std::unique_ptr<TableRow> tr(r);
     results.push_back(std::move(tr));
   }
+
+  std::this_thread::sleep_for(std::chrono::seconds(2));
 
   return results;
 }

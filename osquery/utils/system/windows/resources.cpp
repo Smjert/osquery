@@ -7,7 +7,7 @@
 
 namespace osquery {
 
-Expected<std::uint64_t, ResourceError> getProcessTotalMemoryUsage(
+Expected<std::uint64_t, ResourceError> getProcessMemoryFootprint(
     const std::uint32_t process_id) {
   using ProcExpected = Expected<std::uint64_t, ResourceError>;
 

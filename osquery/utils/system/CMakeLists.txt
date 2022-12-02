@@ -295,6 +295,8 @@ function(generateOsqueryUtilsSystemResources)
     set(sources "linux/resources.cpp")
   elseif(DEFINED PLATFORM_WINDOWS)
     set(sources "windows/resources.cpp")
+  elseif(DEFINED PLATFORM_MACOS)
+    set(sources "darwin/resources.cpp")
   endif()
 
   add_osquery_library(osquery_utils_system_resources EXCLUDE_FROM_ALL

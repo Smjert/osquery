@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014-present, The osquery authors
+ *
+ * This source code is licensed as defined by the LICENSE file found in the
+ * root directory of this source tree.
+ *
+ * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
+ */
+
 #include <osquery/utils/system/resources.h>
 
 #include <charconv>
@@ -44,7 +53,7 @@ std::optional<std::uint64_t> extractValue(std::string_view input) {
 }
 } // namespace
 
-Expected<std::uint64_t, ResourceError> getProcessTotalMemoryUsage(
+Expected<std::uint64_t, ResourceError> getProcessMemoryFootprint(
     const std::uint32_t process_id) {
   using ProcExpected = Expected<std::uint64_t, ResourceError>;
 

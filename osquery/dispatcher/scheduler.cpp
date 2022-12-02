@@ -13,6 +13,8 @@
 #include <ctime>
 #include <future>
 
+#include <libproc.h>
+
 #include <boost/format.hpp>
 #include <boost/io/quoted.hpp>
 
@@ -89,18 +91,27 @@ SQLInternal monitor(const std::string& name, const ScheduledQuery& query) {
                               EQUALS,
                               pid);
 
+    struct rusage_info_v1 rusage_info_data;
+    int status = proc_pid_rusage(
+        getpid(), RUSAGE_INFO_V1, (rusage_info_t*)&rusage_info_data);
+
     using namespace std::chrono;
     auto t0 = steady_clock::now();
 
-    MemoryPeakProfiler memory_peak_profiler(500);
+    MemoryPeakProfiler memory_peak_profiler(250);
 
     Config::get().recordQueryStart(name);
     SQLInternal sql(query.query, true);
 
     auto peak_memory = memory_peak_profiler.getMemoryPeak();
 
+    VLOG(1) << "Previous resident_size: " << rusage_info_data.ri_resident_size;
+    VLOG(1) << "Previous phys_footprint: "
+            << rusage_info_data.ri_phys_footprint;
     VLOG(1) << "Previous reading: " << r0[0]["resident_size"];
     VLOG(1) << "Peak memory: " << peak_memory;
+    VLOG(1) << "Peak memory diff: "
+            << peak_memory - rusage_info_data.ri_phys_footprint;
 
     // Snapshot the performance after, and compare.
     auto t1 = steady_clock::now();
@@ -131,6 +142,15 @@ Status launchQuery(const std::string& name, const ScheduledQuery& query) {
   } else if (FLAGS_schedule_lognames) {
     LOG(INFO) << "Executing scheduled query " << name;
   }
+
+  struct rusage_info_v1 rusage_info_data;
+  proc_pid_rusage(getpid(), RUSAGE_INFO_V1, (rusage_info_t*)&rusage_info_data);
+
+  VLOG(1) << "Previous launch phys_footprint: "
+          << rusage_info_data.ri_phys_footprint;
+
+  MemoryPeakProfiler profiler(250);
+
   runDecorators(DECORATE_ALWAYS);
 
   auto sql = monitor(name, query);
@@ -157,6 +177,10 @@ Status launchQuery(const std::string& name, const ScheduledQuery& query) {
     // This is a snapshot query, emit results with a differential or state.
     item.snapshot_results = std::move(sql.rowsTyped());
     logSnapshotQuery(item);
+    auto peak_memory = profiler.getMemoryPeak();
+    VLOG(1) << "SnapshotPeakMemory: " << peak_memory;
+    VLOG(1) << "SnapshotPeakMemoryDiff: "
+            << peak_memory - rusage_info_data.ri_phys_footprint;
     return Status::success();
   }
 
@@ -190,6 +214,10 @@ Status launchQuery(const std::string& name, const ScheduledQuery& query) {
 
   if (diff_results.hasNoResults()) {
     // No diff results or events to emit.
+    auto peak_memory = profiler.getMemoryPeak();
+    VLOG(1) << "NoDiffPeakMemory: " << peak_memory;
+    VLOG(1) << "NoDiffPeakMemoryDiff: "
+            << peak_memory - rusage_info_data.ri_phys_footprint;
     return status;
   }
 
@@ -202,6 +230,10 @@ Status launchQuery(const std::string& name, const ScheduledQuery& query) {
                           status.toString();
     requestShutdown(EXIT_CATASTROPHIC, message);
   }
+  auto peak_memory = profiler.getMemoryPeak();
+  VLOG(1) << "NormalPeakMemory: " << peak_memory;
+  VLOG(1) << "NormalPeakMemoryDiff: "
+          << peak_memory - rusage_info_data.ri_phys_footprint;
   return status;
 }
 
