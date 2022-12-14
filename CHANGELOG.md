@@ -1,5 +1,7 @@
 # osquery Changelog
 
+testtest
+
 <a name="5.6.0"></a>
 ## [5.6.0](https://github.com/osquery/osquery/releases/tag/5.6.0)
 
