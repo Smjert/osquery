@@ -14,7 +14,10 @@
 # builds on the x86 platform.
 name: build_x86
 
-on: push
+on: 
+  push:
+  
+  pull_request:
 
   pull_request:
     branches:
