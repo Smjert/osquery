@@ -292,8 +292,6 @@ jobs:
           -DOSQUERY_BUILD_ROOT_TESTS=ON \
           "${{ steps.build_paths.outputs.SOURCE }}"
 
-        df -h
-
     - name: Build the project
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
 
@@ -327,8 +325,11 @@ jobs:
           --target install \
           -j ${{ steps.build_job_count.outputs.VALUE }}
 
-        find . -name "*.a" -exec rm {} \;
-        du -sh .
+    # From now on the osquery build folder is not needed anymore.
+    # We need all the free space we can get, so just remove it.
+    - name: Reclaim disk space
+      run: |
+        rm -rf ${{ steps.build_paths.outputs.BINARY }}
 
     # Since we need to run CMake to create the packages with osquery-packaging, the
     # configuration will fail unless the C and C++ compilers are found
@@ -417,9 +418,3 @@ jobs:
       with:
         name: linux_unsigned_release_tgz_aarch64
         path: ${{ steps.packages.outputs.REL_UNSIGNED_RELEASE_TGZ_PATH }}
-
-    # Before we terminate this job, delete the build folder. The cache
-    # actions will require the disk space to create the archives.
-    - name: Reclaim disk space
-      run: |
-        rm -rf ${{ steps.build_paths.outputs.BINARY }}
