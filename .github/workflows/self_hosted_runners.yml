@@ -302,8 +302,6 @@ jobs:
 
       run: |
         cmake --build . -j ${{ steps.build_job_count.outputs.VALUE }}
-        find . -name "*.a" -exec rm {} \;
-        du -sh .
 
     - name: Run the tests as normal user
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
@@ -328,6 +326,9 @@ jobs:
           --build . \
           --target install \
           -j ${{ steps.build_job_count.outputs.VALUE }}
+
+        find . -name "*.a" -exec rm {} \;
+        du -sh .
 
     # Since we need to run CMake to create the packages with osquery-packaging, the
     # configuration will fail unless the C and C++ compilers are found
