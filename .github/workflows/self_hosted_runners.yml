@@ -54,8 +54,6 @@ jobs:
     # destination; right now we are moving the .git folder manually.
     - name: Clone the osquery repository
       uses: actions/checkout@v1
-      with:
-        ref: a11449053c1447af7b2636c4221ca00fce1d6f20
 
     # This script makes sure that the copyright headers have been correctly
     # placed on all the source code files
@@ -176,8 +174,6 @@ jobs:
     steps:
     - name: Clone the osquery repository
       uses: actions/checkout@v1
-      with:
-        ref: a11449053c1447af7b2636c4221ca00fce1d6f20
 
     - name: Select the build job count
       shell: bash
