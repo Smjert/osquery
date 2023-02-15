@@ -325,11 +325,9 @@ jobs:
           --target install \
           -j ${{ steps.build_job_count.outputs.VALUE }}
 
-    # From now on the osquery build folder is not needed anymore.
-    # We need all the free space we can get, so just remove it.
-    - name: Reclaim disk space
-      run: |
-        rm -rf ${{ steps.build_paths.outputs.BINARY }}
+        find . -name "*.a" -exec rm {} \;
+        find . -name "*.o" -exec rm {} \;
+        du -sh .
 
     # Since we need to run CMake to create the packages with osquery-packaging, the
     # configuration will fail unless the C and C++ compilers are found
