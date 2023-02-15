@@ -4,6 +4,7 @@
 <img alt="osquery logo" width="200"
 src="https://github.com/osquery/osquery/raw/master/docs/img/logo-2x-dark.png" />
 </p>
+test
 
 <p align="center">
 osquery is a SQL powered operating system instrumentation, monitoring, and analytics framework.
