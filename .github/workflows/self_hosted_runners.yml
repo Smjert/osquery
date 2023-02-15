@@ -302,6 +302,7 @@ jobs:
 
       run: |
         cmake --build . -j ${{ steps.build_job_count.outputs.VALUE }}
+        find . -name "*.a" -exec rm {} \;
         du -sh .
 
     - name: Run the tests as normal user
