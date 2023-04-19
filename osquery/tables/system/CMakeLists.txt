@@ -45,6 +45,7 @@ function(generateOsqueryTablesSystemSystemtable)
       posix/suid_bin.cpp
       posix/system_controls.cpp
       posix/ulimit_info.cpp
+      posix/nfs_shares.cpp
     )
   endif()
 
@@ -139,7 +140,6 @@ function(generateOsqueryTablesSystemSystemtable)
       darwin/mdfind.mm
       darwin/mdls.mm
       darwin/mounts.cpp
-      darwin/nfs_shares.cpp
       darwin/nvram.cpp
       darwin/os_version.mm
       darwin/packages.mm
