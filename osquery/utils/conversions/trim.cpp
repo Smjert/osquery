@@ -30,4 +30,20 @@ std::string_view trim(std::string_view input) {
 
   return std::string_view(&input[start], (end - start) + 1);
 }
+
+void trimLeftInPlace(std::string_view& input) {
+  std::size_t start = 0;
+  for (;; ++start) {
+    if (start == input.size()) {
+      input.remove_suffix(input.size());
+      return;
+    }
+
+    if (!std::isspace(input[start])) {
+      break;
+    }
+  }
+
+  input.remove_prefix(start);
+}
 } // namespace osquery

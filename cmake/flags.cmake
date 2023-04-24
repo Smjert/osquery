@@ -184,6 +184,12 @@ function(setupBuildFlags)
         dl
       )
 
+      if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+        set(posix_cxx_compile_options
+          -ggdb3
+        )
+      endif()
+
       if(OSQUERY_BUILD_FUZZERS)
         list(APPEND linux_common_compile_options
           -fsanitize=fuzzer-no-link

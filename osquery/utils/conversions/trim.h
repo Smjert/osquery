@@ -13,11 +13,19 @@
 
 namespace osquery {
 /**
- * @brief Adjusts the string_view so that all leading
+ * @brief Returns a new string_view so that all leading
  * and trailing spaces are out
  *
  * @param input
  * @return std::string_view
  */
 std::string_view trim(std::string_view input);
+
+/**
+ * @brief Adjusts the string_view so that all leading are out
+ *
+ * @param input
+ */
+void trimLeftInPlace(std::string_view& input);
+
 } // namespace osquery
