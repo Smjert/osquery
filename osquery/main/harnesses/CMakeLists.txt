@@ -63,6 +63,7 @@ function(osqueryMainHarnesses)
 
   generateOsqueryFuzzHarness(osqueryfuzz-config fuzz_config.cpp)
   generateOsqueryFuzzHarness(osqueryfuzz-sqlquery fuzz_sqlquery.cpp)
+  generateOsqueryFuzzHarness(osqueryfuzz-exportfs fuzz_exportfs.cpp)
 endfunction()
 
 function(generateOsqueryFuzzHarness harness_name source_files)

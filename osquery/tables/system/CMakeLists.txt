@@ -339,6 +339,7 @@ function(generateOsqueryTablesSystemSystemtable)
       linux/pci_devices.h
       linux/processes.h
       linux/smbios_utils.h
+      linux/nfs_shares.h
     )
 
   elseif(DEFINED PLATFORM_MACOS)
