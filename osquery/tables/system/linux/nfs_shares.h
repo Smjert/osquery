@@ -25,6 +25,9 @@ class ExportFsParser {
   }
 
  private:
+  /* void processExportLine(std::size_t line_number, std::string_view&
+   * remaining_line, Row& r);*/
+
   ParserState parser_state{};
   std::string_view remaining_content;
   std::string export_path;

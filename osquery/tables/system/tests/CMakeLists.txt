@@ -39,6 +39,7 @@ function(generateOsqueryTablesSystemLinuxTests)
     linux/rpm_packages_tests.cpp
     linux/selinux_settings_tests.cpp
     linux/yum_sources_tests.cpp
+    linux/nfs_shares_tests.cpp
   )
 
   target_link_libraries(osquery_tables_system_linux_tests-test PRIVATE
