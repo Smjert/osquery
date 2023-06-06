@@ -43,7 +43,10 @@ boost::optional<std::string> extractAndConsumeExportPath(
       return boost::none;
     }
 
+    // Extract export path between quotes
     export_path = remaining_line.substr(1, end_quote_pos - 1);
+
+    // Consume the parsed export_path with quotes
     remaining_line.remove_prefix(end_quote_pos + 1);
   } else {
     auto space_pos = remaining_line.find(" ");
@@ -61,35 +64,39 @@ boost::optional<std::string> extractAndConsumeExportPath(
 }
 
 boost::optional<std::string> isReadOnly(const std::string& options) {
+  /*
+    We need to find a 'ro' or 'rw' option outside of any parenthesis,
+    so that they are globally applied.
+  */
   auto hosts = osquery::vsplit(options, ' ');
 
   for (const auto host : hosts) {
     auto open_paren_pos = host.find("(");
 
-    if (open_paren_pos == std::string_view::npos) {
-      continue;
+    if (open_paren_pos != std::string_view::npos) {
+      auto close_paren_pos = host.find(")");
     }
 
-    auto close_paren_pos = host.find(")");
-
     if (open_paren_pos == std::string_view::npos) {
-      return boost::none;
-    }
-
-    auto host_option_string =
-        host.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos);
-
-    auto host_options = osquery::vsplit(options, ',');
-
-    for (const auto host_option : host_options) {
-      if (host_option == "ro") {
-        return std::string{"1"};
-      }
+    } else {
     }
   }
 
   return std::string{"0"};
 }
+
+// auto host_option_string =
+//         host.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos -
+//         1);
+
+//     auto host_options = osquery::vsplit(host_option_string, ',');
+
+//     for (const auto host_option : host_options) {
+//       VLOG(1) << host_option << std::endl;
+//       if (host_option == "ro") {
+//         return std::string{"1"};
+//       }
+//     }
 
 std::string_view extractAndConsumeLine(std::string_view& remaining_content) {
   auto newline_pos = remaining_content.find("\n");
@@ -178,7 +185,7 @@ boost::optional<Row> ExportFsParser::parseExportLine() {
             remaining_line = {};
           }
 
-          r["readonly"] = isReadOnly(options);
+          r["readonly"] = isReadOnly(options).get_value_or(std::string());
           r["options"] = std::move(options);
           r["share"] = std::move(export_path);
 
