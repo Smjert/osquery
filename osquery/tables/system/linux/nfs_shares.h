@@ -6,35 +6,37 @@
 #include <boost/optional.hpp>
 
 #include <osquery/core/sql/row.h>
+#include <osquery/core/tables.h>
 
 namespace osquery {
 namespace tables {
 enum class ParserState { ExportPath, Options };
 
+struct Export {
+  std::string path;
+  std::string options;
+};
+
 class ExportFsParser {
  public:
   ExportFsParser(std::string_view content) : remaining_content(content) {}
-  boost::optional<Row> parseExportLine();
+  boost::optional<Export> parseExportLine();
+  boost::optional<QueryData> convertExportToRows(const Export& share);
 
   bool hasData() {
     return !remaining_content.empty();
   }
 
-  bool hasParsingErrors() {
-    return has_parsing_errors;
+  std::size_t getCurrentLineNumber() {
+    return line_number;
   }
 
  private:
-  /* void processExportLine(std::size_t line_number, std::string_view&
-   * remaining_line, Row& r);*/
-
   ParserState parser_state{};
   std::string_view remaining_content;
   std::string export_path;
   std::string options;
-  std::size_t newline_pos{};
   std::size_t line_number{};
-  bool has_parsing_errors{};
 };
 } // namespace tables
 } // namespace osquery

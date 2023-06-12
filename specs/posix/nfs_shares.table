@@ -2,6 +2,7 @@ table_name("nfs_shares")
 description("NFS shares exported by the host.")
 schema([
     Column("share", TEXT, "Filesystem path to the share"),
+    Column("network", TEXT, "The host/network the share is accessible by"),
     Column("options", TEXT, "Options string set on the export share"),
     Column("readonly", INTEGER, "1 if the share is exported readonly else 0"),
 ])

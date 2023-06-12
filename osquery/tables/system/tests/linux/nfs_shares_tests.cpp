@@ -15,6 +15,7 @@
 
 namespace osquery {
 namespace tables {
+
 class NFSSharesTests : public testing::Test {};
 
 TEST_F(NFSSharesTests, test_empty_string) {
@@ -38,97 +39,107 @@ TEST_F(NFSSharesTests, test_comment) {
 TEST_F(NFSSharesTests, test_simple_export) {
   std::string content = "# This is a comment\n/";
 
+  QueryData expected_results = {Row{{"share", "/"}, {"readonly", "1"}}};
+
   ExportFsParser parser(content);
   ASSERT_TRUE(parser.hasData());
 
-  auto opt_export_row = parser.parseExportLine();
-  ASSERT_TRUE(opt_export_row.has_value());
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
 
-  const auto& export_row = *opt_export_row;
-  ASSERT_EQ(export_row.size(), 2);
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
 
-  const auto share_it = export_row.find("share");
-  ASSERT_NE(share_it, export_row.end());
-  EXPECT_EQ(share_it->second, "/");
-
-  const auto readonly_it = export_row.find("readonly");
-  ASSERT_NE(readonly_it, export_row.end());
-  EXPECT_EQ(readonly_it->second, "0");
+  ASSERT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_simple_export_with_an_option) {
   std::string content = "# This is a comment\n/ 127.0.0.1";
 
+  QueryData expected_results = {
+      Row{{"share", "/"}, {"network", "127.0.0.1"}, {"readonly", "1"}}};
+
   ExportFsParser parser(content);
   ASSERT_TRUE(parser.hasData());
 
-  auto opt_export_row = parser.parseExportLine();
-  ASSERT_TRUE(opt_export_row.has_value());
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
 
-  const auto& export_row = *opt_export_row;
-  ASSERT_EQ(export_row.size(), 3);
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
 
-  const auto share_it = export_row.find("share");
-  ASSERT_NE(share_it, export_row.end());
-  EXPECT_EQ(share_it->second, "/");
-
-  const auto readonly_it = export_row.find("readonly");
-  ASSERT_NE(readonly_it, export_row.end());
-  EXPECT_EQ(readonly_it->second, "0");
-
-  const auto options_it = export_row.find("options");
-  ASSERT_NE(options_it, export_row.end());
-  EXPECT_EQ(options_it->second, "127.0.0.1");
+  ASSERT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_simple_export_with_options) {
   std::string content = "# This is a comment\n/ 127.0.0.1 host(rw)";
+
+  // clang-format off
+  QueryData expected_results = {
+      Row{{"share", "/"}, {"network", "127.0.0.1"}, {"readonly", "1"}},
+      Row{{"share", "/"}, {"network", "host"}, {"options", "rw"}, {"readonly", "0"}}};
+  // clang-format on
+
   ExportFsParser parser(content);
   ASSERT_TRUE(parser.hasData());
 
-  auto opt_export_row = parser.parseExportLine();
-  ASSERT_TRUE(opt_export_row.has_value());
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
 
-  const auto& export_row = *opt_export_row;
-  ASSERT_EQ(export_row.size(), 3);
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
 
-  const auto share_it = export_row.find("share");
-  ASSERT_NE(share_it, export_row.end());
-  EXPECT_EQ(share_it->second, "/");
-
-  const auto readonly_it = export_row.find("readonly");
-  ASSERT_NE(readonly_it, export_row.end());
-  EXPECT_EQ(readonly_it->second, "0");
-
-  const auto options_it = export_row.find("options");
-  ASSERT_NE(options_it, export_row.end());
-  EXPECT_EQ(options_it->second, "127.0.0.1 host(rw)");
+  ASSERT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_simple_export_with_multiline_options) {
   std::string content =
       "# This is a comment\n/ 127.0.0.1 host(rw)\\\nmultiline_host";
 
+  // clang-format off
+  QueryData expected_results = {
+      Row{{"share", "/"}, {"network", "127.0.0.1"}, {"readonly", "1"}},
+      Row{{"share", "/"}, {"network", "host"}, {"options", "rw"}, {"readonly", "0"}},
+      Row{{"share", "/"}, {"network", "multiline_host"}, {"readonly", "1"}}};
+  // clang-format on
+
   ExportFsParser parser(content);
   ASSERT_TRUE(parser.hasData());
 
-  auto opt_export_row = parser.parseExportLine();
-  ASSERT_TRUE(opt_export_row.has_value());
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
 
-  const auto& export_row = *opt_export_row;
-  ASSERT_EQ(export_row.size(), 3);
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
 
-  const auto share_it = export_row.find("share");
-  ASSERT_NE(share_it, export_row.end());
-  EXPECT_EQ(share_it->second, "/");
+  ASSERT_EQ(expected_results, *opt_export_rows);
+}
 
-  const auto readonly_it = export_row.find("readonly");
-  ASSERT_NE(readonly_it, export_row.end());
-  EXPECT_EQ(readonly_it->second, "0");
+TEST_F(NFSSharesTests, test_erroneous_inline_comment) {
+  std::string content = "/ # This is a comment 127.0.0.1";
 
-  const auto options_it = export_row.find("options");
-  ASSERT_NE(options_it, export_row.end());
-  EXPECT_EQ(options_it->second, "127.0.0.1 host(rw) multiline_host");
+  ExportFsParser parser(content);
+
+  EXPECT_FALSE(parser.parseExportLine().has_value());
+}
+
+TEST_F(NFSSharesTests, test_erroneously_quoted_export_path) {
+  std::string content = "\"/";
+
+  ExportFsParser parser(content);
+
+  EXPECT_FALSE(parser.parseExportLine().has_value());
+}
+
+TEST_F(NFSSharesTests, test_erroneous_network_options) {
+  std::string content = "/ 127.0.0.1(";
+
+  ExportFsParser parser(content);
+
+  auto opt_export = parser.parseExportLine();
+
+  ASSERT_TRUE(opt_export.has_value());
+  EXPECT_FALSE(parser.convertExportToRows(*opt_export).has_value());
 }
 
 } // namespace tables
