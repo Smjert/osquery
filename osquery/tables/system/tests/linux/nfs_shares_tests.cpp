@@ -50,7 +50,7 @@ TEST_F(NFSSharesTests, test_simple_export) {
   auto opt_export_rows = parser.convertExportToRows(*opt_export);
   ASSERT_TRUE(opt_export_rows.has_value());
 
-  ASSERT_EQ(expected_results, *opt_export_rows);
+  EXPECT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_simple_export_with_an_option) {
@@ -68,7 +68,7 @@ TEST_F(NFSSharesTests, test_simple_export_with_an_option) {
   auto opt_export_rows = parser.convertExportToRows(*opt_export);
   ASSERT_TRUE(opt_export_rows.has_value());
 
-  ASSERT_EQ(expected_results, *opt_export_rows);
+  EXPECT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_simple_export_with_options) {
@@ -89,7 +89,7 @@ TEST_F(NFSSharesTests, test_simple_export_with_options) {
   auto opt_export_rows = parser.convertExportToRows(*opt_export);
   ASSERT_TRUE(opt_export_rows.has_value());
 
-  ASSERT_EQ(expected_results, *opt_export_rows);
+  EXPECT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_simple_export_with_multiline_options) {
@@ -112,7 +112,41 @@ TEST_F(NFSSharesTests, test_simple_export_with_multiline_options) {
   auto opt_export_rows = parser.convertExportToRows(*opt_export);
   ASSERT_TRUE(opt_export_rows.has_value());
 
-  ASSERT_EQ(expected_results, *opt_export_rows);
+  EXPECT_EQ(expected_results, *opt_export_rows);
+}
+
+TEST_F(NFSSharesTests, test_multiple_exports) {
+  std::string content = "/ 127.0.0.1(rw)\\\n localhost(ro)\n/home 127.0.0.1";
+
+  // clang-format off
+  QueryData expected_results = {
+    Row{{"share", "/"}, {"network", "127.0.0.1"}, {"options", "rw"}, {"readonly", "0"}},
+    Row{{"share", "/"}, {"network", "localhost"}, {"options", "ro"}, {"readonly", "1"}},
+  };
+  // clang-format on
+
+  ExportFsParser parser(content);
+
+  // Parse first export line
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
+
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
+
+  EXPECT_EQ(expected_results, *opt_export_rows);
+
+  // Parse second export line
+  expected_results = {
+      Row{{"share", "/home"}, {"network", "127.0.0.1"}, {"readonly", "1"}}};
+
+  opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
+
+  opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
+
+  EXPECT_EQ(expected_results, *opt_export_rows);
 }
 
 TEST_F(NFSSharesTests, test_erroneous_inline_comment) {

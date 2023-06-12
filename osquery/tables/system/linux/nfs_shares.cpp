@@ -115,21 +115,36 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
   auto option_groups = osquery::vsplit(share.options, ' ');
 
   bool isWritableGlobal = false;
+  bool foundGlobalOptions = false;
+
+  // TODO: We have to parse out the global options and apply them to each row
+  // options
+  std::string global_options;
 
   for (const auto option_group : option_groups) {
     if (option_group.empty()) {
-      // This is maybe an error, but it does not impair parsing
       continue;
     }
 
-    // TODO: this might need to be on the first option group only if found
+    // Global options can appear multiple times and they apply to whatever comes
+    // after them, up to the next set of global options, if any.
     if (option_group[0] == '-') {
+      // This is a bit of an idiosincrasy of the real parser, but if there are
+      // multiple sets of global options, one after the other, only the first
+      // will actually be considered
+      if (foundGlobalOptions) {
+        continue;
+      }
+
       // These are global options
       isWritableGlobal =
           getAccessType(std::string_view(
               &option_group[1], option_group.size() - 1)) == AccessType::Write;
+      foundGlobalOptions = true;
       continue;
     }
+
+    foundGlobalOptions = false;
 
     Row r;
     r["share"] = share.path;
