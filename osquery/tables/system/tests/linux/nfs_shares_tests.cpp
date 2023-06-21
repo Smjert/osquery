@@ -149,6 +149,25 @@ TEST_F(NFSSharesTests, test_multiple_exports) {
   EXPECT_EQ(expected_results, *opt_export_rows);
 }
 
+TEST_F(NFSSharesTests, test_global_options) {
+  std::string content = "/ -ro";
+
+  QueryData expected_results = {
+      Row{{"share", "/"}, {"options", "-ro"}, {"readonly", "1"}},
+  };
+
+  ExportFsParser parser(content);
+
+  // Parse first export line
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
+
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
+
+  EXPECT_EQ(expected_results, *opt_export_rows);
+}
+
 TEST_F(NFSSharesTests, test_erroneous_inline_comment) {
   std::string content = "/ # This is a comment 127.0.0.1";
 

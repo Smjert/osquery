@@ -112,51 +112,71 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
 
   QueryData rows;
 
-  auto option_groups = osquery::vsplit(share.options, ' ');
+  auto options_groups = osquery::vsplit(share.options, ' ');
 
-  bool isWritableGlobal = false;
-  bool foundGlobalOptions = false;
+  // Trim all options and remove empty ones
+  for (auto it = options_groups.begin(); it != options_groups.end(); ++it) {
+    auto options_group = osquery::trim(*it);
 
-  // TODO: We have to parse out the global options and apply them to each row
-  // options
+    if (options_group.empty()) {
+      it = options_groups.erase(it);
+    } else {
+      *it = options_group;
+    }
+  }
+
+  bool is_writable_global = false;
+  bool found_global_options = false;
+
   std::string global_options;
 
-  for (const auto option_group : option_groups) {
-    if (option_group.empty()) {
-      continue;
-    }
-
-    // Global options can appear multiple times and they apply to whatever comes
-    // after them, up to the next set of global options, if any.
-    if (option_group[0] == '-') {
-      // This is a bit of an idiosincrasy of the real parser, but if there are
-      // multiple sets of global options, one after the other, only the first
-      // will actually be considered
-      if (foundGlobalOptions) {
-        continue;
-      }
-
-      // These are global options
-      isWritableGlobal =
-          getAccessType(std::string_view(
-              &option_group[1], option_group.size() - 1)) == AccessType::Write;
-      foundGlobalOptions = true;
-      continue;
-    }
-
-    foundGlobalOptions = false;
+  for (std::size_t i = 0; i < options_groups.size(); ++i) {
+    auto options_group = options_groups[i];
 
     Row r;
     r["share"] = share.path;
 
-    auto open_parens = option_group.find("(");
+    // Global options can appear multiple times and they apply to whatever comes
+    // after them, up to the next set of global options, if any.
+    if (options_group[0] == '-') {
+      // This is a bit of an idiosincrasy of the real parser, but if there are
+      // multiple sets of global options, one after the other, only the first
+      // will actually be considered
+      if (found_global_options) {
+        continue;
+      }
+
+      found_global_options = true;
+
+      global_options = options_group;
+
+      is_writable_global =
+          getAccessType(options_group.substr(1)) == AccessType::Write;
+
+      // If the last option group we parse are global options,
+      // we want to create a row for them immediately, and return the generated
+      // rows.
+
+      if (i == options_groups.size() - 1) {
+        r["readonly"] = is_writable_global ? "0" : "1";
+        r["options"] = global_options;
+        rows.emplace_back(std::move(r));
+        return rows;
+      }
+
+      continue;
+    }
+
+    found_global_options = false;
+
+    auto open_parens = options_group.find("(");
     if (open_parens != std::string_view::npos) {
-      auto close_parens = option_group.find(")");
+      auto close_parens = options_group.find(")");
 
       if (close_parens == std::string_view::npos) {
         VLOG(1)
             << "Could not find closing parens for the options in option group: "
-            << option_group << " at line " << line_number;
+            << options_group << " at line " << line_number;
         return boost::none;
       }
 
@@ -168,19 +188,24 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
         continue;
       }
 
-      auto options = option_group.substr(open_parens + 1, options_length);
+      auto host_options = options_group.substr(open_parens + 1, options_length);
       auto access_type = getAccessType(options);
 
-      bool readOnly = isWritableGlobal ? access_type == AccessType::ReadOnly
-                                       : access_type != AccessType::Write;
+      bool readOnly = is_writable_global ? access_type == AccessType::ReadOnly
+                                         : access_type != AccessType::Write;
 
-      r["options"] = options;
-      r["network"] = std::string(option_group.data(), open_parens);
+      r["options"] = global_options.empty() ? options
+                                            : std::string(global_options) +
+                                                  " " + std::string(options);
+      r["network"] = std::string(options_group.data(), open_parens);
       r["readonly"] = readOnly ? "1" : "0";
     } else {
       // Assume this is the host
-      r["network"] = option_group;
-      r["readonly"] = isWritableGlobal ? "0" : "1";
+      r["network"] = options_group;
+      r["readonly"] = is_writable_global ? "0" : "1";
+      if (!global_options.empty()) {
+        r["options"] = global_options;
+      }
     }
 
     rows.emplace_back(std::move(r));
