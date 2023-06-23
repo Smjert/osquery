@@ -46,12 +46,13 @@ boost::optional<std::string> extractAndConsumeExportPath(
       return boost::none;
     }
 
-    // Extract export path between quotes
+    // Extract the export path between quotes
     export_path = remaining_line.substr(1, end_quote_pos - 1);
 
     // Consume the parsed export_path with quotes
     remaining_line.remove_prefix(end_quote_pos + 1);
   } else {
+    // Extract the export path up to the space before the options or EOL
     auto space_pos = remaining_line.find(" ");
 
     if (space_pos != std::string_view::npos) {
@@ -142,16 +143,13 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
       // This is a bit of an idiosincrasy of the real parser, but if there are
       // multiple sets of global options, one after the other, only the first
       // will actually be considered
-      if (found_global_options) {
-        continue;
+      if (!found_global_options) {
+        found_global_options = true;
+        global_options = options_group;
+
+        is_writable_global =
+            getAccessType(options_group.substr(1)) == AccessType::Write;
       }
-
-      found_global_options = true;
-
-      global_options = options_group;
-
-      is_writable_global =
-          getAccessType(options_group.substr(1)) == AccessType::Write;
 
       // If the last option group we parse are global options,
       // we want to create a row for them immediately, and return the generated
@@ -176,7 +174,7 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
       if (close_parens == std::string_view::npos) {
         VLOG(1)
             << "Could not find closing parens for the options in option group: "
-            << options_group << " at line " << line_number;
+            << options_group << " at line " << line_number_;
         return boost::none;
       }
 
@@ -189,14 +187,15 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
       }
 
       auto host_options = options_group.substr(open_parens + 1, options_length);
-      auto access_type = getAccessType(options);
+      auto access_type = getAccessType(host_options);
 
       bool readOnly = is_writable_global ? access_type == AccessType::ReadOnly
                                          : access_type != AccessType::Write;
 
-      r["options"] = global_options.empty() ? options
-                                            : std::string(global_options) +
-                                                  " " + std::string(options);
+      r["options"] =
+          global_options.empty()
+              ? host_options
+              : std::string(global_options) + " " + std::string(host_options);
       r["network"] = std::string(options_group.data(), open_parens);
       r["readonly"] = readOnly ? "1" : "0";
     } else {
@@ -219,12 +218,12 @@ boost::optional<Export> ExportFsParser::parseExportLine() {
   Export share;
 
   do {
-    remaining_line = extractAndConsumeLine(remaining_content);
-    ++line_number;
+    remaining_line = extractAndConsumeLine(remaining_content_);
+    ++line_number_;
     osquery::trimLeftInPlace(remaining_line);
 
     while (!remaining_line.empty()) {
-      if (parser_state == ParserState::ExportPath) {
+      if (parser_state_ == ParserState::ExportPath) {
         // Skip comments
         if (remaining_line[0] == '#') {
           remaining_line = {};
@@ -233,34 +232,34 @@ boost::optional<Export> ExportFsParser::parseExportLine() {
 
         auto opt_export_path = extractAndConsumeExportPath(remaining_line);
         if (!opt_export_path.has_value()) {
-          VLOG(1) << "Malformed exportfs export path at line " << line_number
+          VLOG(1) << "Malformed exportfs export path at line " << line_number_
                   << ", ignoring";
           remaining_line = {};
           return boost::none;
         }
 
-        export_path = std::move(*opt_export_path);
-        parser_state = ParserState::Options;
+        export_path_ = std::move(*opt_export_path);
+        parser_state_ = ParserState::Options;
       }
 
-      if (parser_state == ParserState::Options) {
+      if (parser_state_ == ParserState::Options) {
         osquery::trimLeftInPlace(remaining_line);
 
         // There were no options, return the export
         if (remaining_line.empty()) {
-          share.path = std::move(export_path);
-          parser_state = ParserState::ExportPath;
+          share.path = std::move(export_path_);
+          parser_state_ = ParserState::ExportPath;
           return share;
         }
 
         /* A comment found in between the export path
            and the options is an error */
         if (remaining_line[0] == '#') {
-          VLOG(1) << "Malformed exportfs options for path " << export_path
-                  << " at line " << line_number
+          VLOG(1) << "Malformed exportfs options for path " << export_path_
+                  << " at line " << line_number_
                   << ", comment in options continuation "
                      "line, ignoring";
-          parser_state = ParserState::ExportPath;
+          parser_state_ = ParserState::ExportPath;
           return boost::none;
         }
 
@@ -275,33 +274,33 @@ boost::optional<Export> ExportFsParser::parseExportLine() {
            end the export line */
         if (remaining_line.back() != '\\') {
           // End of options, but no previous option line read
-          if (options.empty()) {
-            options += remaining_line;
+          if (options_.empty()) {
+            options_ += remaining_line;
             remaining_line = {};
           } else {
             // End of options, append to previous options
-            options += " ";
-            options += remaining_line;
+            options_ += " ";
+            options_ += remaining_line;
             remaining_line = {};
           }
 
-          share.options = std::move(options);
-          share.path = std::move(export_path);
+          share.options = std::move(options_);
+          share.path = std::move(export_path_);
 
-          options.clear();
-          export_path.clear();
-          parser_state = ParserState::ExportPath;
+          options_.clear();
+          export_path_.clear();
+          parser_state_ = ParserState::ExportPath;
           return share;
         } else {
           remaining_line.remove_suffix(1);
-          options += remaining_line;
+          options_ += remaining_line;
           remaining_line = {};
         }
       }
     }
-  } while (!remaining_content.empty());
+  } while (!remaining_content_.empty());
 
-  parser_state = ParserState::ExportPath;
+  parser_state_ = ParserState::ExportPath;
 
   return boost::none;
 }

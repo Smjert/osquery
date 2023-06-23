@@ -19,7 +19,7 @@ struct Export {
 
 class ExportFsParser {
  public:
-  ExportFsParser(std::string_view content) : remaining_content(content) {}
+  ExportFsParser(std::string_view content) : remaining_content_(content) {}
 
   /**
    * @brief Parses one export config "line", including multiline options
@@ -44,19 +44,19 @@ class ExportFsParser {
   boost::optional<QueryData> convertExportToRows(const Export& share);
 
   bool hasData() {
-    return !remaining_content.empty();
+    return !remaining_content_.empty();
   }
 
   std::size_t getCurrentLineNumber() {
-    return line_number;
+    return line_number_;
   }
 
  private:
-  ParserState parser_state{};
-  std::string_view remaining_content;
-  std::string export_path;
-  std::string options;
-  std::size_t line_number{};
+  ParserState parser_state_{};
+  std::string_view remaining_content_;
+  std::string export_path_;
+  std::string options_;
+  std::size_t line_number_{};
 };
 } // namespace tables
 } // namespace osquery

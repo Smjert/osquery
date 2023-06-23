@@ -149,11 +149,83 @@ TEST_F(NFSSharesTests, test_multiple_exports) {
   EXPECT_EQ(expected_results, *opt_export_rows);
 }
 
-TEST_F(NFSSharesTests, test_global_options) {
+TEST_F(NFSSharesTests, test_global_option) {
   std::string content = "/ -ro";
 
   QueryData expected_results = {
       Row{{"share", "/"}, {"options", "-ro"}, {"readonly", "1"}},
+  };
+
+  ExportFsParser parser(content);
+
+  // Parse first export line
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
+
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
+
+  EXPECT_EQ(expected_results, *opt_export_rows);
+}
+
+TEST_F(NFSSharesTests, test_multiple_global_options) {
+  std::string content = "/ -ro -rw";
+
+  QueryData expected_results = {
+      Row{{"share", "/"}, {"options", "-ro"}, {"readonly", "1"}},
+  };
+
+  ExportFsParser parser(content);
+
+  // Parse first export line
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
+
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
+
+  EXPECT_EQ(expected_results, *opt_export_rows);
+}
+
+TEST_F(NFSSharesTests, test_multiple_global_options_with_networks) {
+  std::string content = "/ -ro 127.0.0.1 -rw localhost";
+
+  QueryData expected_results = {
+      Row{{"share", "/"},
+          {"network", "127.0.0.1"},
+          {"options", "-ro"},
+          {"readonly", "1"}},
+      Row{{"share", "/"},
+          {"network", "localhost"},
+          {"options", "-rw"},
+          {"readonly", "0"}},
+  };
+
+  ExportFsParser parser(content);
+
+  // Parse first export line
+  auto opt_export = parser.parseExportLine();
+  ASSERT_TRUE(opt_export.has_value());
+
+  auto opt_export_rows = parser.convertExportToRows(*opt_export);
+  ASSERT_TRUE(opt_export_rows.has_value());
+
+  EXPECT_EQ(expected_results, *opt_export_rows);
+}
+
+TEST_F(NFSSharesTests,
+       test_multiple_global_options_with_networks_with_options) {
+  std::string content = "/ -ro 127.0.0.1(rw) -rw localhost(ro)";
+
+  QueryData expected_results = {
+      Row{{"share", "/"},
+          {"network", "127.0.0.1"},
+          {"options", "-ro rw"},
+          {"readonly", "0"}},
+      Row{{"share", "/"},
+          {"network", "localhost"},
+          {"options", "-rw ro"},
+          {"readonly", "1"}},
   };
 
   ExportFsParser parser(content);
