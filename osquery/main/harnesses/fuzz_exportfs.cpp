@@ -13,7 +13,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   osquery::tables::ExportFsParser parser(exportfs_content);
 
   while (parser.hasData()) {
-    parser.parseExportLine();
+    auto opt_share = parser.parseExportLine();
+
+    if (!opt_share.has_value()) {
+      continue;
+    }
+
+    parser.convertExportToRows(*opt_share);
   }
 
   return 0;

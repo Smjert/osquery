@@ -267,5 +267,15 @@ TEST_F(NFSSharesTests, test_erroneous_network_options) {
   EXPECT_FALSE(parser.convertExportToRows(*opt_export).has_value());
 }
 
+TEST_F(NFSSharesTests, test_erroneous_comment_in_options_with_continuation) {
+  std::string content = "/ 127.0.0.1 \\\n#";
+
+  ExportFsParser parser(content);
+
+  auto opt_export = parser.parseExportLine();
+
+  EXPECT_FALSE(opt_export.has_value());
+}
+
 } // namespace tables
 } // namespace osquery

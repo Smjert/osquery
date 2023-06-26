@@ -116,19 +116,19 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
   auto options_groups = osquery::vsplit(share.options, ' ');
 
   // Trim all options and remove empty ones
-  for (auto it = options_groups.begin(); it != options_groups.end(); ++it) {
+  for (auto it = options_groups.begin(); it != options_groups.end();) {
     auto options_group = osquery::trim(*it);
 
     if (options_group.empty()) {
       it = options_groups.erase(it);
     } else {
       *it = options_group;
+      ++it;
     }
   }
 
   bool is_writable_global = false;
   bool found_global_options = false;
-
   std::string global_options;
 
   for (std::size_t i = 0; i < options_groups.size(); ++i) {
@@ -137,12 +137,12 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
     Row r;
     r["share"] = share.path;
 
-    // Global options can appear multiple times and they apply to whatever comes
-    // after them, up to the next set of global options, if any.
+    /* Global options can appear multiple times and they apply to whatever comes
+       after them, up to the next set of global options, if any. */
     if (options_group[0] == '-') {
-      // This is a bit of an idiosincrasy of the real parser, but if there are
-      // multiple sets of global options, one after the other, only the first
-      // will actually be considered
+      /* This is a bit of an idiosincrasy of the real parser, but if there are
+         multiple sets of global options, one after the other, only the first
+         will actually be considered */
       if (!found_global_options) {
         found_global_options = true;
         global_options = options_group;
@@ -151,10 +151,9 @@ boost::optional<QueryData> ExportFsParser::convertExportToRows(
             getAccessType(options_group.substr(1)) == AccessType::Write;
       }
 
-      // If the last option group we parse are global options,
-      // we want to create a row for them immediately, and return the generated
-      // rows.
-
+      /* If the last option group we parse are global options,
+         we want to create a row for them immediately, and return the generated
+         rows. */
       if (i == options_groups.size() - 1) {
         r["readonly"] = is_writable_global ? "0" : "1";
         r["options"] = global_options;
@@ -224,7 +223,7 @@ boost::optional<Export> ExportFsParser::parseExportLine() {
 
     while (!remaining_line.empty()) {
       if (parser_state_ == ParserState::ExportPath) {
-        // Skip comments
+        // Skip comment lines
         if (remaining_line[0] == '#') {
           remaining_line = {};
           continue;
