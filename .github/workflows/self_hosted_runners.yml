@@ -98,9 +98,14 @@ jobs:
     needs: check_code_style
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        build_type: [Release, RelWithDebInfo]
+
     outputs:
       label: ${{ steps.start_ec2_runner.outputs.label }}
       ec2-instance-id: ${{ steps.start_ec2_runner.outputs.ec2-instance-id }}
+      build_type: ${{ matrix.build_type }}
 
     steps:
       - name: Configure AWS credentials
@@ -168,7 +173,7 @@ jobs:
       matrix:
         include:
         - os: ${{ needs.start_ec2_runners.outputs.label }}
-          build_type: RelWithDebInfo
+          build_type: ${{ needs.start_ec2_runners.outputs.build_type }}
           cache_key: ubuntu-20.04_aarch64
 
     steps:
@@ -181,6 +186,15 @@ jobs:
       run: |
         echo "VALUE=$(($(nproc) + 1))" >> $GITHUB_OUTPUT
 
+    - name: Select the build options for the tests
+      shell: bash
+      id: tests_build_settings
+      run: |
+        if [[ "${{ matrix.build_type }}" == "RelWithDebInfo" ]] ; then
+          echo "VALUE=OFF" >> $GITHUB_OUTPUT
+        else
+          echo "VALUE=ON" >> $GITHUB_OUTPUT
+        fi
 
     # try to gather some info about build space
     - name: Disk Space Information
@@ -297,9 +311,9 @@ jobs:
         cmake -G "Unix Makefiles" \
           -DOSQUERY_NO_DEBUG_SYMBOLS=${{ steps.debug_symbols_settings.outputs.VALUE }} \
           -DOSQUERY_TOOLCHAIN_SYSROOT:PATH="/usr/local/osquery-toolchain" \
-          -DCMAKE_BUILD_TYPE:STRING="${{ matrix.build_type }}" \
-          -DOSQUERY_BUILD_TESTS=ON \
-          -DOSQUERY_BUILD_ROOT_TESTS=ON \
+          -DCMAKE_BUILD_TYPE:STRING=${{ matrix.build_type }} \
+          -DOSQUERY_BUILD_TESTS=${{ steps.tests_build_settings.outputs.VALUE }} \
+          -DOSQUERY_BUILD_ROOT_TESTS=${{ steps.tests_build_settings.outputs.VALUE }} \
           "${{ steps.build_paths.outputs.SOURCE }}"
 
     - name: Build the project
