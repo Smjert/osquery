@@ -57,10 +57,14 @@ jobs:
     outputs:
       label-Release: ${{ steps.step1.outputs.label-Release }}
       label-RelWithDebInfo: ${{ steps.step1.outputs.label-RelWithDebInfo }}
+      pippo-Release: ${{ steps.step1.outputs.pippo-Release }}
+      pippo-RelWithDebInfo: ${{ steps.step1.outputs.pippo-RelWithDebInfo }}
 
     steps:
       - id: step1
-        run: echo "label-${{ matrix.build_type }}=${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "label-${{ matrix.build_type }}=${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
+          echo "pippo-${{ matrix.build_type }}=babbo-${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
 
   check-matrix:
     needs: run-matrix
@@ -68,9 +72,13 @@ jobs:
     runs-on: ubuntu-20.04
 
     strategy:
-        matrix:
-          label: ${{ needs.run-matrix.outputs.* }}
+      matrix:
+        build_type: [Release, RelWithDebInfo]
+    
+    env:
+      outputs: ${{ toJSON(needs.run-matrix.outputs) }}
 
     steps:
       - name: Print label
-        run: echo "${{ matrix.label }}"
+        run:
+          echo $outputs
