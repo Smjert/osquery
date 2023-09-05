@@ -21,7 +21,7 @@ on:
 
   push:
     branches:
-      - 'master'
+      - 'stefano/ci/x86_64-disk-space'
 
     tags:
       - '*'
@@ -254,8 +254,20 @@ jobs:
         os: [ubuntu-20.04]
 
     steps:
+    - name: Disk Space Information
+      shell: bash
+      id: disk_space_info
+      run: |
+        df -h
+
     - name: Clone the osquery repository
       uses: actions/checkout@v1
+
+    - name: Disk Space Information
+      shell: bash
+      id: disk_space_info1
+      run: |
+        df -h
 
     - name: Select the build job count
       shell: bash
@@ -336,6 +348,12 @@ jobs:
         cd ${{ steps.build_paths.outputs.PACKAGING }}
         git checkout ${{ env.PACKAGING_COMMIT }}
 
+    - name: Disk Space Information
+      shell: bash
+      id: disk_space_info2
+      run: |
+        df -h
+
     # One of the tests in the test suit will spawn a Docker container
     # using this socket. Allow the unprivileged user we created
     # to access it.
@@ -371,6 +389,12 @@ jobs:
       run: |
         git submodule sync --recursive
 
+    - name: Disk Space Information
+      shell: bash
+      id: disk_space_info3
+      run: |
+        df -h
+
     - name: Configure the project
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
 
@@ -386,6 +410,12 @@ jobs:
           -DOSQUERY_BUILD_ROOT_TESTS=${{ steps.tests_build_settings.outputs.VALUE }} \
           "${{ steps.build_paths.outputs.SOURCE }}"
 
+    - name: Disk Space Information
+      shell: bash
+      id: disk_space_info4
+      run: |
+        df -h
+
     - name: Build the project
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
 
@@ -394,6 +424,13 @@ jobs:
 
       run: |
         cmake --build . -j ${{ steps.build_job_count.outputs.VALUE }}
+
+    - name: Disk Space Information
+      shell: bash
+      id: disk_space_info5
+      run: |
+        df -h
+        du -sh ${{ steps.build_paths.outputs.BINARY }}
 
     # Only run the tests on Debug and Release configurations; skip RelWithDebInfo
     - name: Run the tests as normal user
