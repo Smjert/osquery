@@ -51,8 +51,8 @@ jobs:
     runs-on: ubuntu-20.04
 
     strategy:
-        matrix:
-          build_type: [Release, RelWithDebInfo]
+      matrix:
+        build_type: [Release, RelWithDebInfo]
 
     outputs:
       label-Release: ${{ steps.step1.outputs.label-Release }}
@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - id: step1
-        run: echo "${{ matrix.build_type }}=${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
+        run: echo "label-${{ matrix.build_type }}=${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
 
   check-matrix:
     needs: run-matrix
