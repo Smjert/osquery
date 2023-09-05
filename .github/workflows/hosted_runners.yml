@@ -55,16 +55,16 @@ jobs:
         build_type: [Release, RelWithDebInfo]
 
     outputs:
-      label-Release: ${{ steps.step1.outputs.label-Release }}
-      label-RelWithDebInfo: ${{ steps.step1.outputs.label-RelWithDebInfo }}
-      pippo-Release: ${{ steps.step1.outputs.pippo-Release }}
-      pippo-RelWithDebInfo: ${{ steps.step1.outputs.pippo-RelWithDebInfo }}
+      labelRelease: ${{ steps.step1.outputs.labelRelease }}
+      labelRelWithDebInfo: ${{ steps.step1.outputs.labelRelWithDebInfo }}
+      pippoRelease: ${{ steps.step1.outputs.pippoRelease }}
+      pippoRelWithDebInfo: ${{ steps.step1.outputs.pippoRelWithDebInfo }}
 
     steps:
       - id: step1
         run: |
-          echo "label-${{ matrix.build_type }}=${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
-          echo "pippo-${{ matrix.build_type }}=babbo-${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
+          echo "label${{ matrix.build_type }}=${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
+          echo "pippo${{ matrix.build_type }}=babbo-${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
 
   check-matrix:
     needs: run-matrix
@@ -74,11 +74,9 @@ jobs:
     strategy:
       matrix:
         build_type: [Release, RelWithDebInfo]
-    
-    env:
-      outputs: ${{ toJSON(needs.run-matrix.outputs) }}
 
     steps:
       - name: Print label
-        run:
-          echo $outputs
+        run: |
+          echo '${{ toJSON( needs.run-matrix.outputs ) }}' | jq ".label${{ matrix.build_type }}"
+          echo '${{ toJSON( needs.run-matrix.outputs ) }}'' | jq ".pippo${{ matrix.build_type }}"
