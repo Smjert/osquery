@@ -21,7 +21,7 @@ on:
 
   push:
     branches:
-      - 'master'
+      - 'stefano/ci/linux-disk-space2'
 
     tags:
       - '*'
