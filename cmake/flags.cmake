@@ -355,6 +355,7 @@ function(setupBuildFlags)
       "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>"
       _WIN32_WINNT=_WIN32_WINNT_WIN7
       NTDDI_VERSION=NTDDI_WIN7
+      _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
     )
 
     set(windows_cxx_compile_options
