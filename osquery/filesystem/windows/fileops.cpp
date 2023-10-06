@@ -319,6 +319,19 @@ AsyncEvent::AsyncEvent() {
   overlapped_.hEvent = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 }
 
+AsyncEvent::AsyncEvent(AsyncEvent&& other)
+    : overlapped_(std::exchange(other.overlapped_, OVERLAPPED{})),
+      buffer_(std::exchange(other.buffer_, nullptr)),
+      is_active_(std::exchange(other.is_active_, false)) {}
+
+AsyncEvent& AsyncEvent::operator=(AsyncEvent&& other) {
+  overlapped_ = std::exchange(other.overlapped_, OVERLAPPED{});
+  buffer_ = std::exchange(other.buffer_, nullptr);
+  is_active_ = std::exchange(other.is_active_, false);
+
+  return *this;
+}
+
 AsyncEvent::~AsyncEvent() {
   if (overlapped_.hEvent != nullptr) {
     ::CloseHandle(overlapped_.hEvent);
@@ -763,6 +776,14 @@ PlatformFile::PlatformFile(const fs::path& path, int mode, int perms)
   }
 }
 
+PlatformFile::PlatformFile(PlatformFile&& other)
+    : fname_(std::move(other.fname_)),
+      handle_(std::exchange(other.handle_, kInvalidHandle)),
+      is_nonblock_(other.is_nonblock_),
+      has_pending_io_(other.has_pending_io_),
+      cursor_(other.cursor_),
+      last_read_(std::move(other.last_read_)) {}
+
 PlatformFile::~PlatformFile() {
   if (handle_ != kInvalidHandle && handle_ != nullptr) {
     // Only cancel IO if we are a non-blocking HANDLE
@@ -1105,6 +1126,16 @@ ssize_t PlatformFile::getOverlappedResultForRead(void* buf,
       has_pending_io_ = true;
       last_read_.is_active_ = true;
       nret = -1;
+    } else if (last_error == ERROR_HANDLE_EOF) {
+      // We arrived at the end of the file. This normally happens only with
+      // empty files, or when over reading. In the other case where the last
+      // read gets all the final bytes, GetOverlappedResult will succeed and
+      // report no further pending data.
+
+      has_pending_io_ = false;
+      last_read_.is_active_ = false;
+      last_read_.buffer_.reset(nullptr);
+      nret = 0;
     } else {
       // Error has occurred, just in case, cancel all IO
       ::CancelIo(handle_);

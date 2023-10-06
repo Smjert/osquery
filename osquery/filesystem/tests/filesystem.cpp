@@ -292,14 +292,6 @@ TEST_F(FilesystemTests, test_read_limit) {
   EXPECT_TRUE(status.ok());
 }
 
-TEST_F(FilesystemTests, test_read_size) {
-  std::string content;
-  size_t s = 3;
-  auto status = readFile(fake_directory_ / "root.txt", content, s);
-  EXPECT_TRUE(status.ok());
-  EXPECT_EQ(content.size(), s);
-}
-
 TEST_F(FilesystemTests, test_list_files_missing_directory) {
   std::vector<std::string> results;
   auto status = listFilesInDirectory("/foo/bar", results);
@@ -589,29 +581,6 @@ TEST_F(FilesystemTests, test_read_symlink) {
   }
 }
 
-TEST_F(FilesystemTests, test_read_zero) {
-  std::string content;
-
-  if (!isPlatform(PlatformType::TYPE_WINDOWS)) {
-    auto status = readFile("/dev/zero", content, 10);
-    EXPECT_EQ(content.size(), 10U);
-    for (size_t i = 0; i < 10; i++) {
-      EXPECT_EQ(content[i], 0);
-    }
-  }
-}
-
-TEST_F(FilesystemTests, test_read_urandom) {
-  std::string first, second;
-
-  if (!isPlatform(PlatformType::TYPE_WINDOWS)) {
-    auto status = readFile("/dev/urandom", first, 10);
-    EXPECT_TRUE(status.ok());
-    status = readFile("/dev/urandom", second, 10);
-    EXPECT_NE(first, second);
-  }
-}
-
 TEST_F(FilesystemTests, create_directory) {
   auto const recursive = false;
   auto const ignore_existence = false;
@@ -720,7 +689,7 @@ TEST_F(FilesystemTests, test_read_fifo) {
   ASSERT_TRUE(content.empty());
   ::unlink(test_file.c_str());
 #else
-  std::wstring pipe_name = stringToWstring("\\.pipe\test_pipe");
+  std::wstring pipe_name = LR"(\\.\pipe\osquery_test_pipe)";
   HANDLE pipe_handle = CreateNamedPipe(pipe_name.c_str(),
                                        PIPE_ACCESS_DUPLEX,
                                        PIPE_WAIT,
@@ -730,6 +699,7 @@ TEST_F(FilesystemTests, test_read_fifo) {
                                        1000,
                                        0);
   std::string content;
+  ASSERT_NE(pipe_handle, INVALID_HANDLE_VALUE) << GetLastError();
   ASSERT_FALSE(readFile(pipe_name, content));
   ASSERT_TRUE(content.empty());
   CloseHandle(pipe_handle);

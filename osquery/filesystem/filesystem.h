@@ -42,9 +42,55 @@ const std::string kSQLGlobWildcard{"%"};
 /// Globbing wildcard recursive character (double wildcard).
 const std::string kSQLGlobRecursive{kSQLGlobWildcard + kSQLGlobWildcard};
 
+std::string formatReadMaxErrorMessage(const std::string& file_path,
+                                      std::size_t);
+
 /// Calls the setlocale() API, only used on Windows
 void initializeFilesystemAPILocale();
 
+#if 2
+/**
+ * @brief Read a file from disk.
+ *
+ * @param path the path of the file that you would like to read.
+ * @param log emit log messages using default logger for read size errors.
+ *
+ * @return an instance of Status, indicating success or failure.
+ */
+Status readFile(const boost::filesystem::path& path,
+                std::string& content,
+                bool log = true);
+
+Status readWithSize(const boost::filesystem::path& path,
+                    char* buffer,
+                    std::size_t& size,
+                    bool retry_pending);
+
+Status readWithSize(PlatformFile& file_handle,
+                    char* buffer,
+                    std::size_t& size,
+                    bool retry_pending);
+#elif 1
+/**
+ * @brief Read a file from disk.
+ *
+ * @param path the path of the file that you would like to read.
+ * @param log emit log messages using default logger for read size errors.
+ *
+ * @return an instance of Status, indicating success or failure.
+ */
+Status readFile(const boost::filesystem::path& path,
+                std::string& content,
+                bool log = true);
+
+Status readWithSize(const boost::filesystem::path& path,
+                    char* buffer,
+                    std::size_t& size);
+
+Status readWithSize(PlatformFile& file_handle,
+                    char* buffer,
+                    std::size_t& size);
+#else
 /**
  * @brief Read a file from disk.
  *
@@ -85,6 +131,7 @@ Status readFile(const boost::filesystem::path& path,
                 std::function<void(std::string& buffer, size_t size)> predicate,
                 bool blocking = false,
                 bool log = true);
+#endif
 
 /**
  * @brief Write text to disk.

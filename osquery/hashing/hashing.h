@@ -54,7 +54,7 @@ struct MultiHashes {
  * @endcode
  *
  */
-class Hash : private boost::noncopyable {
+class Hash {
  public:
   /**
    * @brief Hash constructor
@@ -77,6 +77,12 @@ class Hash : private boost::noncopyable {
    * @param encoding The encoding that will be used to render the hash digest.
    */
   explicit Hash(HashType algorithm, HashEncodingType encoding);
+
+  Hash(Hash&& other) noexcept;
+  Hash(const Hash& other) = delete;
+
+  Hash& operator=(Hash&& other) noexcept;
+  Hash& operator=(const Hash& other) = delete;
 
   /**
    * @brief Hash destructor

@@ -167,6 +167,10 @@ std::unique_ptr<BYTE[]> getCurrentUserInfo();
  */
 struct AsyncEvent {
   AsyncEvent();
+  AsyncEvent(AsyncEvent&& other);
+
+  AsyncEvent& operator=(AsyncEvent&& other);
+
   ~AsyncEvent();
 
   OVERLAPPED overlapped_{0};
@@ -215,6 +219,8 @@ class PlatformFile : private boost::noncopyable {
                         int perms = -1);
   explicit PlatformFile(PlatformHandle handle) : handle_(handle) {}
 
+  PlatformFile(PlatformFile&& other);
+
   ~PlatformFile();
 
   /// Checks to see if the file object is "special file".
@@ -240,6 +246,10 @@ class PlatformFile : private boost::noncopyable {
   /// Returns the platform specific handle.
   PlatformHandle nativeHandle() const {
     return handle_;
+  }
+
+  const boost::filesystem::path& getFilePath() const {
+    return fname_;
   }
 
   /**

@@ -83,6 +83,12 @@ PlatformFile::PlatformFile(const fs::path& path, int mode, int perms)
   handle_ = ::open(fname_.c_str(), oflag, perms);
 }
 
+PlatformFile::PlatformFile(PlatformFile&& other)
+    : fname_(std::move(other.fname_)),
+      handle_(std::exchange(other.handle_, kInvalidHandle)),
+      is_nonblock_(other.is_nonblock_),
+      has_pending_io_(other.has_pending_io_) {}
+
 PlatformFile::~PlatformFile() {
   if (handle_ != kInvalidHandle) {
     ::close(handle_);

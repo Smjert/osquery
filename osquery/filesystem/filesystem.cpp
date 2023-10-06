@@ -33,11 +33,10 @@
 #if WIN32
 #include <osquery/utils/conversions/windows/strings.h>
 #endif
+#include <osquery/utils/expected/expected.h>
+#include <osquery/utils/json/json.h>
 #include <osquery/utils/system/system.h>
 
-#include <osquery/utils/json/json.h>
-
-namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 namespace errc = boost::system::errc;
 
@@ -49,6 +48,16 @@ FLAG(uint64, read_max, 50 * 1024 * 1024, "Maximum file read size");
 HIDDEN_FLAG(bool, allow_unsafe, false, "Allow unsafe executable permissions");
 
 static const size_t kMaxRecursiveGlobs = 64;
+
+static constexpr std::size_t kBlockSize = 16384;
+
+std::string formatReadMaxErrorMessage(const std::string& file_path,
+                                      std::size_t read) {
+  auto error_message = "Cannot read " + file_path +
+                       " size exceeds limit: " + std::to_string(read) + " > " +
+                       std::to_string(FLAGS_read_max);
+  return error_message;
+}
 
 Status writeTextFile(const fs::path& path,
                      const std::string& content,
@@ -80,6 +89,202 @@ Status writeTextFile(const fs::path& path,
   return Status::success();
 }
 
+void initializeFilesystemAPILocale() {
+#if defined(WIN32)
+  setlocale(LC_ALL, ".UTF-8");
+
+  boost::filesystem::path::imbue(std::locale(
+      std::locale(".UTF-8"), new std::codecvt_utf8_utf16<wchar_t>()));
+#endif
+}
+
+#if 2
+Status readFile(const fs::path& path, std::string& content, bool log) {
+  PlatformFile file_handle(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
+
+  if (!file_handle.isValid()) {
+    return Status::failure("Cannot open file for reading: " +
+                           file_handle.getFilePath().string());
+  }
+
+  std::uint64_t file_size = file_handle.size();
+
+  // Apply the max byte-read.
+  auto read_max = FLAGS_read_max;
+
+  if (file_size > read_max) {
+    auto error_message = "Cannot read " + path.string() +
+                         " size exceeds limit: " + std::to_string(file_size) +
+                         " > " + std::to_string(read_max);
+    if (log) {
+      LOG(WARNING) << error_message;
+    }
+    return Status::failure(error_message);
+  }
+
+  const bool isSpecialFile = file_handle.isSpecialFile();
+
+  std::size_t read_size = 0;
+  if (!isSpecialFile && file_size == 0) {
+    return Status::success();
+  }
+
+  if (file_size > 0) {
+    read_size = file_size;
+    content.resize(file_size);
+  } else {
+    read_size = kBlockSize;
+    content.resize(kBlockSize);
+  }
+
+  std::size_t offset = 0;
+  ssize_t res = 0;
+
+  do {
+    res = file_handle.read(&content[offset], read_size);
+
+    if (res == 0) {
+      break;
+    }
+
+    if (res > 0) {
+      offset += res;
+      if (offset > read_max) {
+        auto error_message = "Cannot read " + path.string() +
+                             " size exceeds limit: " + std::to_string(offset) +
+                             " > " + std::to_string(read_max);
+        if (log) {
+          LOG(WARNING) << error_message;
+        }
+
+        content.clear();
+        return Status::failure(error_message);
+      }
+
+      if (file_size > 0) {
+        read_size = file_size - offset;
+      } else {
+        content.resize(content.size() + kBlockSize);
+      }
+    }
+  } while (read_size > 0 &&
+           (res > 0 || (!isSpecialFile && file_handle.hasPendingIo())));
+
+  if (res < 0) {
+    content.clear();
+    return Status::failure("Failed to read " + path.string());
+  }
+
+  content.resize(offset);
+
+  return Status::success();
+}
+#elif 1
+Status readWithSize(const fs::path& path, char* buffer, std::size_t& size) {
+  PlatformFile file_handle(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
+
+  if (!file_handle.isValid()) {
+    return Status::failure("Cannot open file for reading: " +
+                           file_handle.getFilePath().string());
+  }
+
+  return readWithSize(file_handle, buffer, size);
+}
+
+Status readWithSize(PlatformFile& file_handle,
+                    char* buffer,
+                    std::size_t& size) {
+  std::size_t total_bytes = 0;
+  ssize_t bytes_read = 0;
+
+  do {
+    bytes_read = file_handle.read(&buffer[total_bytes], size - total_bytes);
+
+    if (bytes_read > 0) {
+      total_bytes += bytes_read;
+    }
+
+    // } while ((bytes_read > 0 || file_handle.hasPendingIo()) &&
+    //          total_bytes < size);
+  } while (bytes_read > 0 && total_bytes < size);
+
+  if (bytes_read < 0) {
+    return Status::failure("Failed to read " +
+                           file_handle.getFilePath().string());
+  }
+
+  size = total_bytes;
+
+  return Status::success();
+}
+
+Status readFile(const fs::path& path, std::string& content, bool log) {
+  PlatformFile file_handle(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
+
+  if (!file_handle.isValid()) {
+    return Status::failure("Cannot open file for reading: " +
+                           file_handle.getFilePath().string());
+  }
+
+  std::uint64_t file_size = file_handle.size();
+
+  // Apply the max byte-read.
+  auto read_max = FLAGS_read_max;
+
+  if (file_size > 0) {
+    if (file_size > read_max) {
+      auto error_message = "Cannot read " + path.string() +
+                           " size exceeds limit: " + std::to_string(file_size) +
+                           " > " + std::to_string(read_max);
+      if (log) {
+        LOG(WARNING) << error_message;
+      }
+      return Status::failure(error_message);
+    }
+
+    content.resize(file_size);
+
+    auto status = readWithSize(file_handle, content.data(), file_size);
+
+    if (!status.ok()) {
+      return Status::failure(status.getMessage());
+    }
+    return Status::success();
+  }
+
+  char block[kBlockSize]{};
+  ssize_t res;
+  content.clear();
+
+  do {
+    res = file_handle.read(block, kBlockSize);
+
+    if (res > 0) {
+      if ((content.size() + res) > read_max) {
+        auto error_message =
+            "Cannot read " + path.string() +
+            " size exceeds limit: " + std::to_string(file_size) + " > " +
+            std::to_string(read_max);
+        if (log) {
+          LOG(WARNING) << error_message;
+        }
+        return Status::failure(error_message);
+      }
+
+      content.append(block, res);
+    }
+
+    //} while ((res > 0 || file_handle.hasPendingIo()));
+  } while (res > 0);
+
+  if (res < 0) {
+    return Status::failure("Failed to read " + path.string());
+  }
+
+  return Status::success();
+}
+#else
+
 struct OpenReadableFile : private boost::noncopyable {
  public:
   explicit OpenReadableFile(const fs::path& path, bool blocking = false)
@@ -97,15 +302,6 @@ struct OpenReadableFile : private boost::noncopyable {
   std::unique_ptr<PlatformFile> fd{nullptr};
   bool blocking_io;
 };
-
-void initializeFilesystemAPILocale() {
-#if defined(WIN32)
-  setlocale(LC_ALL, ".UTF-8");
-
-  boost::filesystem::path::imbue(std::locale(
-      std::locale(".UTF-8"), new std::codecvt_utf8_utf16<wchar_t>()));
-#endif
-}
 
 Status readFile(const fs::path& path,
                 size_t size,
@@ -214,6 +410,8 @@ Status readFile(const fs::path& path, bool blocking) {
   std::string blank;
   return readFile(path, blank, 0, true, false, blocking);
 }
+
+#endif
 
 Status isWritable(const fs::path& path, bool effective) {
   auto path_exists = pathExists(path);
@@ -526,8 +724,8 @@ bool safePermissions(const fs::path& dir,
 
   Status result = platformIsTmpDir(dir);
   if (!result.ok() && result.getCode() < 0) {
-    // An error has occurred in stat() on dir, most likely because the file path
-    // does not exist
+    // An error has occurred in stat() on dir, most likely because the file
+    // path does not exist
     return false;
   } else if (result.ok()) {
     // Do not load modules from /tmp-like directories.
