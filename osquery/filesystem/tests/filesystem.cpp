@@ -292,14 +292,6 @@ TEST_F(FilesystemTests, test_read_limit) {
   EXPECT_TRUE(status.ok());
 }
 
-TEST_F(FilesystemTests, test_read_size) {
-  std::string content;
-  size_t s = 3;
-  auto status = readFile(fake_directory_ / "root.txt", content, s);
-  EXPECT_TRUE(status.ok());
-  EXPECT_EQ(content.size(), s);
-}
-
 TEST_F(FilesystemTests, test_list_files_missing_directory) {
   std::vector<std::string> results;
   auto status = listFilesInDirectory("/foo/bar", results);
@@ -586,29 +578,6 @@ TEST_F(FilesystemTests, test_read_symlink) {
     auto status = readFile(fake_directory_ / "root2.txt", content);
     EXPECT_TRUE(status.ok());
     EXPECT_EQ(content, "root");
-  }
-}
-
-TEST_F(FilesystemTests, test_read_zero) {
-  std::string content;
-
-  if (!isPlatform(PlatformType::TYPE_WINDOWS)) {
-    auto status = readFile("/dev/zero", content, 10);
-    EXPECT_EQ(content.size(), 10U);
-    for (size_t i = 0; i < 10; i++) {
-      EXPECT_EQ(content[i], 0);
-    }
-  }
-}
-
-TEST_F(FilesystemTests, test_read_urandom) {
-  std::string first, second;
-
-  if (!isPlatform(PlatformType::TYPE_WINDOWS)) {
-    auto status = readFile("/dev/urandom", first, 10);
-    EXPECT_TRUE(status.ok());
-    status = readFile("/dev/urandom", second, 10);
-    EXPECT_NE(first, second);
   }
 }
 

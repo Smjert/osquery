@@ -37,7 +37,6 @@
 
 #include <osquery/utils/json/json.h>
 
-namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 namespace errc = boost::system::errc;
 
@@ -49,6 +48,8 @@ FLAG(uint64, read_max, 50 * 1024 * 1024, "Maximum file read size");
 HIDDEN_FLAG(bool, allow_unsafe, false, "Allow unsafe executable permissions");
 
 static const size_t kMaxRecursiveGlobs = 64;
+
+static constexpr std::size_t kBlockSize = 4096;
 
 Status writeTextFile(const fs::path& path,
                      const std::string& content,
@@ -108,29 +109,51 @@ void initializeFilesystemAPILocale() {
 }
 
 Status readFile(const fs::path& path,
-                size_t size,
-                size_t block_size,
-                bool dry_run,
-                std::function<void(std::string& buffer, size_t size)> predicate,
-                bool blocking,
+                std::function<void(std::string_view buffer)> predicate,
                 bool log) {
-  OpenReadableFile handle(path, blocking);
+  OpenReadableFile handle(path, false);
 
   if (handle.fd == nullptr || !handle.fd->isValid()) {
     return Status::failure("Cannot open file for reading: " + path.string());
   }
 
-  off_t file_size = static_cast<off_t>(handle.fd->size());
+  std::uint64_t file_size = handle.fd->size();
 
-  if (size > 0 &&
-      (handle.fd->isSpecialFile() || static_cast<off_t>(size) < file_size)) {
-    file_size = static_cast<off_t>(size);
+  // Apply the max byte-read.
+  auto read_max = FLAGS_read_max;
+  if (file_size > read_max) {
+    auto s =
+        Status::failure("Cannot read " + path.string() +
+                        " size exceeds limit: " + std::to_string(file_size) +
+                        " > " + std::to_string(read_max));
+    if (log) {
+      LOG(WARNING) << s.getMessage();
+    }
+    return s;
   }
 
-  // Apply the max byte-read based on file/link target ownership.
-  auto read_max = static_cast<off_t>(FLAGS_read_max);
-  if (file_size > read_max) {
-    if (!dry_run) {
+  std::uint64_t total_bytes = 0;
+  ssize_t bytes_read = 0;
+  char buffer[kBlockSize]{};
+
+  do {
+    bytes_read = handle.fd->read(buffer, kBlockSize);
+
+    if (bytes_read < 0) {
+      if (handle.fd->hasPendingIo()) {
+        continue;
+      }
+
+      return Status::failure("Failed to read");
+    }
+
+    if (bytes_read == 0) {
+      break;
+    }
+
+    total_bytes += bytes_read;
+
+    if (total_bytes > read_max) {
       auto s =
           Status::failure("Cannot read " + path.string() +
                           " size exceeds limit: " + std::to_string(file_size) +
@@ -140,79 +163,17 @@ Status readFile(const fs::path& path,
       }
       return s;
     }
-    return Status::failure("File exceeds read limits");
-  }
 
-  if (dry_run) {
-    // The caller is only interested in performing file read checks.
-    boost::system::error_code ec;
-    try {
-      return Status(0, fs::canonical(path, ec).string());
-    } catch (const boost::filesystem::filesystem_error& err) {
-      return Status::failure(err.what());
-    }
-  }
+    predicate({buffer, static_cast<std::size_t>(bytes_read)});
 
-  off_t total_bytes = 0;
-  if (handle.blocking_io || handle.fd->isSpecialFile()) {
-    // Reset block size to a sane minimum.
-    block_size = (block_size < 4096) ? 4096 : block_size;
-    ssize_t part_bytes = 0;
-    bool overflow = false;
-    do {
-      std::string part(block_size, '\0');
-      part_bytes = handle.fd->read(&part[0], block_size);
-      if (part_bytes > 0) {
-        total_bytes += static_cast<off_t>(part_bytes);
-        if (total_bytes >= read_max) {
-          return Status::failure("File exceeds read limits");
-        }
-        if (file_size > 0 && total_bytes > file_size) {
-          overflow = true;
-          part_bytes -= (total_bytes - file_size);
-        }
-        predicate(part, part_bytes);
-      }
-    } while (part_bytes > 0 && !overflow);
-  } else {
-    std::string content(file_size, '\0');
-    do {
-      auto part_bytes =
-          handle.fd->read(&content[total_bytes], file_size - total_bytes);
-      if (part_bytes > 0) {
-        total_bytes += static_cast<off_t>(part_bytes);
-      }
-    } while (handle.fd->hasPendingIo());
-    predicate(content, file_size);
-  }
+  } while (total_bytes < file_size);
 
   return Status::success();
-} // namespace osquery
-
-Status readFile(const fs::path& path,
-                std::string& content,
-                size_t size,
-                bool dry_run,
-                bool blocking,
-                bool log) {
-  return readFile(path,
-                  size,
-                  4096,
-                  dry_run,
-                  ([&content](std::string& buffer, size_t _size) {
-                    if (buffer.size() == _size) {
-                      content += std::move(buffer);
-                    } else {
-                      content += buffer.substr(0, _size);
-                    }
-                  }),
-                  blocking,
-                  log);
 }
 
-Status readFile(const fs::path& path, bool blocking) {
-  std::string blank;
-  return readFile(path, blank, 0, true, false, blocking);
+Status readFile(const fs::path& path, std::string& content, bool log) {
+  return readFile(
+      path, ([&content](std::string_view buffer) { content += buffer; }), log);
 }
 
 Status isWritable(const fs::path& path, bool effective) {

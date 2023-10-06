@@ -61,29 +61,11 @@ void initializeFilesystemAPILocale();
  */
 Status readFile(const boost::filesystem::path& path,
                 std::string& content,
-                size_t size = 0,
-                bool dry_run = false,
-                bool blocking = false,
                 bool log = true);
-
-/**
- * @brief Return the status of an attempted file read.
- *
- * @param path the path of the file that you would like to read.
- * @param blocking Request a blocking read.
- *
- * @return success iff the file would have been read. On success the status
- * message is the complete/absolute path.
- */
-Status readFile(const boost::filesystem::path& path, bool blocking = false);
 
 /// Internal representation for predicate-based chunk reading.
 Status readFile(const boost::filesystem::path& path,
-                size_t size,
-                size_t block_size,
-                bool dry_run,
-                std::function<void(std::string& buffer, size_t size)> predicate,
-                bool blocking = false,
+                std::function<void(std::string_view buffer)> predicate,
                 bool log = true);
 
 /**

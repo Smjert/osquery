@@ -24,9 +24,6 @@
 
 namespace osquery {
 
-/// The buffer read size from file IO to hashing structures.
-const size_t kHashChunkSize{4096};
-
 Hash::~Hash() {
   if (ctx_ != nullptr) {
     free(ctx_);
@@ -109,19 +106,13 @@ MultiHashes hashMultiFromFile(int mask, const std::string& path) {
       {HASH_TYPE_SHA256, std::make_shared<Hash>(HASH_TYPE_SHA256)},
   };
 
-  auto blocking = isPlatform(PlatformType::TYPE_WINDOWS);
-  auto s = readFile(path,
-                    0,
-                    kHashChunkSize,
-                    false,
-                    ([&hashes, &mask](std::string& buffer, size_t size) {
-                      for (auto& hash : hashes) {
-                        if (mask & hash.first) {
-                          hash.second->update(&buffer[0], size);
-                        }
-                      }
-                    }),
-                    blocking);
+  auto s = readFile(path, [&hashes, &mask](std::string_view buffer) {
+    for (auto& hash : hashes) {
+      if (mask & hash.first) {
+        hash.second->update(buffer.data(), buffer.size());
+      }
+    }
+  });
 
   MultiHashes mh = {};
   if (!s.ok()) {
