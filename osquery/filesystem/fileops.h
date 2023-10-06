@@ -165,8 +165,12 @@ std::unique_ptr<BYTE[]> getCurrentUserInfo();
  * Windows-only class that deals with simulating POSIX asynchronous IO semantics
  * using Windows API calls
  */
-struct AsyncEvent {
+struct AsyncEvent : boost::noncopyable {
   AsyncEvent();
+  AsyncEvent(AsyncEvent&& other) noexcept;
+
+  AsyncEvent& operator=(AsyncEvent&& other) noexcept;
+
   ~AsyncEvent();
 
   OVERLAPPED overlapped_{0};
@@ -215,6 +219,9 @@ class PlatformFile : private boost::noncopyable {
                         int perms = -1);
   explicit PlatformFile(PlatformHandle handle) : handle_(handle) {}
 
+  PlatformFile(PlatformFile&& other) noexcept;
+  PlatformFile& operator=(PlatformFile&& other) noexcept;
+
   ~PlatformFile();
 
   /// Checks to see if the file object is "special file".
@@ -240,6 +247,10 @@ class PlatformFile : private boost::noncopyable {
   /// Returns the platform specific handle.
   PlatformHandle nativeHandle() const {
     return handle_;
+  }
+
+  const boost::filesystem::path& getFilePath() const {
+    return fname_;
   }
 
   /**
