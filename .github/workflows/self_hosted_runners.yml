@@ -201,6 +201,12 @@ jobs:
           cache_key: ubuntu-20.04_aarch64
 
     steps:
+    - name: Sleep test
+      shell: bash
+      run:
+        sleep 4h
+        exit 1
+
     - name: Clone the osquery repository
       uses: actions/checkout@v1
 
