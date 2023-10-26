@@ -108,13 +108,64 @@ void initializeFilesystemAPILocale() {
 #endif
 }
 
-Status readFile(const fs::path& path,
-                std::function<void(std::string_view buffer)> predicate,
-                bool log) {
+Status readWithSize(const fs::path& path,
+                    std::string& content,
+                    std::uint64_t size) {
   OpenReadableFile handle(path, false);
 
   if (handle.fd == nullptr || !handle.fd->isValid()) {
-    return Status::failure("Cannot open file for reading: " + path.string());
+    return Status::failure("Cannot open file for reading: " +
+                           handle.fd->getFilePath().string());
+  }
+
+  return readWithSize(handle, content, size);
+}
+
+Status readWithSize(OpenReadableFile& file_handle,
+                    std::string& content,
+                    std::uint64_t size) {
+  std::uint64_t total_bytes = 0;
+  ssize_t bytes_read = 0;
+  content.resize(size);
+
+  do {
+    bytes_read =
+        file_handle.fd->read(&content[total_bytes], size - total_bytes);
+
+    if (bytes_read < 0) {
+      if (file_handle.fd->hasPendingIo()) {
+        continue;
+      }
+
+      return Status::failure("Failed to read");
+    }
+
+    if (bytes_read == 0) {
+      break;
+    }
+
+    total_bytes += bytes_read;
+
+    // if (total_bytes > read_max) {
+    //   auto s =
+    //       Status::failure("Cannot read " + path.string() +
+    //                       " size exceeds limit: " + std::to_string(file_size)
+    //                       + " > " + std::to_string(read_max));
+    //   if (log) {
+    //     LOG(WARNING) << s.getMessage();
+    //   }
+    //   return s;
+    // }
+
+  } while (total_bytes < size);
+}
+
+Expected<std::string, Error> readFile(const fs::path& path, bool log) {
+  OpenReadableFile handle(path, false);
+
+  if (handle.fd == nullptr || !handle.fd->isValid()) {
+    return Status::failure("Cannot open file for reading: " +
+                           handle.fd->getFilePath().string());
   }
 
   std::uint64_t file_size = handle.fd->size();
@@ -132,43 +183,9 @@ Status readFile(const fs::path& path,
     return s;
   }
 
-  std::uint64_t total_bytes = 0;
-  ssize_t bytes_read = 0;
-  char buffer[kBlockSize]{};
+  readWithSize()
 
-  do {
-    bytes_read = handle.fd->read(buffer, kBlockSize);
-
-    if (bytes_read < 0) {
-      if (handle.fd->hasPendingIo()) {
-        continue;
-      }
-
-      return Status::failure("Failed to read");
-    }
-
-    if (bytes_read == 0) {
-      break;
-    }
-
-    total_bytes += bytes_read;
-
-    if (total_bytes > read_max) {
-      auto s =
-          Status::failure("Cannot read " + path.string() +
-                          " size exceeds limit: " + std::to_string(file_size) +
-                          " > " + std::to_string(read_max));
-      if (log) {
-        LOG(WARNING) << s.getMessage();
-      }
-      return s;
-    }
-
-    predicate({buffer, static_cast<std::size_t>(bytes_read)});
-
-  } while (total_bytes < file_size);
-
-  return Status::success();
+      return Status::success();
 }
 
 Status readFile(const fs::path& path, std::string& content, bool log) {

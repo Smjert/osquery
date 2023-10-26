@@ -242,6 +242,10 @@ class PlatformFile : private boost::noncopyable {
     return handle_;
   }
 
+  const fs::path& getFilePath() const {
+    return fname_;
+  }
+
   /**
    * @brief Returns success if owner of the file is root.
    *
