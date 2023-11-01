@@ -33,9 +33,9 @@
 #if WIN32
 #include <osquery/utils/conversions/windows/strings.h>
 #endif
-#include <osquery/utils/system/system.h>
-
+#include <osquery/utils/expected/expected.h>
 #include <osquery/utils/json/json.h>
+#include <osquery/utils/system/system.h>
 
 namespace fs = boost::filesystem;
 namespace errc = boost::system::errc;
@@ -158,14 +158,22 @@ Status readWithSize(OpenReadableFile& file_handle,
     // }
 
   } while (total_bytes < size);
+
+  /* NOTE: If the read happens successfully but in the end we get less than what we asked,
+     we cannot assume that this is an error necessarily, since the file could be one with no size,
+     so knowing how much data to read before hand is impossible. */
+  content.resize(total_bytes);
+
+ 
+  return Status::success();
 }
 
-Expected<std::string, Error> readFile(const fs::path& path, bool log) {
+ReadResult readFile(const fs::path& path, bool log) {
   OpenReadableFile handle(path, false);
 
   if (handle.fd == nullptr || !handle.fd->isValid()) {
-    return Status::failure("Cannot open file for reading: " +
-                           handle.fd->getFilePath().string());
+    return ReadResult::failure("Cannot open file for reading: " +
+                               handle.fd->getFilePath().string());
   }
 
   std::uint64_t file_size = handle.fd->size();
@@ -173,24 +181,66 @@ Expected<std::string, Error> readFile(const fs::path& path, bool log) {
   // Apply the max byte-read.
   auto read_max = FLAGS_read_max;
   if (file_size > read_max) {
-    auto s =
-        Status::failure("Cannot read " + path.string() +
-                        " size exceeds limit: " + std::to_string(file_size) +
-                        " > " + std::to_string(read_max));
+    auto error_message = "Cannot read " + path.string() +
+                         " size exceeds limit: " + std::to_string(file_size) +
+                         " > " + std::to_string(read_max);
     if (log) {
-      LOG(WARNING) << s.getMessage();
+      LOG(WARNING) << error_message;
     }
-    return s;
+    return ReadResult::failure(error_message);
   }
 
-  readWithSize()
+  std::string content;
 
-      return Status::success();
+  
+
+  auto status = readWithSize(handle, content, file_size);
+
+  if (!status.ok()) {
+    return ReadResult::failure(status.getMessage());
+  }
+
+  return content;
 }
 
-Status readFile(const fs::path& path, std::string& content, bool log) {
-  return readFile(
-      path, ([&content](std::string_view buffer) { content += buffer; }), log);
+ReadResult readFile(const fs::path& path,
+                    std::size_t block_size,
+                    std::function<void(std::string_view buffer)> callback,
+                    bool log) {
+  OpenReadableFile handle(path, false);
+  if (handle.fd == nullptr || !handle.fd->isValid()) {
+    return ReadResult::failure("Cannot open file for reading: " +
+                               handle.fd->getFilePath().string());
+  }
+
+  std::uint64_t file_size = handle.fd->size();
+
+  // Apply the max byte-read.
+  auto read_max = FLAGS_read_max;
+  if (file_size > read_max) {
+    auto error_message = "Cannot read " + path.string() +
+                         " size exceeds limit: " + std::to_string(file_size) +
+                         " > " + std::to_string(read_max);
+    if (log) {
+      LOG(WARNING) << error_message;
+    }
+    return ReadResult::failure(error_message);
+  }
+
+  std::string content;
+  std::size_t total_bytes = 0;
+
+  do {
+    auto status = readWithSize(handle, content, file_size);
+
+    if (!status.ok()) {
+      return ReadResult::failure(status.getMessage());
+    }
+
+    total_bytes += content.size();
+    
+
+  } while ()
 }
 
 Status isWritable(const fs::path& path, bool effective) {

@@ -31,6 +31,10 @@ enum GlobLimits : size_t {
   GLOB_NO_CANON = 0x4,
 };
 
+enum class ReadError {
+  GenericError,
+};
+
 inline GlobLimits operator|(GlobLimits a, GlobLimits b) {
   return static_cast<GlobLimits>(static_cast<size_t>(a) |
                                  static_cast<size_t>(b));
@@ -45,6 +49,7 @@ const std::string kSQLGlobRecursive{kSQLGlobWildcard + kSQLGlobWildcard};
 /// Calls the setlocale() API, only used on Windows
 void initializeFilesystemAPILocale();
 
+using ReadResult = Expected<std::string, ReadError>;
 /**
  * @brief Read a file from disk.
  *
@@ -59,14 +64,14 @@ void initializeFilesystemAPILocale();
  *
  * @return an instance of Status, indicating success or failure.
  */
-Status readFile(const boost::filesystem::path& path,
-                std::string& content,
-                bool log = true);
+ReadResult readFile(const boost::filesystem::path& path,
+                    std::string& content,
+                    bool log = true);
 
 /// Internal representation for predicate-based chunk reading.
-Status readFile(const boost::filesystem::path& path,
-                std::function<void(std::string_view buffer)> predicate,
-                bool log = true);
+ReadResult readFile(const boost::filesystem::path& path,
+                    std::function<void(std::string_view buffer)> predicate,
+                    bool log = true);
 
 /**
  * @brief Write text to disk.
