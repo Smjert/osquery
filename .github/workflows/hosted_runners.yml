@@ -16,8 +16,6 @@ name: build_x86
 
 on: 
   push:
-  
-  pull_request:
 
   pull_request:
     branches:
