@@ -10,10 +10,7 @@
 # Cleanup any lingering ec2 runners
 name: cleanup_ec2_runners
 
-on:
-    schedule:
-     - cron: "0 */1 * * *"
-    workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
     cleanup:
