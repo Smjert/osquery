@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
 
 function(thriftMain)
-  set(library_root "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/cpp")
+  set(library_root "${OSQUERY_thrift_ROOT_DIR}/lib/cpp")
 
   if(PLATFORM_WINDOWS)
     set(thrift_config_path "${CMAKE_CURRENT_SOURCE_DIR}/config/windows/${TARGET_PROCESSOR}")
@@ -42,7 +42,6 @@ function(thriftMain)
     "${library_root}/src/thrift/async/TAsyncChannel.cpp"
     "${library_root}/src/thrift/async/TAsyncProtocolProcessor.cpp"
     "${library_root}/src/thrift/async/TConcurrentClientSyncInfo.cpp"
-    "${library_root}/src/thrift/async/TConcurrentClientSyncInfo.h"
     "${library_root}/src/thrift/concurrency/Monitor.cpp"
     "${library_root}/src/thrift/concurrency/Mutex.cpp"
     "${library_root}/src/thrift/concurrency/Thread.cpp"
@@ -56,6 +55,7 @@ function(thriftMain)
     "${library_root}/src/thrift/protocol/TMultiplexedProtocol.cpp"
     "${library_root}/src/thrift/protocol/TProtocol.cpp"
     "${library_root}/src/thrift/server/TConnectedClient.cpp"
+    "${library_root}/src/thrift/server/TServer.cpp"
     "${library_root}/src/thrift/server/TServerFramework.cpp"
     "${library_root}/src/thrift/server/TSimpleServer.cpp"
     "${library_root}/src/thrift/server/TThreadedServer.cpp"
@@ -80,7 +80,7 @@ function(thriftMain)
     "${library_root}/src/thrift/transport/TTransportException.cpp"
     "${library_root}/src/thrift/transport/TTransportUtils.cpp"
     "${library_root}/src/thrift/transport/TWebSocketServer.cpp"
-    "${library_root}/src/thrift/transport/TWebSocketServer.h"
+    "${library_root}/src/thrift/VirtualProfiling.cpp"
   )
 
   if(PLATFORM_POSIX)
