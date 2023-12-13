@@ -3,9 +3,6 @@ name: cve-scan-runner
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: "17 23 * * *"
-
 env:
   # To see the script output in real time
   PYTHONUNBUFFERED: 1
