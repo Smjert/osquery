@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     container:
-      image: osquery/builder18.04:a4961d234
+      image: smjert/builder18.04:codeql
       options: --privileged --init -v /var/run/docker.sock:/var/run/docker.sock
 
     permissions:
@@ -54,8 +54,11 @@ jobs:
       run: |
         echo ::set-output name=VALUE::$(($(nproc) + 1))
 
+    # NOTE: We will only use an already existing cache, and will not save it later,
+    # just to prevent trashing of cache. Also the cache is only partially updated,
+    # since we only build third party libraries with the cache on.
     - name: Update the cache (ccache)
-      uses: actions/cache@v3
+      uses: actions/cache/restore@v3
       with:
         path: ${{ steps.build_paths.outputs.CCACHE }}
 
@@ -189,20 +192,6 @@ jobs:
       with:
         fetch-depth: 0
         path: ${{ steps.build_paths.outputs.SOURCE }}
-
-    # NOTE: We will only use an already existing cache, and will not save it later,
-    # just to prevent trashing of cache. Also the cache is only partially updated,
-    # since we only build third party libraries with the cache on.
-    - name: Update the cache (ccache)
-      uses: actions/cache/restore@v3
-      with:
-        path: ${{ steps.build_paths.outputs.CCACHE }}
-
-        key: |
-          ccache_ubuntu-18.04_Release_${{ github.sha }}
-
-        restore-keys: |
-          ccache_ubuntu-18.04_Release
 
     - name: Update the cache (git submodules)
       uses: actions/cache@v3
