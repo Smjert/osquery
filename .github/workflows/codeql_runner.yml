@@ -42,7 +42,7 @@ jobs:
         echo "CCACHE=$(realpath ${rel_ccache_path})" >> $GITHUB_OUTPUT
 
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
       with:
         fetch-depth: 0
         path: ${{ steps.build_paths.outputs.SOURCE }}
@@ -178,7 +178,6 @@ jobs:
         $base_dir = (Get-Item .).FullName
 
         echo "SOURCE=$base_dir\$rel_src_path" >> $env:GITHUB_OUTPUT
-        echo "REL_SOURCE=$rel_src_path" >> $env:GITHUB_OUTPUT
         echo "BINARY=$base_dir\$rel_build_path" >> $env:GITHUB_OUTPUT
         echo "SCCACHE=$base_dir\$rel_sccache_path" >> $env:GITHUB_OUTPUT
         echo "DOWNLOADS=$base_dir\$rel_downloads_path" >> $env:GITHUB_OUTPUT
@@ -188,7 +187,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        path: ${{ steps.build_paths.outputs.REL_SOURCE }}
+        path: ${{ steps.build_paths.outputs.SOURCE }}
 
     # NOTE: We will only use an already existing cache, and will not save it later,
     # just to prevent trashing of cache. Also the cache is only partially updated,
@@ -389,7 +388,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        config-file: ./tools/ci/codeql/codeql.yml
+        config-file: ${ steps.build_paths.outputs.SOURCE }/tools/ci/codeql/codeql.yml
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
@@ -399,7 +398,7 @@ jobs:
       shell: cmd
 
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ steps.vc_arch.outputs.VC_ARCH }}
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         @echo on
 
         cmake --build . -j 3 --target osqueryd
