@@ -274,7 +274,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
-        cl /O2 tools\ci\sccache_wrapper.c /Fe:"${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache_wrapper" /DUNICODE /D_UNICODE /link Pathcch.lib Shlwapi.lib
+        cl /O2 tools\ci\sccache\sccache_wrapper.c /Fe:"${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache_wrapper" /DUNICODE /D_UNICODE /link Pathcch.lib Shlwapi.lib
 
     - name: Install Ninja
       working-directory: ${{ steps.build_paths.outputs.DOWNLOADS }}
