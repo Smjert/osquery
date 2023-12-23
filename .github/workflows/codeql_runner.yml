@@ -285,7 +285,7 @@ jobs:
 
         echo "${{ steps.build_paths.outputs.INSTALL }}\ninja" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-   - name: Configure the project
+    - name: Configure the project
       shell: cmd
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
 
@@ -320,11 +320,11 @@ jobs:
         }
 
         <#
-           We run the compiler help option; the compiler will write its version in stderr.
-           Due to how powershell works, we have to go through some hoops to extract the stderr to a variable
-           and also avoid it considering the command as failed because stderr contains messages.
-           The expression runs the compiler in a subshell, discards its stdout, then the stderr of the subshell is redirected
-           to the stdout of the parent shell.
+          We run the compiler help option; the compiler will write its version in stderr.
+          Due to how powershell works, we have to go through some hoops to extract the stderr to a variable
+          and also avoid it considering the command as failed because stderr contains messages.
+          The expression runs the compiler in a subshell, discards its stdout, then the stderr of the subshell is redirected
+          to the stdout of the parent shell.
         #>
         $ErrorActionPreference = 'Continue'
         $erroutput = $( & "$compiler" /? 1>$null ) 2>&1
