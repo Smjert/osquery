@@ -42,7 +42,7 @@ jobs:
         echo "CCACHE=$(realpath ${rel_ccache_path})" >> $GITHUB_OUTPUT
 
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         path: ${{ steps.build_paths.outputs.SOURCE }}
@@ -196,13 +196,13 @@ jobs:
     - name: Update the cache (git submodules)
       uses: actions/cache@v3
       with:
-        path: ${{ steps.build_paths.outputs.SOURCE }}/.git/modules
+        path: ${{ steps.build_paths.outputs.SOURCE }}\.git\modules
 
         key: |
-          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}_${{ github.sha }}
+          gitmodules_${{ matrix.os }}_${{env.SUBMODULE_CACHE_VERSION}}_${{ github.sha }}
 
         restore-keys: |
-          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}
+          gitmodules_${{ matrix.os }}_${{env.SUBMODULE_CACHE_VERSION}}
 
     - name: Update the git submodules
       working-directory: ${{ steps.build_paths.outputs.SOURCE }}
