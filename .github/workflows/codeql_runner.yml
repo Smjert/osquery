@@ -26,21 +26,27 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
     - name: Create a build folder
       id: build_paths
       run: |
-        build_path=`realpath $GITHUB_WORKSPACE/../build`
-        ccache_path=`realpath $GITHUB_WORKSPACE/../ccache`
+        rel_build_path="workspace/usr/src/debug/osquery/build"
+        rel_src_path="workspace/padding-required-by-rpm-packages/src"
+        rel_ccache_path="workspace/ccache"
 
-        mkdir $build_path
-        mkdir $ccache_path
+        mkdir -p ${rel_build_path} \
+                 ${rel_src_path} \
+                 ${rel_ccache_path} \
 
-        echo ::set-output name=BINARY::$build_path
-        echo ::set-output name=SOURCE::$GITHUB_WORKSPACE
-        echo ::set-output name=CCACHE::$ccache_path
+        echo "SOURCE=$(realpath ${rel_src_path})" >> $GITHUB_OUTPUT
+        echo "BINARY=$(realpath ${rel_build_path})" >> $GITHUB_OUTPUT
+        echo "CCACHE=$(realpath ${rel_ccache_path})" >> $GITHUB_OUTPUT
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        path: ${{ steps.build_paths.outputs.SOURCE }}
+
 
     - name: Select the build job count
       shell: bash
@@ -179,8 +185,9 @@ jobs:
         echo "INSTALL=$base_dir\$rel_install_path" >> $env:GITHUB_OUTPUT
 
     - name: Clone the osquery repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
+        fetch-depth: 0
         path: ${{ steps.build_paths.outputs.REL_SOURCE }}
 
     # NOTE: We will only use an already existing cache, and will not save it later,
