@@ -7,7 +7,7 @@ env:
 
 jobs:
   analyze_linux:
-    name: Analyze
+    name: Analyze Linux
 
     runs-on: ubuntu-22.04
 
@@ -27,7 +27,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
     - name: Create a build folder
       id: build_paths
@@ -139,7 +139,7 @@ jobs:
 
 
   analyze_windows:
-    name: Analyze
+    name: Analyze Windows
 
     runs-on: windows-2019
 
@@ -154,9 +154,6 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
     - name: Setup the build paths
       shell: powershell
       id: build_paths
@@ -180,6 +177,11 @@ jobs:
         echo "SCCACHE=$base_dir\$rel_sccache_path" >> $env:GITHUB_OUTPUT
         echo "DOWNLOADS=$base_dir\$rel_downloads_path" >> $env:GITHUB_OUTPUT
         echo "INSTALL=$base_dir\$rel_install_path" >> $env:GITHUB_OUTPUT
+
+    - name: Clone the osquery repository
+      uses: actions/checkout@v3
+      with:
+        path: ${{ steps.build_paths.outputs.REL_SOURCE }}
 
     # NOTE: We will only use an already existing cache, and will not save it later,
     # just to prevent trashing of cache. Also the cache is only partially updated,
