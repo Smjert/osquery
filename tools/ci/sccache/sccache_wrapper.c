@@ -1,39 +1,42 @@
+#include <windows.h>
+
 #include <pathcch.h>
 #include <shlwapi.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
 
 #define MAX_PATH_LENGTH 4096
 
-int main(int argc, char* argv[]) {
+int wmain(int argc, wchar_t* argv[]) {
   // Concatenate all the arguments separated by space
-  int argsLen = 0;
+  size_t argsLen = 0;
   for (int i = 2; i < argc; i++) {
-    argsLen += strlen(argv[i]) + 1; // add the length of argument + 1 for space
+    argsLen += wcslen(argv[i]) + 1;
   }
 
   // Allocate memory for the arguments string
-  char* args = (char*)malloc((argsLen + 1) * sizeof(char));
-  args[0] = '\0'; // Init the string
+  wchar_t* args = (wchar_t*)calloc(argsLen + 1, sizeof(wchar_t));
 
   for (int i = 2; i < argc; i++) {
-    strcat(args, argv[i]);
-    strcat(args, " ");
+    wcscat(args, argv[i]);
+    wcscat(args, L" ");
   }
 
   // Get the full path of the current executable
   WCHAR curExecFullName[MAX_PATH_LENGTH];
   if (!GetModuleFileNameW(NULL, curExecFullName, MAX_PATH_LENGTH)) {
     wprintf(L"Cannot get the path of the executable\n");
+    free(args);
     return 1;
   }
 
   // Get the directory name from the full path
   HRESULT hr = PathCchRemoveFileSpec(curExecFullName, MAX_PATH_LENGTH);
   if (!SUCCEEDED(hr)) {
-    wprintf(L"Cannot get the directory of the executable\n");
+    fprintf(stderr, "Cannot get the directory of the executable\n");
+    free(args);
     return 1;
   }
 
@@ -44,27 +47,55 @@ int main(int argc, char* argv[]) {
            L"%ls\\disable_sccache",
            curExecFullName);
 
-  FILE* disable_sccache = NULL;
+  STARTUPINFOW siStartupInfo;
+  PROCESS_INFORMATION piProcessInfo;
+  memset(&siStartupInfo, 0, sizeof(siStartupInfo));
+  memset(&piProcessInfo, 0, sizeof(piProcessInfo));
+  siStartupInfo.cb = sizeof(siStartupInfo);
+
+  wchar_t* cmd = NULL;
 
   // Check the existence of the signal file in the same directory as the C
   // executable
   if (PathFileExistsW(signalFilePath)) {
     // If the signal file exists, run the original compiler with arguments
-    int cmdLen = strlen(argv[1]) + 1 + argsLen + 1;
-    char* cmd = (char*)malloc(cmdLen + 1);
-    snprintf(cmd, cmdLen + 1, "%s %s", argv[1], args);
-    system(cmd);
-    free(cmd);
+    int cmdLen = wcslen(argv[1]) + wcslen(args) + 2;
+    cmd = (wchar_t*)calloc(cmdLen, sizeof(wchar_t));
+    swprintf(cmd, cmdLen, L"%s %s", argv[1], args);
   } else {
     // If the signal file does not exist, call sccache passing all the arguments
     // to it
-    int cmdLen = sizeof("sccache ") - 1 + strlen(argv[1]) + argsLen;
-    char* cmd = (char*)malloc(cmdLen + 1);
-    snprintf(cmd, cmdLen + 1, "sccache %s %s", argv[1], args);
-    system(cmd);
-    free(cmd);
+    int cmdLen = wcslen(L"sccache ") + wcslen(argv[1]) + wcslen(args) + 2;
+    cmd = (wchar_t*)calloc(cmdLen, sizeof(wchar_t));
+    swprintf(cmd, cmdLen, L"sccache %s %s", argv[1], args);
   }
 
+  // CreateProcessW
+  if (!CreateProcessW(NULL,
+                      cmd,
+                      NULL,
+                      NULL,
+                      FALSE,
+                      0,
+                      NULL,
+                      NULL,
+                      &siStartupInfo,
+                      &piProcessInfo)) {
+    fprintf(stderr, "Create process failed(%d)", GetLastError());
+    free(cmd);
+    free(args);
+    return 1;
+  }
+
+  // Wait for the child process to exit
+  WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
+
+  // Close handles to the child process and its primary thread
+  CloseHandle(piProcessInfo.hProcess);
+  CloseHandle(piProcessInfo.hThread);
+
+  free(cmd);
   free(args);
+
   return 0;
 }
