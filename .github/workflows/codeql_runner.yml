@@ -376,7 +376,7 @@ jobs:
         SCCACHE_CACHE_SIZE: "5G"
 
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ steps.vc_arch.outputs.VC_ARCH }}
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         @echo on
 
         cmake --build . -j 3 --target thirdparty_libraries
