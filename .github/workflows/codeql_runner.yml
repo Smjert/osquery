@@ -11,13 +11,14 @@
 #
 name: "CodeQL"
 
-on: push
+on:
+  workflow_dispatch:
 
 env:
-  SUBMODULE_CACHE_VERSION: 1
+  SUBMODULE_CACHE_VERSION: 2
 
 jobs:
-  analyze:
+  analyze_linux:
     name: Analyze
 
     runs-on: ubuntu-22.04
@@ -35,12 +36,10 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'cpp' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://git.io/codeql-language-support
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
 
     - name: Create a build folder
       id: build_paths
@@ -54,15 +53,6 @@ jobs:
         echo ::set-output name=BINARY::$build_path
         echo ::set-output name=SOURCE::$GITHUB_WORKSPACE
         echo ::set-output name=CCACHE::$ccache_path
-
-
-    # - name: Fix CodeQL shared library name
-    #   run: |
-    #     versions=`find /__t/CodeQL/ -maxdepth 1 -mindepth 1 -type d`
-    #     versions=`echo "$versions" | sort -r`
-    #     most_recent_codeql=`echo "$versions" | head -n 1 | tr -d '\n'`
-    #     ln -s $most_recent_codeql/x64/codeql/tools/linux64/lib64_haswell_trace.so \
-    #           $most_recent_codeql/x64/codeql/tools/linux64/x86_64-linux-gnu_haswell_trace.so
 
     - name: Select the build job count
       shell: bash
@@ -121,7 +111,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         config-file: ./tools/ci/codeql/codeql.yml
@@ -137,25 +127,8 @@ jobs:
       run: |
         cmake --build ${{ steps.build_paths.outputs.BINARY }} -j ${{ steps.build_job_count.outputs.VALUE }} --target osqueryd
 
-    # - name: "Build code to analyze"
-    #   run: |
-    #     apt update
-    #     apt install -y strace
-    #     pwd
-    #     echo "--------"
-    #     ls
-    #     echo "--------"
-    #     ls osquery
-    #     echo "--------"
-    #     ls /__t/CodeQL/0.0.0-20211208/x64/codeql/tools/linux64/
-    #     echo "--------"
-    #     echo "Workspace: $GITHUB_WORKSPACE"
-    #     echo "LIB: $LIB"
-    #     echo "PLATFORM: $PLATFORM"
-    #     LD_PRELOAD='/foo/$LIB/$PLATFORM/bar.so' strace -f /bin/true 2>&1 | grep '^open.*foo'
-
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         upload: False
         output: sarif-results
@@ -172,6 +145,286 @@ jobs:
         output: sarif-results/cpp.sarif
 
     - name: Upload Sarif
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: sarif-results/cpp.sarif
+
+
+  analyze_windows:
+    name: Analyze
+
+    runs-on: windows-2019
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup the build paths
+      shell: powershell
+      id: build_paths
+      run: |
+        $rel_src_path = "w\src"
+        $rel_build_path = "w\build"
+        $rel_sccache_path = "w\sccache"
+        $rel_downloads_path = "w\downloads"
+        $rel_install_path = "w\install"
+
+        New-Item -ItemType Directory -Force -Path $rel_build_path
+        New-Item -ItemType Directory -Force -Path $rel_sccache_path
+        New-Item -ItemType Directory -Force -Path $rel_downloads_path
+        New-Item -ItemType Directory -Force -Path $rel_install_path
+
+        $base_dir = (Get-Item .).FullName
+
+        echo "SOURCE=$base_dir\$rel_src_path" >> $env:GITHUB_OUTPUT
+        echo "REL_SOURCE=$rel_src_path" >> $env:GITHUB_OUTPUT
+        echo "BINARY=$base_dir\$rel_build_path" >> $env:GITHUB_OUTPUT
+        echo "SCCACHE=$base_dir\$rel_sccache_path" >> $env:GITHUB_OUTPUT
+        echo "DOWNLOADS=$base_dir\$rel_downloads_path" >> $env:GITHUB_OUTPUT
+        echo "INSTALL=$base_dir\$rel_install_path" >> $env:GITHUB_OUTPUT
+
+    # NOTE: We will only use an already existing cache, and will not save it later,
+    # just to prevent trashing of cache. Also the cache is only partially updated,
+    # since we only build third party libraries with the cache on.
+    - name: Update the cache (ccache)
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ steps.build_paths.outputs.CCACHE }}
+
+        key: |
+          ccache_ubuntu-18.04_Release_${{ github.sha }}
+
+        restore-keys: |
+          ccache_ubuntu-18.04_Release
+
+    - name: Update the cache (git submodules)
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.build_paths.outputs.SOURCE }}/.git/modules
+
+        key: |
+          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}_${{ github.sha }}
+
+        restore-keys: |
+          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}
+
+    - name: Update the git submodules
+      working-directory: ${{ steps.build_paths.outputs.SOURCE }}
+      run: |
+        git submodule sync --recursive
+
+    - name: Initialize the Python 3 installation
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.x"
+        architecture: "x64"
+
+    # The runners will likely have both the x86 and x64 versions of
+    # Python but we always need the 64-bit one regardless of which
+    # architecture we are building for.
+    #
+    # The setup-python action should have put the right Python version
+    # in the PATH variable for us, so locate the installation directory
+    # so we can use it as a hint when we configure the project with
+    # CMake
+    - name: Locate the Python root directory
+      id: python_root_directory
+      shell: powershell
+      run: |
+        $python_executable_path = $(Get-Command python.exe | Select-Object -ExpandProperty Definition)
+        $python_root_directory = (Get-Item $python_executable_path).Directory.FullName
+
+        echo "VALUE=$python_root_directory" >> $env:GITHUB_OUTPUT
+
+    - name: Install Strawberry Perl
+      working-directory: ${{ steps.build_paths.outputs.SOURCE }}
+      shell: powershell
+      run: |
+        tools\ci\scripts\install_openssl_formula_dependencies.ps1
+
+    - name: Install CMake
+      working-directory: ${{ steps.build_paths.outputs.DOWNLOADS }}
+      shell: powershell
+      run: |
+        $long_cmake_ver = "3.21.4"
+        $short_cmake_ver = $($long_cmake_ver.split(".")[0] + "." + $long_cmake_ver.split(".")[1])
+
+        $folder_name = $("cmake-" + $long_cmake_ver + "-windows-x86_64")
+        $archive_name = $($folder_name + ".zip")
+
+        $url = $("https://cmake.org/files/v" + $short_cmake_ver + "/" + $archive_name)
+
+        (New-Object System.Net.WebClient).DownloadFile($url, $archive_name)
+        7z x -o${{ steps.build_paths.outputs.INSTALL }} -y $archive_name
+
+        echo "${{ steps.build_paths.outputs.INSTALL }}\$folder_name\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install sccache
+      working-directory: ${{ steps.build_paths.outputs.DOWNLOADS }}
+      shell: powershell
+      run: |
+        $long_version = "0.0.1"
+
+        $archive_name = $("sccache-" + $long_version + "-windows.7z")
+        $url = $("https://github.com/osquery/sccache/releases/download/" + $long_version + "-osquery/" + $archive_name)
+
+        (New-Object System.Net.WebClient).DownloadFile($url, $archive_name)
+        7z x -o${{ steps.build_paths.outputs.INSTALL }}\sccache -y $archive_name
+
+        echo "${{ steps.build_paths.outputs.INSTALL }}\sccache" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install Ninja
+      working-directory: ${{ steps.build_paths.outputs.DOWNLOADS }}
+      shell: powershell
+      run: |
+        $long_version = "1.11.1"
+
+        $archive_name = "ninja-win.zip"
+        $url = $("https://github.com/ninja-build/ninja/releases/download/v" + $long_version + "/" + $archive_name)
+
+        (New-Object System.Net.WebClient).DownloadFile($url, $archive_name)
+        7z x -o${{ steps.build_paths.outputs.INSTALL }}\ninja -y $archive_name
+
+        echo "${{ steps.build_paths.outputs.INSTALL }}\ninja" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+   - name: Configure the project
+      shell: cmd
+      working-directory: ${{ steps.build_paths.outputs.BINARY }}
+
+      env:
+        SCCACHE_DIR: ${{ steps.build_paths.outputs.SCCACHE }}
+        SCCACHE_CACHE_SIZE: "5G"
+
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
+        @echo on
+
+        cmake -G Ninja ^
+          -DCMAKE_C_COMPILER=cl.exe ^
+          -DCMAKE_CXX_COMPILER=cl.exe ^
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
+          -DOSQUERY_BUILD_TESTS=OFF ^
+          -DCMAKE_C_COMPILER_LAUNCHER="sccache.exe" ^
+          -DCMAKE_CXX_COMPILER_LAUNCHER="sccache.exe" ^
+          -DPython3_ROOT_DIR=${{ steps.python_root_directory.outputs.VALUE }} ^
+          ${{ steps.build_paths.outputs.SOURCE }}
+
+    - name: Determine compiler version
+      id: determine_compiler_version
+      shell: pwsh
+      run: |
+        $compiler = (Get-Content "${{ steps.build_paths.outputs.BINARY }}\CMakeCache.txt" | Select-String -Pattern "CMAKE_CXX_COMPILER:STRING=(.*)").Matches[0].Groups[1].Value
+
+        echo "Compiler configured by CMake is $compiler"
+
+        if ($compiler -eq $null || $compiler -eq "") {
+          Write-Error "Could not find the configured compiler" -ErrorAction Stop
+        }
+
+        <#
+           We run the compiler help option; the compiler will write its version in stderr.
+           Due to how powershell works, we have to go through some hoops to extract the stderr to a variable
+           and also avoid it considering the command as failed because stderr contains messages.
+           The expression runs the compiler in a subshell, discards its stdout, then the stderr of the subshell is redirected
+           to the stdout of the parent shell.
+        #>
+        $ErrorActionPreference = 'Continue'
+        $erroutput = $( & "$compiler" /? 1>$null ) 2>&1
+        $ErrorActionPreference = 'Stop'
+
+        if ($erroutput -eq $null || $erroutput -eq "") {
+          Write-Error "Failed to run the compiler at $compiler" -ErrorAction Stop
+        }
+
+        $version = ($erroutput | Select-String -Pattern "Compiler Version (.*) for").Matches[0].Groups[1].Value.Replace(".", "")
+
+        if ($version -eq $null || $version -eq "") {
+          Write-Error "Failed to determine compiler version for $compiler and output $erroutput" -ErrorAction Stop
+        }
+
+        echo "Found compiler version $version"
+
+        echo "COMPILER_VERSION=$version" >> $env:GITHUB_OUTPUT
+
+    # NOTE: We will only use an already existing cache, and will not save it later,
+    # just to prevent trashing of cache. Also the cache is only partially updated,
+    # since we only build third party libraries with the cache on.
+    - name: Update the cache (sccache)
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ steps.build_paths.outputs.SCCACHE }}
+
+        key: |
+          sccache_${{ matrix.os }}_64_Release_${{ steps.determine_compiler_version.outputs.COMPILER_VERSION }}_${{ github.sha }}
+
+        restore-keys: |
+          sccache_${{ matrix.os }}_64_Release_${{ steps.determine_compiler_version.outputs.COMPILER_VERSION }}
+
+    - name: Build third party libraries
+      shell: cmd
+      working-directory: ${{ steps.build_paths.outputs.BINARY }}
+
+      env:
+        SCCACHE_DIR: ${{ steps.build_paths.outputs.SCCACHE }}
+        SCCACHE_CACHE_SIZE: "5G"
+
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ steps.vc_arch.outputs.VC_ARCH }}
+        @echo on
+
+        cmake --build . -j 3 --target thirdparty_libraries
+
+        if %errorlevel% neq 0 exit /b %errorlevel%
+        sccache.exe --stop-server
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        config-file: ./tools/ci/codeql/codeql.yml
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+        # queries: ./path/to/local/query, your-org/your-repo/queries@main
+
+    - name: "Build code to analyze"
+      shell: cmd
+
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ steps.vc_arch.outputs.VC_ARCH }}
+        @echo on
+
+        cmake --build . -j 3 --target osqueryd
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        upload: False
+        output: sarif-results
+
+    - name: Filter out third party headers
+      uses: advanced-security/filter-sarif@v1
+      with:
+        patterns: |
+          -**/libraries/cmake/source/**
+          -**/build/libs/**
+          -**/build/openssl/**
+          -**/build/installed_formulas/**
+        input: sarif-results/cpp.sarif
+        output: sarif-results/cpp.sarif
+
+    - name: Upload Sarif
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: sarif-results/cpp.sarif

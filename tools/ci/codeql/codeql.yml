@@ -2,9 +2,3 @@ name: "osquery CodeQL config"
 
 queries:
   - uses: security-and-quality
-
-paths-ignore:
-  - '**/libraries/cmake/source/**'
-  - '**/build/libs/**'
-  - '**/build/openssl/**'
-  - '**/build/installed_formulas/**'
