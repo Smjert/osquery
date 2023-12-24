@@ -1,7 +1,9 @@
-FROM ubuntu:18.04 AS ubuntubase
+FROM ubuntu:20.04 AS ubuntubase
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update -q -y
 RUN apt upgrade -q -y
 RUN apt install -q -y --no-install-recommends \
+  git \
 	make \
 	ccache \
 	python \
@@ -23,25 +25,9 @@ RUN apt install -q -y --no-install-recommends \
 	file \
 	elfutils \
 	locales \
-	python3-wheel \
-	libexpat1-dev \
-	libcurl4-gnutls-dev
+	python3-wheel
 
 RUN pip3 install timeout_decorator thrift==0.11.0 osquery pexpect==3.3 docker
-
-FROM ubuntubase AS git
-WORKDIR /root
-RUN apt install -q -y dh-autoreconf gcc zlib1g-dev libssl-dev gettext
-RUN mkdir -p /root/git/install/usr/local \
-  && wget https://github.com/git/git/archive/refs/tags/v2.43.0.tar.gz \
-  && tar xvf v2.43.0.tar.gz \
-  && cd git-2.43.0 \
-  && make configure \
-  && ./configure --prefix=/usr/local \
-  && sudo make DESTDIR=/root/git/install -j$(nproc) install
-
-FROM ubuntubase AS ubuntubase
-COPY --from=git /root/git/install/usr/local /usr/local
 
 FROM ubuntubase AS base1
 RUN case $(uname -m) in aarch64) ARCH="aarch64" ;; amd64|x86_64) ARCH="x86_64" ;; esac \
@@ -78,7 +64,6 @@ RUN rm -rf /var/lib/apt/lists/*
 
 FROM base3 AS base4
 COPY --from=cppcheck /root/cppcheck/install/usr/local/ /usr/local/
-COPY --from=git /root/git/install/usr/local /usr/local
 
 # Squash all layers down using a giant COPY. It's kinda gross, but it
 # works. Though the layers are only adding about 50 megs on a 1gb
