@@ -209,20 +209,6 @@ jobs:
       run: |
         git submodule sync --recursive
 
-    # NOTE: We will only use an already existing cache, and will not save it later,
-    # just to prevent trashing of cache. Also the cache is only partially updated,
-    # since we only build third party libraries with the cache on.
-    - name: Update the cache (sccache)
-      uses: actions/cache/restore@v3
-      with:
-        path: ${{ steps.build_paths.outputs.SCCACHE }}
-
-        key: |
-          sccache_${{ matrix.os }}_64_Release_${{ steps.determine_compiler_version.outputs.COMPILER_VERSION }}_${{ github.sha }}
-
-        restore-keys: |
-          sccache_${{ matrix.os }}_64_Release_${{ steps.determine_compiler_version.outputs.COMPILER_VERSION }}
-
     - name: Initialize the Python 3 installation
       uses: actions/setup-python@v2
       with:
@@ -283,8 +269,6 @@ jobs:
 
         echo "${{ steps.build_paths.outputs.INSTALL }}\sccache" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-        ls -l ${{ steps.build_paths.outputs.SCCACHE }}
-
     - name: Prepare sccache wrapper
       working-directory: ${{ steps.build_paths.outputs.SOURCE }}
       shell: cmd
@@ -323,8 +307,8 @@ jobs:
           -DCMAKE_CXX_COMPILER=cl.exe ^
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
           -DOSQUERY_BUILD_TESTS=OFF ^
-          -DCMAKE_C_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache_wrapper.exe" ^
-          -DCMAKE_CXX_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache_wrapper.exe" ^
+          -DCMAKE_C_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache.exe" ^
+          -DCMAKE_CXX_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache.exe" ^
           -DPython3_ROOT_DIR=${{ steps.python_root_directory.outputs.VALUE }} ^
           ${{ steps.build_paths.outputs.SOURCE }}
 
@@ -365,6 +349,20 @@ jobs:
 
         echo "COMPILER_VERSION=$version" >> $env:GITHUB_OUTPUT
 
+    # NOTE: We will only use an already existing cache, and will not save it later,
+    # just to prevent trashing of cache. Also the cache is only partially updated,
+    # since we only build third party libraries with the cache on.
+    - name: Update the cache (sccache)
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ steps.build_paths.outputs.SCCACHE }}
+
+        key: |
+          sccache_${{ matrix.os }}_64_Release_${{ steps.determine_compiler_version.outputs.COMPILER_VERSION }}_${{ github.sha }}
+
+        restore-keys: |
+          sccache_${{ matrix.os }}_64_Release_${{ steps.determine_compiler_version.outputs.COMPILER_VERSION }}
+
     - name: Build third party libraries
       shell: cmd
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
@@ -397,10 +395,15 @@ jobs:
       working-directory: ${{ steps.build_paths.outputs.BINARY }}
       shell: cmd
 
+      env:
+        SCCACHE_DIR: ${{ steps.build_paths.outputs.SCCACHE }}
+        SCCACHE_CACHE_SIZE: "5G"
+
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         @echo on
 
+        rmdir "${{ steps.build_paths.outputs.SCCACHE }}" /S /Q
         type nul > "${{ steps.build_paths.outputs.INSTALL }}\sccache\disable_sccache"
 
         cmake --build . -j 3 --target osqueryd

@@ -2,8 +2,9 @@
 if(DEFINED PLATFORM_POSIX)
   include(CheckPIESupported)
   check_pie_supported()
+
   if(NOT CMAKE_C_LINK_PIE_SUPPORTED OR NOT CMAKE_CXX_LINK_PIE_SUPPORTED)
-      message(FATAL_ERROR "The linker for the current compiler does not support -fPIE or -pie")
+    message(FATAL_ERROR "The linker for the current compiler does not support -fPIE or -pie")
   endif()
 
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -35,7 +36,6 @@ function(setupBuildFlags)
   endif()
 
   if(DEFINED PLATFORM_POSIX)
-
     set(posix_common_compile_options
       -Qunused-arguments
       -Wno-shadow-field
@@ -161,8 +161,8 @@ function(setupBuildFlags)
       set(osquery_linux_common_defines
         LINUX=1
         OSQUERY_LINUX=1
-        OSQUERY_BUILD_DISTRO="centos7"
-        OSQUERY_BUILD_PLATFORM="linux"
+        OSQUERY_BUILD_DISTRO=centos7
+        OSQUERY_BUILD_PLATFORM=linux
       )
 
       set(osquery_linux_common_link_options
@@ -259,8 +259,8 @@ function(setupBuildFlags)
         DARWIN=1
         BSD=1
         OSQUERY_DARWIN=1
-        OSQUERY_BUILD_PLATFORM="darwin"
-        OSQUERY_BUILD_DISTRO="10.14"
+        OSQUERY_BUILD_PLATFORM=darwin
+        OSQUERY_BUILD_DISTRO=10.14
       )
 
       target_compile_options(cxx_settings INTERFACE
@@ -280,12 +280,11 @@ function(setupBuildFlags)
 
     if(OSQUERY_NO_DEBUG_SYMBOLS AND
       ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR
-       "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
+      "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
       target_compile_options(cxx_settings INTERFACE -g0)
       target_compile_options(c_settings INTERFACE -g0)
     endif()
   elseif(DEFINED PLATFORM_WINDOWS)
-
     set(windows_common_compile_options
       "$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/Gs;/GS>"
       "$<$<CONFIG:Debug>:/Od;/UNDEBUG>$<$<NOT:$<CONFIG:Debug>>:/Ot>"
@@ -344,8 +343,8 @@ function(setupBuildFlags)
       WINDOWS=1
       WIN32_LEAN_AND_MEAN
       OSQUERY_WINDOWS=1
-      OSQUERY_BUILD_PLATFORM="windows"
-      OSQUERY_BUILD_DISTRO="10"
+      OSQUERY_BUILD_PLATFORM=windows
+      OSQUERY_BUILD_DISTRO=10
       BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1
       UNICODE
       _UNICODE
@@ -444,7 +443,6 @@ function(setupBuildFlags)
     ${osquery_defines}
   )
 
-
   add_library(osquery_c_settings INTERFACE)
   target_link_libraries(osquery_c_settings INTERFACE
     c_settings
@@ -457,7 +455,6 @@ function(setupBuildFlags)
   target_compile_definitions(osquery_c_settings INTERFACE
     ${osquery_defines}
   )
-
 endfunction()
 
 setupBuildFlags()
