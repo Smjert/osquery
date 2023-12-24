@@ -63,10 +63,10 @@ jobs:
         path: ${{ steps.build_paths.outputs.CCACHE }}
 
         key: |
-          ccache_ubuntu-18.04_Release_${{ github.sha }}
+          ccache_ubuntu-20.04_Release_${{ github.sha }}
 
         restore-keys: |
-          ccache_ubuntu-18.04_Release
+          ccache_ubuntu-20.04_Release
 
     - name: Update the cache (git submodules)
       uses: actions/cache@v3
@@ -74,10 +74,10 @@ jobs:
         path: ${{ steps.build_paths.outputs.SOURCE }}/.git/modules
 
         key: |
-          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}_${{ github.sha }}
+          gitmodules_ubuntu-20.04_${{env.SUBMODULE_CACHE_VERSION}}_${{ github.sha }}
 
         restore-keys: |
-          gitmodules_ubuntu-18.04_${{env.SUBMODULE_CACHE_VERSION}}
+          gitmodules_ubuntu-20.04_${{env.SUBMODULE_CACHE_VERSION}}
 
     - name: Update the git submodules
       working-directory: ${{ steps.build_paths.outputs.SOURCE }}
