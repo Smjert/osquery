@@ -111,7 +111,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        config-file: ./tools/ci/codeql/codeql.yml
+        config-file: ${{ steps.build_paths.outputs.SOURCE }}/tools/ci/codeql/codeql.yml
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
@@ -307,8 +307,8 @@ jobs:
           -DCMAKE_CXX_COMPILER=cl.exe ^
           -DCMAKE_BUILD_TYPE=Release ^
           -DOSQUERY_BUILD_TESTS=OFF ^
-          -DCMAKE_C_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache.exe" ^
-          -DCMAKE_CXX_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache.exe" ^
+          -DCMAKE_C_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache_wrapper.exe" ^
+          -DCMAKE_CXX_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache_wrapper.exe" ^
           -DPython3_ROOT_DIR=${{ steps.python_root_directory.outputs.VALUE }} ^
           ${{ steps.build_paths.outputs.SOURCE }}
 
