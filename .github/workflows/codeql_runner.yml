@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     container:
-      image: smjert/builder18.04:codeql
+      image: smjert/builder20.04:codeql
       options: --privileged --init -v /var/run/docker.sock:/var/run/docker.sock
 
     permissions:
@@ -305,7 +305,7 @@ jobs:
         cmake -G Ninja ^
           -DCMAKE_C_COMPILER=cl.exe ^
           -DCMAKE_CXX_COMPILER=cl.exe ^
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
+          -DCMAKE_BUILD_TYPE=Release ^
           -DOSQUERY_BUILD_TESTS=OFF ^
           -DCMAKE_C_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache.exe" ^
           -DCMAKE_CXX_COMPILER_LAUNCHER="${{ steps.build_paths.outputs.INSTALL }}\sccache\sccache.exe" ^
