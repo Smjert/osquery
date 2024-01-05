@@ -123,6 +123,7 @@ DECLARE_bool(disable_logging);
 DECLARE_bool(enable_numeric_monitoring);
 DECLARE_bool(ignore_table_exceptions);
 DECLARE_bool(ignore_registry_exceptions);
+DECLARE_bool(tls_use_system_cert_store);
 
 CLI_FLAG(bool, S, false, "Run as a shell process");
 CLI_FLAG(bool, D, false, "Run as a daemon process");
