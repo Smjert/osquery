@@ -60,6 +60,20 @@ CLI_FLAG(uint32,
          3600,
          "TLS session keep alive timeout in seconds");
 
+#ifdef WIN32
+CLI_FLAG(
+    bool,
+    tls_use_system_cert_store,
+    false,
+    "Use the native system certificate and key store instead of using files");
+
+CLI_FLAG(
+    string,
+    tls_client_cert_thumbprint,
+    "",
+    "The client certificate hash to be found in the system certificate store");
+#endif
+
 #ifndef NDEBUG
 HIDDEN_FLAG(bool,
             tls_allow_unsafe,

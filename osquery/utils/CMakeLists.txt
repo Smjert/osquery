@@ -30,6 +30,10 @@ function(osqueryUtilsMain)
     add_subdirectory("linux")
   endif()
 
+  if(DEFINED PLATFORM_WINDOWS)
+    add_subdirectory("windows")
+  endif()
+
   if(OSQUERY_BUILD_TESTS)
     generateOsqueryUtilsUtilstestsTest()
   endif()
