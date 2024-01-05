@@ -22,6 +22,7 @@
 #include <osquery/config/packs.h>
 #include <osquery/core/flagalias.h>
 #include <osquery/core/flags.h>
+#include <osquery/core/init.h>
 #include <osquery/core/shutdown.h>
 #include <osquery/core/system.h>
 #include <osquery/core/tables.h>

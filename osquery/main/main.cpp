@@ -17,6 +17,7 @@
 
 #include <osquery/core/core.h>
 #include <osquery/core/flags.h>
+#include <osquery/core/init.h>
 #include <osquery/core/shutdown.h>
 #include <osquery/core/system.h>
 #include <osquery/core/watcher.h>

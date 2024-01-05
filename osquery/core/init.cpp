@@ -7,6 +7,8 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
+#include "init.h"
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -123,6 +125,7 @@ DECLARE_bool(disable_logging);
 DECLARE_bool(enable_numeric_monitoring);
 DECLARE_bool(ignore_table_exceptions);
 DECLARE_bool(ignore_registry_exceptions);
+DECLARE_bool(tls_use_system_cert_store);
 
 CLI_FLAG(bool, S, false, "Run as a shell process");
 CLI_FLAG(bool, D, false, "Run as a daemon process");
@@ -174,6 +177,9 @@ struct Initializer::PrivateData final {
 
 bool Initializer::isWorker_{false};
 std::atomic<bool> Initializer::resource_limit_hit_{false};
+
+std::optional<OpenSSLProviderContext>
+    Initializer::openssl_custom_provider_context_{};
 
 namespace {
 
@@ -720,6 +726,21 @@ void Initializer::start() const {
     return;
   }
 
+#if defined(WIN32) || defined(__APPLE__)
+  if (isWorker() || !isWatcher()) {
+    auto opt_provider_context = createSystemOpenSSLProviderContext();
+
+    if (!opt_provider_context.has_value()) {
+      LOG(ERROR) << "Failed to initialize the openssl system provider context";
+      requestShutdown(EXIT_CATASTROPHIC);
+      return;
+    }
+
+    openssl_custom_provider_context_ =
+        std::optional<OpenSSLProviderContext>(std::move(*opt_provider_context));
+  }
+#endif
+
   // Then set the config plugin, which uses a single/active plugin.
   initActivePlugin("config", FLAGS_config_plugin);
 
@@ -821,6 +842,10 @@ void Initializer::resourceLimitHit() {
 
 bool Initializer::isResourceLimitHit() {
   return resource_limit_hit_.load();
+}
+
+OpenSSLProviderContext& Initializer::getOpenSSLCustomProviderContext() {
+  return openssl_custom_provider_context_.value();
 }
 
 /**

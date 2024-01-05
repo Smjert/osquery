@@ -25,6 +25,8 @@
 #include <mutex>
 #endif
 
+#include <variant>
+
 // clang-format off
 // Keep it on top of all other includes to fix double include WinSock.h header file
 // which is windows specific boost build problem
@@ -42,6 +44,7 @@
 #include <openssl/ssl.h>
 
 #include <osquery/remote/uri.h>
+#include <osquery/utils/openssl/openssl_utils.h>
 
 namespace beast_http = boost::beast::http;
 
@@ -131,23 +134,9 @@ class Client {
       return *this;
     }
 
-    Options& openssl_verify_path(std::string const& vp) {
-      verify_path_ = vp;
-      return *this;
-    }
-
-    Options& openssl_certificate(std::string const& scf) {
-      server_certificate_ = scf;
-      return *this;
-    }
-
-    Options& openssl_certificate_file(std::string const& ccf) {
-      client_certificate_file_ = ccf;
-      return *this;
-    }
-
-    Options& openssl_private_key_file(std::string const& cpkf) {
-      client_private_key_file_ = cpkf;
+    template <typename T>
+    Options& openssl_set_cert_parameters(T parameters) {
+      openssl_parameters_ = parameters;
       return *this;
     }
 
@@ -167,10 +156,8 @@ class Client {
     }
 
     bool operator==(Options const& ropts) {
-      return (server_certificate_ == ropts.server_certificate_) &&
+      return (openssl_parameters_ == ropts.openssl_parameters_) &&
              (verify_path_ == ropts.verify_path_) &&
-             (client_certificate_file_ == ropts.client_certificate_file_) &&
-             (client_private_key_file_ == ropts.client_private_key_file_) &&
              (ciphers_ == ropts.ciphers_) &&
              (proxy_hostname_ == ropts.proxy_hostname_) &&
              (remote_hostname_ == ropts.remote_hostname_) &&
@@ -184,10 +171,10 @@ class Client {
     }
 
    private:
-    boost::optional<std::string> server_certificate_;
+    std::optional<
+        std::variant<DefaultOpenSSLParameters, NativeOpenSSLParameters>>
+        openssl_parameters_;
     boost::optional<std::string> verify_path_;
-    boost::optional<std::string> client_certificate_file_;
-    boost::optional<std::string> client_private_key_file_;
     boost::optional<std::string> ciphers_;
     boost::optional<std::string> proxy_hostname_;
     boost::optional<std::string> remote_hostname_;
@@ -480,7 +467,7 @@ class HTTP_Response<T>::Iterator {
     return (iter_ != it.iter_);
   }
 
-  auto operator-> () {
+  auto operator->() {
     return std::make_shared<std::pair<std::string, std::string>>(
         std::string(iter_->name_string()), std::string(iter_->value()));
   }

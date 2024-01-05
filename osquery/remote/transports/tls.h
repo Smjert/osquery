@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <variant>
+
 #include <gtest/gtest_prod.h>
 
 // clang-format off
@@ -19,6 +21,7 @@
 
 #include <osquery/core/flags.h>
 #include <osquery/remote/requests.h>
+#include <osquery/utils/openssl/openssl_utils.h>
 
 namespace osquery {
 

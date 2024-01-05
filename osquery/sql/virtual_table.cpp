@@ -20,6 +20,7 @@
 #include <osquery/sql/dynamic_table_row.h>
 #include <osquery/sql/virtual_table.h>
 #include <osquery/utils/conversions/tryto.h>
+#include <osquery/utils/info/tool_type.h>
 
 namespace osquery {
 

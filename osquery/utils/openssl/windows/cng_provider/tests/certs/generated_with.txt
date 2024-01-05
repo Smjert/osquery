@@ -1,0 +1,24 @@
+# Generate RSASSA-PSS private key for CA
+# The key size is 2048
+C:\openssl\install\bin\openssl genpkey -algorithm rsa-pss -pkeyopt rsa_keygen_bits:2048 -out CA.key
+
+# Generate self-signed RSASSA-PSS CA
+C:\openssl\install\bin\openssl req -x509 -new -key CA.key -subj "/CN=CA" -sha256 -out CA.cer
+
+# Generate RSASSA-PSS private key for server
+C:\openssl\install\bin\openssl genpkey -algorithm rsa-pss -pkeyopt rsa_keygen_bits:2048 -out server.key
+
+# Generate certificate signing request for RSASSA-PSS server
+C:\openssl\install\bin\openssl req -new -key server.key -subj "/CN=rsa-pss-test-server" -sha256 -out server.csr
+
+# Generate RSASSA-PSS server certificate based on the above CSR, and sign it with the above RSASSA-PSS CA
+C:\openssl\install\bin\openssl x509 -req -CAcreateserial -in server.csr -sha256 -CA CA.cer -CAkey CA.key -out server.cer
+
+# Generate RSASSA-PSS private key for server
+C:\openssl\install\bin\openssl genpkey -algorithm rsa-pss -pkeyopt rsa_keygen_bits:2048 -out client.key
+
+# Generate certificate signing request for RSASSA-PSS server
+C:\openssl\install\bin\openssl req -new -key client.key -subj "/CN=rsa-pss-test-client" -sha256 -out client.csr
+
+# Generate RSASSA-PSS server certificate based on the above CSR, and sign it with the above RSASSA-PSS CA
+C:\openssl\install\bin\openssl x509 -req -CAcreateserial -in client.csr -sha256 -CA CA.cer -CAkey CA.key -out client.cer

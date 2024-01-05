@@ -7,10 +7,18 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
+#include <optional>
+#include <vector>
+
 #include <osquery/logger/logger.h>
 #include <osquery/remote/http_client.h>
 
 #include <boost/asio/connect.hpp>
+
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/trace.h>
 
 namespace osquery {
 namespace http {
@@ -192,23 +200,113 @@ void Client::createConnection() {
 }
 
 void Client::encryptConnection() {
-  boost::asio::ssl::context ctx{boost::asio::ssl::context::sslv23};
-
-  if (client_options_.always_verify_peer_) {
-    ctx.set_verify_mode(boost::asio::ssl::verify_peer);
-  } else {
-    ctx.set_verify_mode(boost::asio::ssl::verify_none);
+  if (!client_options_.openssl_parameters_.has_value()) {
+    throw std::runtime_error(
+        "Missing certificate parameters to properly do encryption");
   }
 
-  if (client_options_.server_certificate_) {
-    ctx.set_verify_mode(boost::asio::ssl::verify_peer);
-    ctx.load_verify_file(*client_options_.server_certificate_);
-  }
+  boost::asio::ssl::context ctx = [this]() {
+    if (std::holds_alternative<DefaultOpenSSLParameters>(
+            *client_options_.openssl_parameters_)) {
+      boost::asio::ssl::context ctx{boost::asio::ssl::context::sslv23};
 
-  if (client_options_.verify_path_) {
-    ctx.set_verify_mode(boost::asio::ssl::verify_peer);
-    ctx.add_verify_path(*client_options_.verify_path_);
-  }
+      const auto& openssl_parameters = std::get<DefaultOpenSSLParameters>(
+          *client_options_.openssl_parameters_);
+
+      if (client_options_.always_verify_peer_) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+      } else {
+        ctx.set_verify_mode(boost::asio::ssl::verify_none);
+      }
+
+      if (!openssl_parameters.server_certificate_file_.empty()) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+        ctx.load_verify_file(openssl_parameters.server_certificate_file_);
+      }
+
+      if (!openssl_parameters.server_certificate_dir_.empty()) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+        ctx.add_verify_path(openssl_parameters.server_certificate_dir_);
+      }
+
+      if (!openssl_parameters.client_certificate_file_.empty()) {
+        ctx.use_certificate_chain_file(
+            openssl_parameters.client_certificate_file_);
+      }
+
+      if (!openssl_parameters.client_private_key_file_.empty()) {
+        ctx.use_private_key_file(openssl_parameters.client_private_key_file_,
+                                 boost::asio::ssl::context::pem);
+      }
+
+      return ctx;
+    } else {
+      const auto& openssl_parameters = std::get<NativeOpenSSLParameters>(
+          *client_options_.openssl_parameters_);
+      auto* provider_library_context =
+          &openssl_parameters.getSSLLibraryContext();
+
+      auto* ssl_ctx = createNativeContext(openssl_parameters);
+
+      boost::asio::ssl::context ctx{ssl_ctx};
+
+      if (client_options_.always_verify_peer_) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+      } else {
+        ctx.set_verify_mode(boost::asio::ssl::verify_none);
+      }
+
+      if (openssl_parameters.server_search_parameters.has_value()) {
+        X509_STORE* ca_store = getCABundleFromSearchParameters(
+            *provider_library_context,
+            *openssl_parameters.server_search_parameters);
+
+        if (ca_store == nullptr) {
+          throw std::runtime_error(
+              "Could not retrieve the current user CA certificates");
+        }
+
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+
+        // NOTE: The SSL_CTX takes ownership here
+        SSL_CTX_set_cert_store(ssl_ctx, ca_store);
+      }
+
+      if (openssl_parameters.client_cert_search_parameters.has_value()) {
+        auto opt_client_cert_data = getClientCertificateFromSearchParameters(
+            *provider_library_context,
+            *openssl_parameters.client_cert_search_parameters);
+
+        if (!opt_client_cert_data.has_value()) {
+          throw std::runtime_error("Could not find client certificate");
+        }
+
+        auto [client_cert, client_private_key] = *opt_client_cert_data;
+
+        if (client_cert == nullptr || client_private_key == nullptr) {
+          throw std::runtime_error(
+              "Failed to get a client certificate and/or private key");
+        }
+
+        auto res = SSL_CTX_use_certificate(ssl_ctx, client_cert);
+
+        if (res != 1) {
+          throw std::runtime_error("Failed to use the certificate");
+        }
+
+        X509_free(client_cert);
+
+        res = SSL_CTX_use_PrivateKey(ssl_ctx, client_private_key);
+        if (res != 1) {
+          throw std::runtime_error("Failed to use the private key");
+        }
+
+        EVP_PKEY_free(client_private_key);
+      }
+
+      return ctx;
+    }
+  }();
 
   if (client_options_.ciphers_) {
     ::SSL_CTX_set_cipher_list(ctx.native_handle(),
@@ -219,20 +317,13 @@ void Client::encryptConnection() {
     ctx.set_options(client_options_.ssl_options_);
   }
 
-  if (client_options_.client_certificate_file_) {
-    ctx.use_certificate_chain_file(*client_options_.client_certificate_file_);
-  }
-
-  if (client_options_.client_private_key_file_) {
-    ctx.use_private_key_file(*client_options_.client_private_key_file_,
-                             boost::asio::ssl::context::pem);
-  }
-
   ssl_sock_ = std::make_shared<ssl_stream>(sock_, ctx);
   ::SSL_set_tlsext_host_name(ssl_sock_->native_handle(),
                              client_options_.remote_hostname_->c_str());
 
-  ssl_sock_->set_verify_callback(boost::asio::ssl::rfc2818_verification(
+  // TODO: remove this comment; we changed to RFC6125 because it's more modern
+  // than RFC2818
+  ssl_sock_->set_verify_callback(boost::asio::ssl::host_name_verification(
       *client_options_.remote_hostname_));
 
   callNetworkOperation([&]() {
@@ -441,7 +532,9 @@ Response Client::sendHTTPRequest(Request& req) {
       default:
         return Response(resp.release());
       }
-    } catch (std::exception const& /* e */) {
+    } catch (std::exception const& e) {
+      VLOG(1) << e.what();
+
       closeSocket();
       if (init_request && ec_ != boost::asio::error::timed_out) {
         init_request = false;
