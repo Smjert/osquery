@@ -29,15 +29,23 @@ Integrate the osquery-toolchain; you can use the `cmake/toolchain.cmake` as a re
 cmake \
   -S . \
   -B b \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_TESTING=OFF \
   -G Ninja \
-  -DBoost_USE_STATIC_LIBS=ON \
-  -DBoost_INCLUDE_DIR=/path/to/osquery/libraries/cmake/source/boost/src/libs/config/include/ \
+  -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_SHARED_LIBS=OFF \
+  -DBoost_USE_STATIC_LIBS=ON \
+  -DBoost_INCLUDE_DIR=${BOOST_HEADERS} \
   -DWITH_OPENSSL=ON \
   -DWITH_ZLIB=ON \
   -DWITH_LIBEVENT=OFF \
+  -DBUILD_COMPILER=OFF \
+  -DBUILD_C_GLIB=OFF \
+  -DBUILD_JAVA=OFF \
+  -DBUILD_JAVASCRIPT=OFF \
+  -DBUILD_NODEJS=OFF \
+  -DBUILD_KOTLIN=OFF \
+  -DBUILD_PYTHON=OFF \
+  -DBUILD_TESTING=OFF \
+  -DOPENSSL_ROOT_DIR=${OSQUERY_BUILD}/installed_formulas/openssl \
   -DOSQUERY_TOOLCHAIN_SYSROOT=/usr/local/osquery-toolchain
 ```
 
