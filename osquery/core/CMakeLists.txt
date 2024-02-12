@@ -35,6 +35,7 @@ function(generateOsqueryCoreInit)
     osquery_extensions
     osquery_distributed
     osquery_utils_pidfile
+    osquery_utils_openssl_utils
   )
 
   if(OSQUERY_BUILD_EXPERIMENTS)
@@ -46,6 +47,7 @@ function(generateOsqueryCoreInit)
   if(DEFINED PLATFORM_WINDOWS)
     list(APPEND dependencies
       osquery_system_usersgroups_services
+      osquery_utils_openssl_cngprovider
     )
   endif()
 
@@ -141,6 +143,7 @@ function(generateOsqueryCore)
     tables.h
     shutdown.h
     system.h
+    init.h
   )
 
   if(DEFINED PLATFORM_WINDOWS)

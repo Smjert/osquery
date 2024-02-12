@@ -16,7 +16,7 @@
 #include <ncrypt.h>
 #include <wincrypt.h>
 
-#include <osquery/utils/windows/openssl_cng_provider/cng.h>
+#include <osquery/utils/openssl/windows/cng_provider/cng.h>
 
 namespace cng {
 

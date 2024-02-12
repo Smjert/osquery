@@ -11,7 +11,7 @@
 #include <osquery/config/packs.h>
 #include <osquery/core/core.h>
 #include <osquery/core/flags.h>
-#include <osquery/core/system.h>
+#include <osquery/core/init.h>
 #include <osquery/core/tables.h>
 #include <osquery/events/eventfactory.h>
 #include <osquery/events/eventpublisher.h>

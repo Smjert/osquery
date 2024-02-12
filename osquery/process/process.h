@@ -26,6 +26,8 @@
 
 namespace osquery {
 
+using ModuleHandle = void*;
+
 /// Constant for an invalid process
 const auto kInvalidPid = (PlatformPidType)-1;
 

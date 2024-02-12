@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
-#include <osquery/core/system.h>
+#include <osquery/core/init.h>
 #include <osquery/sdk/sdk.h>
 
 #include <chrono>

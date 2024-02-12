@@ -25,13 +25,10 @@ function(osqueryUtilsMain)
   add_subdirectory("conversions")
   add_subdirectory("schemer")
   add_subdirectory("ycloud")
+  add_subdirectory("openssl")
 
   if(DEFINED PLATFORM_LINUX)
     add_subdirectory("linux")
-  endif()
-
-  if(DEFINED PLATFORM_WINDOWS)
-    add_subdirectory("windows")
   endif()
 
   if(OSQUERY_BUILD_TESTS)

@@ -9,7 +9,7 @@
 
 #include <openssl/params.h>
 
-#include <osquery/utils/windows/openssl_cng_provider/keymanagement/provider_key.h>
+#include <osquery/utils/openssl/windows/cng_provider/keymanagement/provider_key.h>
 
 extern "C" const OSSL_ALGORITHM* OsqueryGetStoreAlgorithms();
 
