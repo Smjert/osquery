@@ -2,11 +2,13 @@
 
 #include <iostream>
 
-#include <osquery/utils/windows/openssl_cng_provider/common/defines.h>
-#include <osquery/utils/windows/openssl_cng_provider/common/provider_context.h>
-#include <osquery/utils/windows/openssl_cng_provider/keymanagement/key_management.h>
-#include <osquery/utils/windows/openssl_cng_provider/signature/signature.h>
-#include <osquery/utils/windows/openssl_cng_provider/store/store.h>
+#include <openssl/provider.h>
+
+#include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
+#include <osquery/utils/openssl/windows/cng_provider/common/provider_context.h>
+#include <osquery/utils/openssl/windows/cng_provider/keymanagement/key_management.h>
+#include <osquery/utils/openssl/windows/cng_provider/signature/signature.h>
+#include <osquery/utils/openssl/windows/cng_provider/store/store.h>
 
 namespace osquery {
 constexpr char* provider_name = "CNG Provider";
@@ -134,3 +136,33 @@ int OsqueryCNGProviderInit([[maybe_unused]] const OSSL_CORE_HANDLE* handle,
   return 1;
 }
 }
+
+namespace osquery {
+
+// OpenSSLCNGContext::OpenSSLCNGContext(OSSL_LIB_CTX& lib_ctx,
+//                                      OSSL_PROVIDER& default_provider,
+//                                      OSSL_PROVIDER& cng_provider) {}
+
+// std::optional<OpenSSLCNGContext> InitializeOpenSSLCNGProvider() {
+//   auto* lib_ctx = OSSL_LIB_CTX_new();
+
+//   if (OSSL_PROVIDER_add_builtin(
+//           lib_ctx, "cng_provider", OsqueryCNGProviderInit) != 1) {
+//     return std::nullopt;
+//   }
+
+//   OSSL_PROVIDER* default_provider = OSSL_PROVIDER_load(lib_ctx, "default");
+
+//   if (default_provider == nullptr) {
+//     return std::nullopt;
+//   }
+
+//   OSSL_PROVIDER* cng_provider = OSSL_PROVIDER_load(lib_ctx, "cng_provider");
+
+//   if (cng_provider == nullptr) {
+//     return std::nullopt;
+//   }
+
+//   return OpenSSLCNGContext{*lib_ctx, *default_provider, *cng_provider};
+// }
+} // namespace osquery

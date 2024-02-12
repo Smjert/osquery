@@ -10,7 +10,10 @@
 #include "tls.h"
 
 #include <chrono>
+#include <variant>
+
 #include <osquery/core/core.h>
+#include <osquery/core/init.h>
 #include <osquery/filesystem/filesystem.h>
 #include <osquery/utils/config/default_paths.h>
 #include <osquery/utils/info/platform_type.h>
@@ -91,15 +94,42 @@ HIDDEN_FLAG(bool, tls_node_api, false, "Use node key as TLS endpoints");
 
 DECLARE_bool(verbose);
 
-TLSTransport::TLSTransport() {
-  if (FLAGS_tls_server_certs.size() > 0) {
-    server_certificate_file_ = FLAGS_tls_server_certs;
+namespace {
+std::variant<DefaultOpenSSLContextData, NativeOpenSSLContextData>
+createOpenSSLContextData() {
+  auto expected_client_cert_data =
+      getSSLClientCertificateDataFromUri(FLAGS_tls_client_cert);
+  if (expected_client_cert_data.isError()) {
+    switch (expected_client_cert_data.getErrorCode()) {
+    case UriParseError::ParseError: {
+      LOG(WARNING) << "Failed to parse the uri for the client certificate";
+    }
+    case UriParseError::GenericError: {
+      LOG(WARNING) << "Failed to get the client certificate and key from uri "
+                   << FLAGS_tls_client_cert;
+    }
+    }
+
+    return expected_client_cert_data
   }
 
-  if (FLAGS_tls_client_cert.size() > 0 && FLAGS_tls_client_key.size() > 0) {
-    client_certificate_file_ = FLAGS_tls_client_cert;
-    client_private_key_file_ = FLAGS_tls_client_key;
+  if (FLAGS_tls_use_system_cert_store) {
+    NativeOpenSSLContextData context_data{
+        Initializer::getOpenSSLCustomProviderContext()};
+  } else {
+
   }
+}
+} // namespace
+
+TLSTransport::TLSTransport() {
+  if (FLAGS_tls_use_system_cert_store) {
+    return std::make_unique<OpenSSLContextFactory>(
+        Initializer::getOpenSSLCustomProviderContext());
+  }
+
+  auto openssl_context_factory = std::make_unique<OpenSSLDefaultContextFactory>(
+      FLAGS_tls_client_cert, FLAGS_tls_client_key, FLAGS_tls_server_certs);
 }
 
 void TLSTransport::decorateRequest(http::Request& r) {
@@ -277,7 +307,8 @@ Status TLSTransport::sendRequest(const std::string& params, bool compress) {
   VLOG(1) << "TLS/HTTPS " << ((verb == HTTP_POST) ? "POST" : "PUT")
           << " request to URI: " << destination_;
   if (FLAGS_verbose && FLAGS_tls_dump) {
-    // Not using VLOG to avoid logging whole body to logging destination.
+    // Not using VLOG to avoid logging whole body to logging
+    // destination.
     printRawStderr(params);
   }
 
@@ -293,7 +324,8 @@ Status TLSTransport::sendRequest(const std::string& params, bool compress) {
 
     const auto& response_body = response_.body();
     if (FLAGS_verbose && FLAGS_tls_dump) {
-      // Not using VLOG to avoid logging whole body to logging destination.
+      // Not using VLOG to avoid logging whole body to logging
+      // destination.
       printRawStderr(response_body);
     }
     response_status_ =

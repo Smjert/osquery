@@ -7,8 +7,8 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 
-#include <osquery/utils/windows/openssl_cng_provider/common/defines.h>
-#include <osquery/utils/windows/openssl_cng_provider/keymanagement/provider_key.h>
+#include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
+#include <osquery/utils/openssl/windows/cng_provider/keymanagement/provider_key.h>
 
 extern "C" {
 void* OsqueryCNGKeyManagementNew(void* prov_ctx);

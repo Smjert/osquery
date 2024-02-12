@@ -22,10 +22,13 @@ function(generateOsqueryRemoteTransportsTransportstls)
   target_link_libraries(osquery_remote_transports_transportstls PUBLIC
     osquery_cxx_settings
     osquery_core
+    osquery_core_init
     osquery_remote_httpclient
     osquery_remote_requests
     osquery_utils_json
+    osquery_utils_openssl_utils
     thirdparty_boost
+    
   )
 
   set(public_header_files

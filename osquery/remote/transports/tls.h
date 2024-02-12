@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <variant>
+
 #include <gtest/gtest_prod.h>
 
 // clang-format off
@@ -19,6 +21,7 @@
 
 #include <osquery/core/flags.h>
 #include <osquery/remote/requests.h>
+#include <osquery/utils/openssl/openssl_utils.h>
 
 namespace osquery {
 
@@ -101,27 +104,16 @@ class TLSTransport : public Transport {
     verify_peer_ = false;
   }
 
-  /// Set TLS-client authentication options.
-  void setClientCertificate(const std::string& certificate_file,
-                            const std::string& private_key_file) {
-    client_certificate_file_ = certificate_file;
-    client_private_key_file_ = private_key_file;
-  }
-
-  /// Set TLS server/ca pinning options.
-  void setPeerCertificate(const std::string& server_certificate_file) {
-    server_certificate_file_ = server_certificate_file;
+  /// Testing-only
+  void setOpenSSLContextData(
+      std::variant<DefaultOpenSSLContextData, NativeOpenSSLContextData>
+          ssl_context_data) {
+    ssl_context_data_ = ssl_context_data;
   }
 
  private:
-  /// Optional TLS client-auth client certificate filename.
-  std::string client_certificate_file_;
-
-  /// Optional TLS client-auth client private key filename.
-  std::string client_private_key_file_;
-
-  /// Optional TLS server-pinning server certificate/bundle filename.
-  std::string server_certificate_file_;
+  std::variant<DefaultOpenSSLContextData, NativeOpenSSLContextData>
+      ssl_context_data_;
 
   /// Testing-only, disable peer verification.
   bool verify_peer_{true};

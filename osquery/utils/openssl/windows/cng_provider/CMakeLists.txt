@@ -12,7 +12,7 @@ endfunction()
 
 function(generateOsqueryUtilsOpensslCngProvider)
 
-  add_library(osquery_utils_openssl_cng_provider STATIC
+  add_library(osquery_utils_openssl_cngprovider STATIC
     signature/signature.cpp
     keymanagement/key_management.cpp
     keymanagement/provider_key.cpp
@@ -20,7 +20,7 @@ function(generateOsqueryUtilsOpensslCngProvider)
     cng.cpp
   )
 
-  target_link_libraries(osquery_utils_openssl_cng_provider PUBLIC
+  target_link_libraries(osquery_utils_openssl_cngprovider PUBLIC
     osquery_cxx_settings
     osquery_utils_conversions
     thirdparty_openssl
@@ -28,7 +28,7 @@ function(generateOsqueryUtilsOpensslCngProvider)
   )
 
   if(OSQUERY_BUILD_TESTS)
-    add_test(NAME osquery_utils_openssl_cng_provider_tests-test COMMAND osquery_utils_openssl_cng_provider_tests-test)
+    add_test(NAME osquery_utils_openssl_cngprovider_tests-test COMMAND osquery_utils_openssl_cngprovider_tests-test)
   endif()
 
   set(public_header_files
@@ -42,22 +42,22 @@ function(generateOsqueryUtilsOpensslCngProvider)
     store/store.h
   )
 
-  generateIncludeNamespace(osquery_utils_openssl_cng_provider "osquery/utils/windows/openssl_cng_provider" "FULL_PATH" ${public_header_files})
+  generateIncludeNamespace(osquery_utils_openssl_cngprovider "osquery/utils/openssl/windows/cng_provider" "FULL_PATH" ${public_header_files})
 endfunction()
 
 function(generateOsqueryUtilsOpensslCngProviderTests)
   
-  add_executable(osquery_utils_openssl_cng_provider_tests-test
+  add_executable(osquery_utils_openssl_cngprovider_tests-test
     tests/openssl_tests.cpp
   )
 
-  target_link_libraries(osquery_utils_openssl_cng_provider_tests-test PRIVATE
+  target_link_libraries(osquery_utils_openssl_cngprovider_tests-test PRIVATE
     osquery_cxx_settings
-    osquery_utils_openssl_cng_provider
+    osquery_utils_openssl_cngprovider
     thirdparty_googletest
   )
 
-  target_compile_definitions(osquery_utils_openssl_cng_provider_tests-test PRIVATE
+  target_compile_definitions(osquery_utils_openssl_cngprovider_tests-test PRIVATE
     OSQUERY_PFX_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/osquery.pfx"
   )
 endfunction()

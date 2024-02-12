@@ -7,6 +7,8 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
+#include "init.h"
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -720,6 +722,23 @@ void Initializer::start() const {
   if (shutdownRequested()) {
     return;
   }
+
+#if defined(WIN32) || defined(__apple__)
+  if (isWorker() || !isWatcher()) {
+    if (FLAGS_tls_use_system_cert_store) {
+      auto opt_provider_context = createSystemOpenSSLProviderContext();
+
+      if (!opt_provider_context.has_value()) {
+        LOG(ERROR)
+            << "Failed to initialize the openssl system provider context";
+        requestShutdown(EXIT_CATASTROPHIC);
+        return;
+      }
+
+      openssl_custom_provider_context_ = std::move(*opt_provider_context);
+    }
+  }
+#endif
 
   // Then set the config plugin, which uses a single/active plugin.
   initActivePlugin("config", FLAGS_config_plugin);
