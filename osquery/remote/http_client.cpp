@@ -26,7 +26,7 @@
 #include <openssl/store.h>
 #include <openssl/x509.h>
 
-#include <osquery/utils/windows/openssl_cng_provider/cng.h>
+#include <osquery/utils/openssl/windows/cng_provider/cng.h>
 #endif
 
 #include <boost/asio/connect.hpp>
@@ -422,44 +422,10 @@ void Client::createConnection() {
   }
 }
 
-std::once_flag ssl_cng_ctx_once;
-
-struct OpenSSLCNGContext {
-  OSSL_LIB_CTX* lib_ctx;
-  OSSL_PROVIDER* default_provider;
-  OSSL_PROVIDER* cng_provider;
-};
-
-static OpenSSLCNGContext cng_context;
-
 void Client::encryptConnection() {
   // boost::asio::ssl::context ctx{boost::asio::ssl::context::sslv23};
 
-  std::call_once(ssl_cng_ctx_once, []() {
-    auto* lib_ctx = OSSL_LIB_CTX_new();
-
-    if (OSSL_PROVIDER_add_builtin(
-            lib_ctx, "cng_provider", OsqueryCNGProviderInit) != 1) {
-      std::abort();
-    }
-
-    OSSL_PROVIDER* default_provider = OSSL_PROVIDER_load(lib_ctx, "default");
-
-    if (default_provider == nullptr) {
-      std::abort();
-    }
-
-    OSSL_PROVIDER* cng_provider = OSSL_PROVIDER_load(lib_ctx, "cng_provider");
-
-    if (cng_provider == nullptr) {
-      std::abort();
-    }
-
-    cng_context.lib_ctx = lib_ctx;
-    cng_context.default_provider = default_provider;
-    cng_context.cng_provider = cng_provider;
-  });
-
+  /*
   auto* ssl_ctx = SSL_CTX_new_ex(
       cng_context.lib_ctx, "?provider=cng_provider", ::SSLv23_client_method());
 
@@ -479,12 +445,14 @@ void Client::encryptConnection() {
   }
 
   SSL_CTX_set_cert_store(ssl_ctx, ca_store);
+  */
 
   // if (client_options_.server_certificate_) {
   //   ctx.set_verify_mode(boost::asio::ssl::verify_peer);
   //   ctx.load_verify_file(*client_options_.server_certificate_);
   // }
 
+  /*
   if (client_options_.verify_path_) {
     ctx.set_verify_mode(boost::asio::ssl::verify_peer);
     ctx.add_verify_path(*client_options_.verify_path_);
@@ -498,6 +466,7 @@ void Client::encryptConnection() {
   if (client_options_.ssl_options_) {
     ctx.set_options(client_options_.ssl_options_);
   }
+  */
 
   // if (client_options_.client_certificate_file_) {
   //   ctx.use_certificate_chain_file(*client_options_.client_certificate_file_);
@@ -512,6 +481,7 @@ void Client::encryptConnection() {
                                     0x3e, 0x2a, 0xa9, 0x94, 0x9a, 0x61, 0x3a,
                                     0x92, 0xb9, 0x1e, 0xb9, 0x01, 0x50};
 
+  /*
   auto opt_client_cert_data = getClientCertificate(hash, cng_context.lib_ctx);
 
   if (!opt_client_cert_data.has_value()) {
@@ -535,6 +505,7 @@ void Client::encryptConnection() {
   if (res != 1) {
     throw std::runtime_error("Failed to use the private key");
   }
+  */
 
   ssl_sock_ = std::make_shared<ssl_stream>(sock_, ctx);
   ::SSL_set_tlsext_host_name(ssl_sock_->native_handle(),

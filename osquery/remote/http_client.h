@@ -25,6 +25,8 @@
 #include <mutex>
 #endif
 
+#include <variant>
+
 // clang-format off
 // Keep it on top of all other includes to fix double include WinSock.h header file
 // which is windows specific boost build problem
@@ -42,6 +44,7 @@
 #include <openssl/ssl.h>
 
 #include <osquery/remote/uri.h>
+#include <osquery/utils/openssl/openssl_utils.h>
 
 namespace beast_http = boost::beast::http;
 
@@ -136,21 +139,6 @@ class Client {
       return *this;
     }
 
-    Options& openssl_certificate(std::string const& scf) {
-      server_certificate_ = scf;
-      return *this;
-    }
-
-    Options& openssl_certificate_file(std::string const& ccf) {
-      client_certificate_file_ = ccf;
-      return *this;
-    }
-
-    Options& openssl_private_key_file(std::string const& cpkf) {
-      client_private_key_file_ = cpkf;
-      return *this;
-    }
-
     Options& proxy_hostname(std::string const& prxy_h) {
       proxy_hostname_ = prxy_h;
       return *this;
@@ -166,28 +154,25 @@ class Client {
       return *this;
     }
 
-    bool operator==(Options const& ropts) {
-      return (server_certificate_ == ropts.server_certificate_) &&
-             (verify_path_ == ropts.verify_path_) &&
-             (client_certificate_file_ == ropts.client_certificate_file_) &&
-             (client_private_key_file_ == ropts.client_private_key_file_) &&
-             (ciphers_ == ropts.ciphers_) &&
-             (proxy_hostname_ == ropts.proxy_hostname_) &&
-             (remote_hostname_ == ropts.remote_hostname_) &&
-             (remote_port_ == ropts.remote_port_) &&
-             (ssl_options_ == ropts.ssl_options_) &&
-             (timeout_ == ropts.timeout_) &&
-             (always_verify_peer_ == ropts.always_verify_peer_) &&
-             (follow_redirects_ == ropts.follow_redirects_) &&
-             (keep_alive_ == ropts.keep_alive_) &&
-             (ssl_connection_ == ropts.ssl_connection_);
-    }
+    // bool operator==(Options const& ropts) {
+    //   return (openssl_context_data_ == ropts.openssl_context_data_) &&
+    //          (verify_path_ == ropts.verify_path_) &&
+    //          (ciphers_ == ropts.ciphers_) &&
+    //          (proxy_hostname_ == ropts.proxy_hostname_) &&
+    //          (remote_hostname_ == ropts.remote_hostname_) &&
+    //          (remote_port_ == ropts.remote_port_) &&
+    //          (ssl_options_ == ropts.ssl_options_) &&
+    //          (timeout_ == ropts.timeout_) &&
+    //          (always_verify_peer_ == ropts.always_verify_peer_) &&
+    //          (follow_redirects_ == ropts.follow_redirects_) &&
+    //          (keep_alive_ == ropts.keep_alive_) &&
+    //          (ssl_connection_ == ropts.ssl_connection_);
+    // }
 
    private:
-    boost::optional<std::string> server_certificate_;
+    std::variant<DefaultOpenSSLContextData, NativeOpenSSLContextData>
+        openssl_context_data_;
     boost::optional<std::string> verify_path_;
-    boost::optional<std::string> client_certificate_file_;
-    boost::optional<std::string> client_private_key_file_;
     boost::optional<std::string> ciphers_;
     boost::optional<std::string> proxy_hostname_;
     boost::optional<std::string> remote_hostname_;
@@ -480,7 +465,7 @@ class HTTP_Response<T>::Iterator {
     return (iter_ != it.iter_);
   }
 
-  auto operator-> () {
+  auto operator->() {
     return std::make_shared<std::pair<std::string, std::string>>(
         std::string(iter_->name_string()), std::string(iter_->value()));
   }

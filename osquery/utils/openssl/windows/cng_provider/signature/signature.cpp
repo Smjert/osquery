@@ -16,11 +16,11 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 
-#include <osquery/utils/windows/openssl_cng_provider/common/defines.h>
-#include <osquery/utils/windows/openssl_cng_provider/common/provider_context.h>
-#include <osquery/utils/windows/openssl_cng_provider/keymanagement/key_management.h>
-#include <osquery/utils/windows/openssl_cng_provider/keymanagement/provider_key.h>
-#include <osquery/utils/windows/openssl_cng_provider/signature/signature_ctx.h>
+#include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
+#include <osquery/utils/openssl/windows/cng_provider/common/provider_context.h>
+#include <osquery/utils/openssl/windows/cng_provider/keymanagement/key_management.h>
+#include <osquery/utils/openssl/windows/cng_provider/keymanagement/provider_key.h>
+#include <osquery/utils/openssl/windows/cng_provider/signature/signature_ctx.h>
 
 extern "C" {
 void* OsqueryCNGSignatureNewCtx(void* prov_ctx,

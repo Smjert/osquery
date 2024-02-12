@@ -8,7 +8,7 @@
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 
-#include <osquery/utils/windows/openssl_cng_provider/common/defines.h>
+#include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
 
 extern "C" {
 void* OsqueryCNGStoreOpen(void* prov_ctx, const char* uri);
@@ -253,6 +253,8 @@ ProviderKey searchNextValidPrivateKey(HCERTSTORE store_handle,
 } // namespace
 
 Store* Store::openStore(const std::wstring& store_name) {
+  // TODO: Here we have to decide if it's the LocalMachine one we access or the
+  // CurrentUser
   HCERTSTORE windows_store = CertOpenSystemStore(0, store_name.data());
 
   if (windows_store == nullptr) {
@@ -314,8 +316,6 @@ bool Store::loadNextPrivateKey(OSSL_CALLBACK* object_callback,
 
   static int object_type_pkey = OSSL_OBJECT_PKEY;
   OSSL_PARAM privkey_params[] = {
-      /* This can be a OSSL_OBJECT_PARAM_REFERENCE instead of
-         OSSL_OBJECT_PARAM_DATA */
       OSSL_PARAM_int(OSSL_OBJECT_PARAM_TYPE, &object_type_pkey),
       /* When given the string length 0, OSSL_PARAM_utf8_string() figures out
          the real length */
@@ -325,7 +325,7 @@ bool Store::loadNextPrivateKey(OSSL_CALLBACK* object_callback,
           0),
       /* Here we MUST use a reference, because this is not a real RSA private
          key, but just a handle. This forces openssl to make a duplicate of the
-         key handle and therefore keep it's own copy alive, otherwise when we
+         key handle and therefore keep its own copy alive, otherwise when we
          close the store, the key handle is destroyed */
       OSSL_PARAM_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
                               &current_private_key_,
