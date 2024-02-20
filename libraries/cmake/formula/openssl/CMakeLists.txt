@@ -16,6 +16,7 @@ function(opensslMain)
     no-weak-ssl-ciphers
     no-comp
     enable-cms
+    #enable-trace TODO: we want to test this
   )
 
   add_library(thirdparty_openssl_ssl STATIC IMPORTED GLOBAL)

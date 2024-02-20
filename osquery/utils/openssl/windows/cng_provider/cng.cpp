@@ -10,6 +10,16 @@
 #include <osquery/utils/openssl/windows/cng_provider/signature/signature.h>
 #include <osquery/utils/openssl/windows/cng_provider/store/store.h>
 
+// #define DBGOUTPUT 1
+
+#ifdef DBGOUTPUT
+#define DBGERR(message) std::cerr << message << std::endl
+#define DBGWERR(message) std::wcerr << message << std::endl
+#else
+#define DBGERR(message)
+#define DBGWERR(message)
+#endif
+
 namespace osquery {
 constexpr char* provider_name = "CNG Provider";
 constexpr char* provider_version = "0.0.1";
@@ -66,15 +76,15 @@ static const OSSL_ALGORITHM* OsqueryCNGQueryOperations(
 
   switch (operation_id) {
   case OSSL_OP_STORE: {
-    std::cout << "Returning store algorithms" << std::endl;
+    DBGERR("Returning store algorithms");
     return OsqueryGetStoreAlgorithms();
   }
   case OSSL_OP_KEYMGMT: {
-    std::cout << "Returning CNG KeyMgmt to the core" << std::endl;
+    DBGERR("Returning CNG KeyMgmt to the core");
     return OsqueryGetKeyManagementAlgorithms();
   }
   case OSSL_OP_SIGNATURE: {
-    std::cout << "Returning CNG Signature to core" << std::endl;
+    DBGERR("Returning CNG Signature to core");
     return OsqueryGetSignatureAlgorithms();
   }
 
@@ -88,10 +98,10 @@ static const OSSL_ALGORITHM* OsqueryCNGQueryOperations(
   case OSSL_OP_KEM:
   case OSSL_OP_ENCODER:
   case OSSL_OP_DECODER:
-    std::cerr << "Operation not supported: " << operation_id << std::endl;
+    DBGERR("Operation not supported: " << operation_id);
     break;
   default:
-    std::cerr << "Error, no algoritm matches: " << operation_id << std::endl;
+    DBGERR("Error, no algoritm matches: " << operation_id);
     return nullptr;
   }
   return nullptr; /* When unsupported return nullptr */

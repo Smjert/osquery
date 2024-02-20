@@ -15,20 +15,6 @@
 #include <osquery/logger/logger.h>
 #include <osquery/remote/http_client.h>
 
-#ifdef WIN32
-#include <sdkddkver.h>
-
-#include <windows.h>
-
-#include <wincrypt.h>
-
-#include <openssl/provider.h>
-#include <openssl/store.h>
-#include <openssl/x509.h>
-
-#include <osquery/utils/openssl/windows/cng_provider/cng.h>
-#endif
-
 #include <boost/asio/connect.hpp>
 
 namespace osquery {
@@ -39,218 +25,6 @@ const std::string kHTTPDefaultPort{"80"};
 const std::string kProxyDefaultPort{"3128"};
 
 const long kSSLShortReadError{0x140000dbL};
-
-namespace {
-#ifdef WIN32
-std::array<std::wstring, 2> kStores = {
-    L"Root", // Trusted Root Certification Authorities
-    L"CA", // Intermediate Certification Authorities
-};
-
-X509_STORE* getCurrentUserCACertificates(OSSL_LIB_CTX* lib_ctx) {
-  X509_STORE* store = X509_STORE_new();
-  for (const auto& store_name : kStores) {
-    auto hStore =
-        CertOpenStore(CERT_STORE_PROV_SYSTEM,
-                      0,
-                      0,
-                      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_READONLY_FLAG,
-                      store_name.data());
-
-    if (hStore == 0) {
-      VLOG(1) << "Failed to open the store";
-      return nullptr;
-    }
-
-    PCCERT_CONTEXT pContext = nullptr;
-    while ((pContext = CertEnumCertificatesInStore(hStore, pContext)) !=
-           nullptr) {
-      /* We search the usage/purpose property, if present, to select
-         certificates that are valid for Server Auth. if there's no property, so
-         if the API fails, it means the certificate can be used for all
-         purposes. */
-      DWORD usage_size = 0;
-      if (CertGetEnhancedKeyUsage(pContext,
-                                  CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG,
-                                  nullptr,
-                                  &usage_size)) {
-        std::vector<char> buffer(usage_size);
-
-        if (!CertGetEnhancedKeyUsage(
-                pContext,
-                CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG,
-                reinterpret_cast<PCERT_ENHKEY_USAGE>(buffer.data()),
-                &usage_size)) {
-          continue;
-        }
-
-        CERT_ENHKEY_USAGE usage;
-        std::memcpy(&usage, buffer.data(), sizeof(usage));
-
-        bool found_correct_usage = false;
-        for (DWORD i = 0; i < usage.cUsageIdentifier; ++i) {
-          if (strcmp(usage.rgpszUsageIdentifier[i],
-                     szOID_PKIX_KP_SERVER_AUTH) == 0) {
-            found_correct_usage = true;
-            break;
-          }
-        }
-
-        if (!found_correct_usage) {
-          continue;
-        }
-      }
-
-      X509* x509 = d2i_X509(nullptr,
-                            (const unsigned char**)&pContext->pbCertEncoded,
-                            pContext->cbCertEncoded);
-      if (x509) {
-        DWORD str_type = CERT_SIMPLE_NAME_STR;
-        DWORD str_size = CertGetNameStringW(
-            pContext, CERT_NAME_RDN_TYPE, 0, &str_type, nullptr, 0);
-
-        std::wstring name_buffer(str_size, 0);
-        CertGetNameStringW(pContext,
-                           CERT_NAME_RDN_TYPE,
-                           0,
-                           &str_type,
-                           name_buffer.data(),
-                           static_cast<DWORD>(name_buffer.size()));
-
-        std::wcout << "Loading certificate: " << name_buffer << std::endl;
-
-        int i = X509_STORE_add_cert(store, x509);
-
-        if (i == 0) {
-          VLOG(1) << "Failed to add a certificate to the CA store";
-          return nullptr;
-        }
-
-        X509_free(x509);
-      }
-    }
-
-    CertFreeCertificateContext(pContext);
-    // TODO: change flag to 0
-    CertCloseStore(hStore, CERT_CLOSE_STORE_CHECK_FLAG);
-  }
-
-  if (X509_STORE_set_purpose(store, X509_PURPOSE_SSL_SERVER) == 0) {
-    VLOG(1) << "Failed to set the purpose to the store";
-    return nullptr;
-  }
-
-  return store;
-}
-
-std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificate(
-    const std::vector<std::uint8_t> thumbprint, OSSL_LIB_CTX* lib_ctx) {
-  OSSL_STORE_CTX* ossl_store_ctx = OSSL_STORE_open_ex("cng://MY",
-                                                      lib_ctx,
-                                                      nullptr,
-                                                      nullptr,
-                                                      nullptr,
-                                                      nullptr,
-                                                      nullptr,
-                                                      nullptr);
-  if (ossl_store_ctx == nullptr) {
-    VLOG(1) << "Failed to open the store!";
-    return std::nullopt;
-  }
-
-  X509* cert_test = nullptr;
-  EVP_PKEY* private_key = nullptr;
-
-  while (!OSSL_STORE_eof(ossl_store_ctx)) {
-    auto* store_info = OSSL_STORE_load(ossl_store_ctx);
-
-    if (store_info == nullptr) {
-      break;
-    }
-
-    if (cert_test == nullptr &&
-        OSSL_STORE_INFO_get_type(store_info) == OSSL_STORE_INFO_CERT) {
-      auto* cert = OSSL_STORE_INFO_get1_CERT(store_info);
-
-      if (cert != nullptr) {
-        X509_NAME* subject_name = X509_get_subject_name(cert);
-
-        char buf[1024]{};
-        char* res = X509_NAME_oneline(subject_name, buf, 1024);
-
-        if (res != nullptr) {
-          // std::cout << "Subject: " << buf << std::endl;
-        }
-
-        auto ex_flags = X509_get_extension_flags(cert);
-
-        // std::cout << "Flags: " << ex_flags << std::endl;
-
-        if (ex_flags & EXFLAG_XKUSAGE) {
-          // auto ex_key_flags = X509_get_extended_key_usage(cert);
-          //  std::cout << "Extended Key Usage: " << ex_key_flags << std::endl;
-        }
-
-        auto* issuer_name = X509_get_issuer_name(cert);
-        res = X509_NAME_oneline(issuer_name, buf, 1024);
-
-        if (res != nullptr) {
-          // std::cout << "Issuer: " << buf << std::endl;
-        }
-
-        const EVP_MD* cert_digest = EVP_sha1();
-        const auto hash_size = EVP_MD_get_size(cert_digest);
-        std::vector<std::uint8_t> hash(hash_size);
-
-        VLOG(1) << "Hash size: " << hash_size << std::endl;
-
-        // std::array<cert_digest
-
-        if (X509_digest(cert, cert_digest, hash.data(), nullptr) == 0) {
-          VLOG(1) << "Failed to calculate digest!";
-
-          return std::nullopt;
-        }
-
-        std::stringstream hash_ss;
-
-        for (auto c : hash) {
-          hash_ss << "0x" << std::hex << std::setw(2) << std::setfill('0')
-                  << (static_cast<std::uint32_t>(c) & 0xFF) << " ";
-        }
-        hash_ss << "\n";
-
-        if (std::equal(thumbprint.begin(),
-                       thumbprint.end(),
-                       hash.begin(),
-                       hash.end())) {
-          cert_test = cert;
-        }
-      }
-    } else if (OSSL_STORE_INFO_get_type(store_info) == OSSL_STORE_INFO_PKEY) {
-      if (cert_test == nullptr) {
-        VLOG(1) << "No client certificate found";
-        return std::nullopt;
-      }
-
-      VLOG(1) << "Got private key";
-      private_key = OSSL_STORE_INFO_get1_PKEY(store_info);
-    }
-
-    OSSL_STORE_INFO_free(store_info);
-  }
-
-  OSSL_STORE_close(ossl_store_ctx);
-
-  if (private_key == nullptr) {
-    VLOG(1) << "No client private key found";
-    return std::nullopt;
-  }
-
-  return std::make_pair(cert_test, private_key);
-}
-#endif
-} // namespace
 
 void Client::callNetworkOperation(std::function<void()> callback) {
   if (client_options_.timeout_) {
@@ -423,39 +197,118 @@ void Client::createConnection() {
 }
 
 void Client::encryptConnection() {
-  // boost::asio::ssl::context ctx{boost::asio::ssl::context::sslv23};
+  if (!client_options_.openssl_parameters_.has_value()) {
+    throw std::runtime_error(
+        "Missing certificate parameters to properly do encryption");
+  }
 
-  /*
-  auto* ssl_ctx = SSL_CTX_new_ex(
-      cng_context.lib_ctx, "?provider=cng_provider", ::SSLv23_client_method());
+  boost::asio::ssl::context ctx = [this]() {
+    if (std::holds_alternative<DefaultOpenSSLParameters>(
+            *client_options_.openssl_parameters_)) {
+      boost::asio::ssl::context ctx{boost::asio::ssl::context::sslv23};
 
-  boost::asio::ssl::context ctx{ssl_ctx};
+      const auto& openssl_parameters = std::get<DefaultOpenSSLParameters>(
+          *client_options_.openssl_parameters_);
 
+      if (!openssl_parameters.server_certificate_file_.empty()) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+        ctx.load_verify_file(openssl_parameters.server_certificate_file_);
+      }
+
+      if (!openssl_parameters.server_certificate_dir_.empty()) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+        ctx.add_verify_path(openssl_parameters.server_certificate_dir_);
+      }
+
+      if (!openssl_parameters.client_certificate_file_.empty()) {
+        ctx.use_certificate_chain_file(
+            openssl_parameters.client_certificate_file_);
+      }
+
+      if (!openssl_parameters.client_private_key_file_.empty()) {
+        ctx.use_private_key_file(openssl_parameters.client_private_key_file_,
+                                 boost::asio::ssl::context::pem);
+      }
+
+      return ctx;
+    } else {
+      // auto start = std::chrono::system_clock::now();
+
+      const auto& openssl_parameters = std::get<NativeOpenSSLParameters>(
+          *client_options_.openssl_parameters_);
+      auto* provider_library_context =
+          &openssl_parameters.getSSLLibraryContext();
+
+      auto* ssl_ctx = createNativeContext(openssl_parameters);
+
+      boost::asio::ssl::context ctx{ssl_ctx};
+
+      if (openssl_parameters.server_search_parameters.has_value()) {
+        // TODO: filter by the search parameters given
+        X509_STORE* ca_store = getCABundleFromSearchParameters(
+            *provider_library_context,
+            *openssl_parameters.server_search_parameters);
+
+        if (ca_store == nullptr) {
+          throw std::runtime_error(
+              "Could not retrieve the current user CA certificates");
+        }
+
+        // NOTE: The SSL_CTX takes ownership here
+        SSL_CTX_set_cert_store(ssl_ctx, ca_store);
+      }
+
+      if (openssl_parameters.client_cert_search_parameters.has_value()) {
+        auto opt_client_cert_data = getClientCertificateFromSearchParameters(
+            *provider_library_context,
+            *openssl_parameters.client_cert_search_parameters);
+
+        if (!opt_client_cert_data.has_value()) {
+          throw std::runtime_error("Could not find client certificate");
+        }
+
+        auto [client_cert, client_private_key] = *opt_client_cert_data;
+
+        if (client_cert == nullptr || client_private_key == nullptr) {
+          throw std::runtime_error(
+              "Failed to get a client certificate and/or private key");
+        }
+
+        auto res = SSL_CTX_use_certificate(ssl_ctx, client_cert);
+
+        if (res != 1) {
+          throw std::runtime_error("Failed to use the certificate");
+        }
+
+        // TODO: check this is NOT freeing the cert, but just decreasing a ref
+        X509_free(client_cert);
+
+        res = SSL_CTX_use_PrivateKey(ssl_ctx, client_private_key);
+        if (res != 1) {
+          throw std::runtime_error("Failed to use the private key");
+        }
+
+        // TODO: check this is NOT freeing the cert, but just decreasing a ref
+        EVP_PKEY_free(client_private_key);
+      }
+
+      // auto end = std::chrono::system_clock::now();
+
+      // VLOG(1) << "Encrypt ms: "
+      //         << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+      //                                                                  start)
+      //                .count();
+
+      return ctx;
+    }
+  }();
+
+  // TODO: check the order of evaluation with this and setting the certificate
+  // files
   if (client_options_.always_verify_peer_) {
     ctx.set_verify_mode(boost::asio::ssl::verify_peer);
   } else {
     ctx.set_verify_mode(boost::asio::ssl::verify_none);
-  }
-
-  X509_STORE* ca_store = getCurrentUserCACertificates(cng_context.lib_ctx);
-
-  if (ca_store == nullptr) {
-    throw std::runtime_error(
-        "Could not retrieve the current user CA certificates");
-  }
-
-  SSL_CTX_set_cert_store(ssl_ctx, ca_store);
-  */
-
-  // if (client_options_.server_certificate_) {
-  //   ctx.set_verify_mode(boost::asio::ssl::verify_peer);
-  //   ctx.load_verify_file(*client_options_.server_certificate_);
-  // }
-
-  /*
-  if (client_options_.verify_path_) {
-    ctx.set_verify_mode(boost::asio::ssl::verify_peer);
-    ctx.add_verify_path(*client_options_.verify_path_);
   }
 
   if (client_options_.ciphers_) {
@@ -466,46 +319,6 @@ void Client::encryptConnection() {
   if (client_options_.ssl_options_) {
     ctx.set_options(client_options_.ssl_options_);
   }
-  */
-
-  // if (client_options_.client_certificate_file_) {
-  //   ctx.use_certificate_chain_file(*client_options_.client_certificate_file_);
-  // }
-
-  // if (client_options_.client_private_key_file_) {
-  //   ctx.use_private_key_file(*client_options_.client_private_key_file_,
-  //                            boost::asio::ssl::context::pem);
-  // }
-
-  std::vector<std::uint8_t> hash = {0xbf, 0x61, 0x7b, 0x23, 0x1f, 0x85, 0xe1,
-                                    0x3e, 0x2a, 0xa9, 0x94, 0x9a, 0x61, 0x3a,
-                                    0x92, 0xb9, 0x1e, 0xb9, 0x01, 0x50};
-
-  /*
-  auto opt_client_cert_data = getClientCertificate(hash, cng_context.lib_ctx);
-
-  if (!opt_client_cert_data.has_value()) {
-    throw std::runtime_error("Could not find client certificate");
-  }
-
-  auto [client_cert, client_private_key] = *opt_client_cert_data;
-
-  if (client_cert == nullptr || client_private_key == nullptr) {
-    throw std::runtime_error(
-        "Failed to get a client certificate and/or private key");
-  }
-
-  auto res = SSL_CTX_use_certificate(ssl_ctx, client_cert);
-
-  if (res != 1) {
-    throw std::runtime_error("Failed to use the certificate");
-  }
-
-  res = SSL_CTX_use_PrivateKey(ssl_ctx, client_private_key);
-  if (res != 1) {
-    throw std::runtime_error("Failed to use the private key");
-  }
-  */
 
   ssl_sock_ = std::make_shared<ssl_stream>(sock_, ctx);
   ::SSL_set_tlsext_host_name(ssl_sock_->native_handle(),

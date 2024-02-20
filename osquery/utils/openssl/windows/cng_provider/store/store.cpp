@@ -10,6 +10,16 @@
 
 #include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
 
+// #define DBGOUTPUT 1
+
+#ifdef DBGOUTPUT
+#define DBGERR(message) std::cerr << message << std::endl
+#define DBGWERR(message) std::wcerr << message << std::endl
+#else
+#define DBGERR(message)
+#define DBGWERR(message)
+#endif
+
 extern "C" {
 void* OsqueryCNGStoreOpen(void* prov_ctx, const char* uri);
 int OsqueryCNGSetCtxParams(void* loader_ctx, const OSSL_PARAM params[]);
@@ -164,25 +174,23 @@ NCRYPT_KEY_HANDLE loadPrivateKeyFromCert(PCCERT_CONTEXT cert) {
                            subject_name.data(),
                            subject_size);
       if (res == 0) {
-        std::cerr << "Failed to get the certificate subject name" << std::endl;
+        DBGERR("Failed to get the certificate subject name");
       } else {
         subject_name.pop_back();
       }
     } else {
-      std::cerr << "Failed to get the certificate subject name size"
-                << std::endl;
+      DBGERR("Failed to get the certificate subject name size");
     }
 
-    std::wcerr << "Failed to load private key from certificate " << subject_name
-               << ", error: " << std::hex << error << std::dec << std::endl;
+    DBGWERR("Failed to load private key from certificate "
+            << subject_name << ", error: " << std::hex << error << std::dec);
   }
 
   if (caller_must_free != TRUE) {
     return 0;
   }
 
-  std::cout << "Loading key handle: " << std::hex << tmp_key_handle << std::dec
-            << std::endl;
+  DBGERR("Loading key handle: " << std::hex << tmp_key_handle << std::dec);
 
   return tmp_key_handle;
 }
@@ -253,9 +261,13 @@ ProviderKey searchNextValidPrivateKey(HCERTSTORE store_handle,
 } // namespace
 
 Store* Store::openStore(const std::wstring& store_name) {
-  // TODO: Here we have to decide if it's the LocalMachine one we access or the
-  // CurrentUser
-  HCERTSTORE windows_store = CertOpenSystemStore(0, store_name.data());
+  HCERTSTORE windows_store =
+      CertOpenStore(CERT_STORE_PROV_SYSTEM_W,
+                    X509_ASN_ENCODING,
+                    NULL,
+                    CERT_STORE_OPEN_EXISTING_FLAG | CERT_STORE_READONLY_FLAG |
+                        CERT_SYSTEM_STORE_LOCAL_MACHINE,
+                    store_name.data());
 
   if (windows_store == nullptr) {
     return nullptr;
@@ -354,8 +366,7 @@ bool Store::loadNextCertificate(OSSL_CALLBACK* object_callback,
     return false;
   }
 
-  std::cout << "Cert encoding type: " << current_certificate->dwCertEncodingType
-            << std::endl;
+  DBGERR("Cert encoding type: " << current_certificate->dwCertEncodingType);
 
   static constexpr auto object_type_cert = OSSL_OBJECT_CERT;
   OSSL_PARAM cert_params[] = {

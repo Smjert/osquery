@@ -178,6 +178,9 @@ struct Initializer::PrivateData final {
 bool Initializer::isWorker_{false};
 std::atomic<bool> Initializer::resource_limit_hit_{false};
 
+std::optional<OpenSSLProviderContext>
+    Initializer::openssl_custom_provider_context_{};
+
 namespace {
 
 static inline bool hasWorkerVariable() {
@@ -725,18 +728,16 @@ void Initializer::start() const {
 
 #if defined(WIN32) || defined(__apple__)
   if (isWorker() || !isWatcher()) {
-    if (FLAGS_tls_use_system_cert_store) {
-      auto opt_provider_context = createSystemOpenSSLProviderContext();
+    auto opt_provider_context = createSystemOpenSSLProviderContext();
 
-      if (!opt_provider_context.has_value()) {
-        LOG(ERROR)
-            << "Failed to initialize the openssl system provider context";
-        requestShutdown(EXIT_CATASTROPHIC);
-        return;
-      }
-
-      openssl_custom_provider_context_ = std::move(*opt_provider_context);
+    if (!opt_provider_context.has_value()) {
+      LOG(ERROR) << "Failed to initialize the openssl system provider context";
+      requestShutdown(EXIT_CATASTROPHIC);
+      return;
     }
+
+    openssl_custom_provider_context_ =
+        std::optional<OpenSSLProviderContext>(std::move(*opt_provider_context));
   }
 #endif
 
@@ -841,6 +842,10 @@ void Initializer::resourceLimitHit() {
 
 bool Initializer::isResourceLimitHit() {
   return resource_limit_hit_.load();
+}
+
+OpenSSLProviderContext& Initializer::getOpenSSLCustomProviderContext() {
+  return openssl_custom_provider_context_.value();
 }
 
 /**
