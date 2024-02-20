@@ -134,8 +134,9 @@ class Client {
       return *this;
     }
 
-    Options& openssl_verify_path(std::string const& vp) {
-      verify_path_ = vp;
+    template <typename T>
+    Options& openssl_set_cert_parameters(T parameters) {
+      openssl_parameters_ = parameters;
       return *this;
     }
 
@@ -154,24 +155,25 @@ class Client {
       return *this;
     }
 
-    // bool operator==(Options const& ropts) {
-    //   return (openssl_context_data_ == ropts.openssl_context_data_) &&
-    //          (verify_path_ == ropts.verify_path_) &&
-    //          (ciphers_ == ropts.ciphers_) &&
-    //          (proxy_hostname_ == ropts.proxy_hostname_) &&
-    //          (remote_hostname_ == ropts.remote_hostname_) &&
-    //          (remote_port_ == ropts.remote_port_) &&
-    //          (ssl_options_ == ropts.ssl_options_) &&
-    //          (timeout_ == ropts.timeout_) &&
-    //          (always_verify_peer_ == ropts.always_verify_peer_) &&
-    //          (follow_redirects_ == ropts.follow_redirects_) &&
-    //          (keep_alive_ == ropts.keep_alive_) &&
-    //          (ssl_connection_ == ropts.ssl_connection_);
-    // }
+    bool operator==(Options const& ropts) {
+      return (openssl_parameters_ == ropts.openssl_parameters_) &&
+             (verify_path_ == ropts.verify_path_) &&
+             (ciphers_ == ropts.ciphers_) &&
+             (proxy_hostname_ == ropts.proxy_hostname_) &&
+             (remote_hostname_ == ropts.remote_hostname_) &&
+             (remote_port_ == ropts.remote_port_) &&
+             (ssl_options_ == ropts.ssl_options_) &&
+             (timeout_ == ropts.timeout_) &&
+             (always_verify_peer_ == ropts.always_verify_peer_) &&
+             (follow_redirects_ == ropts.follow_redirects_) &&
+             (keep_alive_ == ropts.keep_alive_) &&
+             (ssl_connection_ == ropts.ssl_connection_);
+    }
 
    private:
-    std::variant<DefaultOpenSSLContextData, NativeOpenSSLContextData>
-        openssl_context_data_;
+    std::optional<
+        std::variant<DefaultOpenSSLParameters, NativeOpenSSLParameters>>
+        openssl_parameters_;
     boost::optional<std::string> verify_path_;
     boost::optional<std::string> ciphers_;
     boost::optional<std::string> proxy_hostname_;

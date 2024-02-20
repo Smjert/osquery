@@ -23,6 +23,7 @@ function(generateOsqueryConfig)
 
   target_link_libraries(osquery_config PUBLIC
     osquery_cxx_settings
+    osquery_core_init
     osquery_events_eventsregistry
     osquery_filesystem
     osquery_hashing

@@ -19,6 +19,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <osquery/core/flagalias.h>
 #include <osquery/core/flags.h>
 #include <osquery/core/plugins/logger.h>
 #include <osquery/core/system.h>
@@ -29,10 +30,9 @@
 #include <osquery/logger/data_logger.h>
 #include <osquery/numeric_monitoring/numeric_monitoring.h>
 #include <osquery/registry/registry_factory.h>
-
-#include <osquery/core/flagalias.h>
 #include <osquery/utils/conversions/split.h>
 #include <osquery/utils/info/platform_type.h>
+#include <osquery/utils/info/tool_type.h>
 #include <osquery/utils/json/json.h>
 #include <osquery/utils/system/time.h>
 

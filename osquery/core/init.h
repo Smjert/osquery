@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <boost/core/noncopyable.hpp>
@@ -130,8 +131,9 @@ class Initializer : private boost::noncopyable {
   static void resourceLimitHit();
   static bool isResourceLimitHit();
 
-  /// Gets the OpenSSL library context necessary for custom providers to create new OpenSSL contexts
-  static OpenSSLProviderContext getOpenSSLCustomProviderContext();
+  /// Gets the OpenSSL library context necessary for custom providers to create
+  /// new OpenSSL contexts
+  static OpenSSLProviderContext& getOpenSSLCustomProviderContext();
 
  private:
   struct PrivateData;
@@ -154,6 +156,6 @@ class Initializer : private boost::noncopyable {
 
   static std::atomic<bool> resource_limit_hit_;
 
-  static OpenSSLProviderContext openssl_custom_provider_context_;
+  static std::optional<OpenSSLProviderContext> openssl_custom_provider_context_;
 };
 } // namespace osquery

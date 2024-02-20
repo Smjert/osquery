@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -21,6 +22,16 @@
 #include <osquery/utils/openssl/windows/cng_provider/keymanagement/key_management.h>
 #include <osquery/utils/openssl/windows/cng_provider/keymanagement/provider_key.h>
 #include <osquery/utils/openssl/windows/cng_provider/signature/signature_ctx.h>
+
+// #define DBGOUTPUT 1
+
+#ifdef DBGOUTPUT
+#define DBGERR(message) std::cerr << message << std::endl
+#define DBGWERR(message) std::wcerr << message << std::endl
+#else
+#define DBGERR(message)
+#define DBGWERR(message)
+#endif
 
 extern "C" {
 void* OsqueryCNGSignatureNewCtx(void* prov_ctx,
@@ -175,8 +186,7 @@ int OsqueryCNGSignatureDigestSignInit(void* ctx,
   auto opt_algorithm_id = osquery::OSSLDigestNameToCNG(digest_name);
 
   if (!opt_algorithm_id.has_value()) {
-    std::cerr << "No match for the hashing algorithm " << digest_name
-              << std::endl;
+    DBGERR("No match for the hashing algorithm " << digest_name)
     return 0;
   }
 
@@ -199,7 +209,7 @@ int OsqueryCNGSignatureDigestSignInit(void* ctx,
       alg_provider_handle, &hash_handle, nullptr, 0, nullptr, 0, 0);
 
   if (status != STATUS_SUCCESS) {
-    std::cerr << "Failed to create a hash" << std::endl;
+    DBGERR("Failed to create a hash");
     return 0;
   }
 
@@ -318,7 +328,7 @@ int OsqueryCNGSignatureSignInit(void* ctx,
   osquery::SignatureCtx* sig_ctx = static_cast<osquery::SignatureCtx*>(ctx);
 
   if (params == nullptr) {
-    std::cout << "Params is nullptr" << std::endl;
+    DBGERR("Params is nullptr")
   }
 
   return sig_ctx->initSignature(
@@ -376,7 +386,7 @@ SignatureCtx::~SignatureCtx() {
 bool SignatureCtx::initSignature(ProviderKey& provider_key) {
   provider_key_ = &provider_key;
 
-  std::cout << "Initializing signature" << std::endl;
+  DBGERR("Initializing signature")
 
   return true;
 }
@@ -384,8 +394,8 @@ bool SignatureCtx::initSignature(ProviderKey& provider_key) {
 bool SignatureCtx::initHash(const wchar_t* algorithm_id,
                             BCRYPT_HASH_HANDLE hash_handle,
                             ProviderKey& key) {
-  std::cout << "Initializing hash handle: " << std::hex << hash_handle
-            << " and key: " << key.getHandle() << std::dec << std::endl;
+  DBGERR("Initializing hash handle: " << std::hex << hash_handle << " and key: "
+                                      << key.getHandle() << std::dec);
 
   algorithm_id_ = algorithm_id;
   hash_handle_ = hash_handle;
@@ -404,15 +414,13 @@ bool SignatureCtx::initHash(const wchar_t* algorithm_id,
     return false;
   }
 
-  std::cout << "Hash length: " << std::hex << hash_length_ << std::dec
-            << std::endl;
+  DBGERR("Hash length: " << std::hex << hash_length_ << std::dec);
 
   return true;
 }
 
 bool SignatureCtx::updateHash(const unsigned char* data, size_t data_len) {
-  std::cout << "Updating hash handle: " << std::hex << hash_handle_ << std::dec
-            << std::endl;
+  DBGERR("Updating hash handle: " << std::hex << hash_handle_ << std::dec);
 
   // NOTE: The const_cast here is safe because the function is not going to
   // modify the input
@@ -420,7 +428,7 @@ bool SignatureCtx::updateHash(const unsigned char* data, size_t data_len) {
       hash_handle_, const_cast<PUCHAR>(data), static_cast<ULONG>(data_len), 0);
 
   if (status != STATUS_SUCCESS) {
-    std::cerr << "Failed to update hash" << std::endl;
+    DBGERR("Failed to update hash");
   }
 
   return status == STATUS_SUCCESS;
@@ -461,7 +469,7 @@ bool SignatureCtx::finishSignature(std::basic_string_view<BYTE> hash_data,
 
   switch (padding_) {
   case SignaturePadding::Pss: {
-    std::cout << "Finishing signature with PSS padding" << std::endl;
+    DBGERR("Finishing signature with PSS padding");
     BCRYPT_PSS_PADDING_INFO padding_info{algorithm_id_, pss_salt_length_};
 
     sign_result = NCryptSignHash(provider_key_->getHandle(),
@@ -476,7 +484,7 @@ bool SignatureCtx::finishSignature(std::basic_string_view<BYTE> hash_data,
     break;
   }
   case SignaturePadding::Pkcs1: {
-    std::cout << "Finishing signature with PKCS1 padding" << std::endl;
+    DBGERR("Finishing signature with PKCS1 padding");
     BCRYPT_PKCS1_PADDING_INFO padding_info{algorithm_id_};
 
     sign_result = NCryptSignHash(provider_key_->getHandle(),
@@ -495,17 +503,20 @@ bool SignatureCtx::finishSignature(std::basic_string_view<BYTE> hash_data,
   }
 
   if (sign_result != ERROR_SUCCESS) {
-    std::cerr << "Failed to sign" << std::endl;
+    DBGERR("Failed to sign");
     return false;
   }
 
-  std::cout << "Successfully signed hash" << std::endl;
+  DBGERR("Successfully signed hash");
+
+  std::stringstream ss;
 
   for (auto b : hash_data) {
-    std::cout << std::setw(2) << std::setfill('0') << std::hex
-              << (static_cast<std::uint32_t>(b) & 0xFF);
+    ss << std::setw(2) << std::setfill('0') << std::hex
+       << (static_cast<std::uint32_t>(b) & 0xFF);
   }
-  std::cout << std::endl;
+
+  DBGERR(ss);
 
   actual_signature_length = signature_length;
 
@@ -517,15 +528,15 @@ bool SignatureCtx::finishHashAndSign(unsigned char* signature,
                                      std::size_t max_signature_length) {
   std::vector<UCHAR> hash_data(hash_length_);
 
-  std::cout << "Finish Hash Signature with handle: " << std::hex << hash_handle_
-            << std::dec << std::endl;
+  DBGERR("Finish Hash Signature with handle: " << std::hex << hash_handle_
+                                               << std::dec);
 
   NTSTATUS status = BCryptFinishHash(
       hash_handle_, hash_data.data(), static_cast<ULONG>(hash_data.size()), 0);
 
   if (status != STATUS_SUCCESS) {
-    std::cerr << "Failed to finish hash with error: " << std::hex << status
-              << std::dec << std::endl;
+    DBGERR("Failed to finish hash with error: " << std::hex << status
+                                                << std::dec);
     return false;
   }
 
@@ -540,15 +551,15 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
                                                 std::size_t signature_length) {
   std::vector<UCHAR> hash_data(hash_length_);
 
-  std::cout << "Finish Hash to verify with handle: " << std::hex << hash_handle_
-            << std::dec << std::endl;
+  DBGERR("Finish Hash to verify with handle: " << std::hex << hash_handle_
+                                               << std::dec);
 
   NTSTATUS status = BCryptFinishHash(
       hash_handle_, hash_data.data(), static_cast<ULONG>(hash_data.size()), 0);
 
   if (status != STATUS_SUCCESS) {
-    std::cerr << "Failed to finish hash to verify with error: " << std::hex
-              << status << std::dec << std::endl;
+    DBGERR("Failed to finish hash to verify with error: " << std::hex << status
+                                                          << std::dec);
     return false;
   }
 
@@ -587,8 +598,8 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
   }
 
   if (sign_result != ERROR_SUCCESS) {
-    std::cerr << "Signature verification failed: " << std::hex << sign_result
-              << std::dec << std::endl;
+    DBGERR("Signature verification failed: " << std::hex << sign_result
+                                             << std::dec);
     return false;
   }
 
@@ -721,8 +732,8 @@ SignatureCtx* SignatureCtx::clone() {
     return nullptr;
   }
 
-  std::cout << "Duplicating hash handle: " << std::hex << hash_handle_ << " to "
-            << new_ctx->hash_handle_ << std::dec << std::endl;
+  DBGERR("Duplicating hash handle: " << std::hex << hash_handle_ << " to "
+                                     << new_ctx->hash_handle_ << std::dec);
 
   new_ctx->algorithm_id_ = algorithm_id_;
 

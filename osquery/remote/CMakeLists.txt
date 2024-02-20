@@ -49,7 +49,7 @@ function(generateOsqueryRemoteHttpclient)
     osquery_cxx_settings
     osquery_logger
     osquery_utils_status
-    osquery_utils_openssl_cngprovider
+    osquery_utils_openssl_utils
     thirdparty_boost
     thirdparty_openssl
   )
