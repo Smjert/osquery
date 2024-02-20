@@ -10,6 +10,16 @@
 #include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
 #include <osquery/utils/openssl/windows/cng_provider/keymanagement/provider_key.h>
 
+// #define DBGOUTPUT 1
+
+#ifdef DBGOUTPUT
+#define DBGERR(message) std::cerr << message << std::endl
+#define DBGWERR(message) std::wcerr << message << std::endl
+#else
+#define DBGERR(message)
+#define DBGWERR(message)
+#endif
+
 extern "C" {
 void* OsqueryCNGKeyManagementNew(void* prov_ctx);
 void OsqueryCNGKeyManagementFree(void* key_data);
@@ -227,8 +237,7 @@ void OsqueryCNGKeyManagementFree(void* key_data) {
   const osquery::ProviderKey* provider_key =
       static_cast<const osquery::ProviderKey*>(key_data);
 
-  std::cout << "Freeing key: " << std::hex << provider_key->getHandle()
-            << std::dec << std::endl;
+  DBGERR("Freeing key: " << std::hex << provider_key->getHandle() << std::dec);
 
   delete provider_key;
 }
@@ -333,9 +342,9 @@ int OsqueryCNGKeyManagementHas(const void* key_data, int selection) {
   const osquery::ProviderKey* provider_key =
       static_cast<const osquery::ProviderKey*>(key_data);
 
-  std::cout << "Checking if key at handle " << std::hex
-            << provider_key->getHandle() << " has " << cng_desired_key_usages
-            << std::dec << std::endl;
+  DBGERR("Checking if key at handle " << std::hex << provider_key->getHandle()
+                                      << " has " << cng_desired_key_usages
+                                      << std::dec);
 
   if (cng_desired_key_usages != 0) {
     DWORD cng_key_usages;
@@ -375,9 +384,9 @@ int OsqueryCNGKeyManagementExport(const void* key_data,
 
   OSSL_PARAM* param = nullptr;
 
-  std::cout << "Attempting to export key at handle " << std::hex
-            << provider_key->getHandle() << " with selection " << selection
-            << std::dec << std::endl;
+  DBGERR("Attempting to export key at handle "
+         << std::hex << provider_key->getHandle() << " with selection "
+         << selection << std::dec);
 
   if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) {
     // We don't want to export the private key
@@ -459,9 +468,9 @@ int OsqueryCNGKeyManagementExport(const void* key_data,
     params[2] = OSSL_PARAM_construct_end();
     param = params;
 
-    std::cout << "Successful export of key at handle: " << std::hex
-              << provider_key->getHandle() << " with selection " << selection
-              << std::dec << std::endl;
+    DBGERR("Successful export of key at handle: "
+           << std::hex << provider_key->getHandle() << " with selection "
+           << selection << std::dec);
 
     /* NOTE: we return here because this is the only type of selection
        we support now */
@@ -593,8 +602,8 @@ int OsqueryCNGKeyManagementImport(void* key_data,
                                       NCRYPT_SILENT_FLAG);
 
     if (security_status != ERROR_SUCCESS) {
-      std::cerr << "Failed to import a key, error " << std::hex
-                << security_status << std::dec << std::endl;
+      DBGERR("Failed to import a key, error " << std::hex << security_status
+                                              << std::dec);
       return 0;
     }
 
@@ -617,13 +626,14 @@ void* OsqueryCNGKeyManagementDup(const void* keydata_from,
   auto* new_key_data = old_key_data->clone();
 
   if (new_key_data == nullptr) {
-    std::cerr << "Failed to duplicate key handle " << std::hex
-              << old_key_data->getHandle() << std::dec << std::endl;
+    DBGERR("Failed to duplicate key handle "
+           << std::hex << old_key_data->getHandle() << std::dec);
     return nullptr;
   }
 
-  std::cout << "Duplicated key handle " << std::hex << old_key_data->getHandle()
-            << " to " << new_key_data->getHandle() << std::dec << std::endl;
+  DBGERR("Duplicated key handle " << std::hex << old_key_data->getHandle()
+                                  << " to " << new_key_data->getHandle()
+                                  << std::dec);
 
   return new_key_data;
 }

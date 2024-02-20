@@ -1,8 +1,10 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <openssl/provider.h>
@@ -25,9 +27,36 @@ class OpenSSLProviderContext {
  public:
   OpenSSLProviderContext(OSSL_LIB_CTX& lib_ctx,
                          OSSL_PROVIDER& default_provider,
-                         OSSL_PROVIDER& custom_provider);
-  ~OpenSSLProviderContext();
-  OSSL_LIB_CTX& getLibraryContext();
+                         OSSL_PROVIDER& custom_provider)
+      : lib_ctx_(&lib_ctx),
+        default_provider_(&default_provider),
+        custom_provider_(&custom_provider) {}
+
+  OpenSSLProviderContext(const OpenSSLProviderContext& other) = delete;
+  OpenSSLProviderContext(OpenSSLProviderContext&& other) noexcept
+      : lib_ctx_(std::exchange(other.lib_ctx_, nullptr)),
+        default_provider_(std::exchange(other.default_provider_, nullptr)),
+        custom_provider_(std::exchange(other.custom_provider_, nullptr)) {}
+
+  OpenSSLProviderContext& operator=(const OpenSSLProviderContext& other) =
+      delete;
+  OpenSSLProviderContext& operator=(OpenSSLProviderContext&& other) noexcept {
+    lib_ctx_ = std::exchange(other.lib_ctx_, nullptr);
+    default_provider_ = std::exchange(other.default_provider_, nullptr);
+    custom_provider_ = std::exchange(other.custom_provider_, nullptr);
+
+    return *this;
+  }
+
+  ~OpenSSLProviderContext() {
+    OSSL_PROVIDER_unload(custom_provider_);
+    OSSL_PROVIDER_unload(default_provider_);
+    OSSL_LIB_CTX_free(lib_ctx_);
+  }
+
+  OSSL_LIB_CTX& getLibraryContext() {
+    return *lib_ctx_;
+  }
 
  private:
   OSSL_LIB_CTX* lib_ctx_{};
@@ -35,7 +64,7 @@ class OpenSSLProviderContext {
   OSSL_PROVIDER* custom_provider_{};
 };
 
-struct DefaultOpenSSLContextData {
+struct DefaultOpenSSLParameters {
   /// Optional TLS client-auth client certificate filename.
   std::string client_certificate_file_;
 
@@ -44,72 +73,79 @@ struct DefaultOpenSSLContextData {
 
   /// Optional TLS server-pinning server certificate/bundle filename.
   std::string server_certificate_file_;
+
+  /// Optional TLS server-pinning server certificates/bundle directory.
+  std::string server_certificate_dir_;
+
+  bool operator==(const DefaultOpenSSLParameters& other) const {
+    return client_certificate_file_ == other.client_certificate_file_ &&
+           client_private_key_file_ == other.client_private_key_file_ &&
+           server_certificate_file_ == other.server_certificate_file_ &&
+           server_certificate_dir_ == other.server_certificate_dir_;
+  }
 };
 
-struct NativeOpenSSLContextData {
-  OpenSSLProviderContext* provider_context;
-  X509* client_certificate_;
-  X509* server_certiticates_chain_;
-  EVP_PKEY* client_private_key;
-};
-
-// class IOpenSSLContextFactory {
-//  public:
-//   virtual ~IOpenSSLContextFactory() {}
-//   virtual SSL_CTX* createNativeContext() = 0;
-// };
-
-/**
- * @brief: Factory for SSL_CTX which use default/built-in functions only
- *
- * This provides SSL_CTXs to do TLS encryption with certificates and keys
- * stored on the filesystem.
- */
-SSL_CTX* createDefaultContext(const DefaultOpenSSLContextData& context_data);
-SSL_CTX* createNativeContext(const NativeOpenSSLContextData& context_data);
-
-/*#ifdef WIN32
-
-class OpenSSLCNGContextFactory {
+class NativeOpenSSLParameters {
  public:
-  OpenSSLCNGContextFactory();
+  NativeOpenSSLParameters(OpenSSLProviderContext& provider_context)
+      : provider_context_(&provider_context) {}
 
-  SSL_CTX* createNativeContext(OpenSSLProviderContext& provider_context,
-                               X509* client_certificate_,
-                               X509* server_certiticates_chain_,
-                               EVP_PKEY* client_private_key_);
-};
+  struct CertificateHash {
+    std::array<std::uint8_t, 20> hash;
 
-using OpenSSLContextFactory = OpenSSLCNGContextFactory;
-#elif __APPLE__
+    bool operator==(const CertificateHash& other) const {
+      return hash == other.hash;
+    }
+  };
 
-class OpenSSLKeychainContextFactory {
- public:
-  OpenSSLKeychainContextFactory();
+  struct CertificateFields {
+    std::string common_name;
+    std::string organizational_unit;
+    std::string issuer;
 
-  SSL_CTX* createNativeContext(OpenSSLProviderContext& provider_context,
-                               X509* client_certificate_,
-                               X509* server_certiticates_chain_,
-                               EVP_PKEY* client_private_key_);
+    bool operator==(const CertificateFields& other) const {
+      return common_name == other.common_name &&
+             organizational_unit == other.organizational_unit &&
+             issuer == other.issuer;
+    }
+  };
+
+  using CertificateSearchParameters =
+      std::variant<CertificateHash, CertificateFields>;
+
+  OSSL_LIB_CTX& getSSLLibraryContext() const {
+    return provider_context_->getLibraryContext();
+  }
+
+  bool operator==(const NativeOpenSSLParameters& other) const {
+    /* NOTE: For the provider context comparison we are stricter than usual, and
+       we are only comparing the pointers, because comparing every property of
+       the provider would be complex and for the use we have it doesn't make
+       sense. We initialize one context for the whole osquery process and
+       multiple different contexts will only happen in test code. */
+    return provider_context_ == other.provider_context_ &&
+           client_cert_search_parameters ==
+               other.client_cert_search_parameters &&
+           server_search_parameters == other.server_search_parameters;
+  }
+
+  std::optional<CertificateSearchParameters> client_cert_search_parameters;
+  std::optional<CertificateFields> server_search_parameters;
 
  private:
-  OpenSSLProviderContext provider_context;
+  OpenSSLProviderContext* provider_context_;
 };
 
-using OpenSSLContextFactory = OpenSSLKeychainContextFactory;
-#endif*/
+SSL_CTX* createNativeContext(const NativeOpenSSLParameters& context_data);
 
 std::optional<OpenSSLProviderContext> createSystemOpenSSLProviderContext();
+X509_STORE* getCABundleFromSearchParameters(
+    OSSL_LIB_CTX& lib_ctx,
+    const NativeOpenSSLParameters::CertificateFields& search_params);
 
-enum class UriParseError { ParseError, GenericError };
-
-Expected<std::pair<X509*, EVP_PKEY*>, UriParseError>
-getSSLClientCertificateDataFromUri(std::string_view uri);
-
-std::optional<std::pair<X509*, EVP_PKEY*>> getSSLClientCertificateDataFromHash(
-    std::vector<std::uint8_t>& hash);
 std::optional<std::pair<X509*, EVP_PKEY*>>
-getSSLClientCertificateDataFromCommonName(const std::string& common_name);
-std::optional<X509*> getSSLSystemCAChain();
+getClientCertificateFromSearchParameters(
+    OSSL_LIB_CTX& lib_ctx,
+    const NativeOpenSSLParameters::CertificateSearchParameters& search_params);
 
 } // namespace osquery
