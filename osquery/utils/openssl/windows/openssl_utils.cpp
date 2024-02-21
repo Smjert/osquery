@@ -1,5 +1,6 @@
 #include <osquery/utils/openssl/openssl_utils.h>
 
+#include <iomanip> // TODO: remove me
 #include <iostream> // TODO: remove me
 
 #include <sdkddkver.h>
@@ -101,6 +102,16 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
       auto* cert = OSSL_STORE_INFO_get1_CERT(store_info);
 
       if (cert != nullptr) {
+        // X509_NAME* subject_name = X509_get_subject_name(cert);
+
+        // char* subject_name_buffer = X509_NAME_oneline(subject_name, nullptr,
+        // 0);
+
+        // if (subject_name_buffer != nullptr) {
+        //   std::cout << "Evaluating client cert: " << subject_name_buffer
+        //             << std::endl;
+        // }
+
         const ASN1_TIME* cert_not_after = X509_get0_notAfter(cert);
 
         // On error, or on the certificate date being expired, we skip
@@ -112,6 +123,9 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
 
         // On error, or on the certificate not being yet usable, we skip
         if (X509_cmp_time(cert_not_before, &current_time) != -1) {
+          // std::cerr << "Skipping cert because it's still not ready to be
+          // used"
+          //           << std::endl;
           continue;
         }
 
@@ -121,8 +135,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
           continue;
         }
 
-        // If we have a key usage, let's ensure that we have at least Digital
-        // Signature
+        /* If we have a key usage, let's ensure that we have at least
+           Digital Signature */
         if (ex_flags & EXFLAG_KUSAGE) {
           auto key_usage_flags = X509_get_key_usage(cert);
 
@@ -166,6 +180,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
         }
 
         if (!cert_fields.organizational_unit.empty()) {
+          // std::cout << "Trying to search for ou: "
+          //           << cert_fields.organizational_unit << std::endl;
           certificate_found = false;
           std::array<char, 65> cert_organization_unit;
           std::uint32_t buffer_length =
@@ -174,10 +190,14 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
                                         NID_organizationalUnitName,
                                         cert_organization_unit.data(),
                                         buffer_length)) {
-            if (std::equal(cert_fields.organizational_unit.begin(),
-                           cert_fields.organizational_unit.end(),
-                           cert_organization_unit.begin(),
-                           cert_organization_unit.begin() + buffer_length)) {
+            // std::cout << "Found cert with ou: " <<
+            // cert_organization_unit.data()
+            //           << std::endl;
+
+            // TODO: This should actually be a lowercase check and ignore
+            // leading or following whitespaces
+            if (cert_fields.organizational_unit ==
+                cert_organization_unit.data()) {
               certificate_found = true;
             }
           }
@@ -290,85 +310,161 @@ X509_STORE* getCABundleFromSearchParameters(
     const NativeOpenSSLParameters::CertificateFields& search_params) {
   X509_STORE* store = X509_STORE_new();
   for (const auto& store_name : kStores) {
-    auto hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,
-                                X509_ASN_ENCODING,
-                                NULL,
-                                CERT_SYSTEM_STORE_LOCAL_MACHINE |
-                                    CERT_STORE_READONLY_FLAG |
-                                    CERT_STORE_OPEN_EXISTING_FLAG,
-                                store_name.data());
+    auto system_store = CertOpenStore(CERT_STORE_PROV_SYSTEM,
+                                      X509_ASN_ENCODING,
+                                      NULL,
+                                      CERT_SYSTEM_STORE_LOCAL_MACHINE |
+                                          CERT_STORE_READONLY_FLAG |
+                                          CERT_STORE_OPEN_EXISTING_FLAG,
+                                      store_name.data());
 
-    if (hStore == 0) {
+    if (system_store == 0) {
       return nullptr;
     }
 
-    PCCERT_CONTEXT pContext = nullptr;
-    while ((pContext = CertEnumCertificatesInStore(hStore, pContext)) !=
-           nullptr) {
-      DWORD key_usage = 0;
+    // To be used for certificate validity/expiration
+    FILETIME current_time;
+    GetSystemTimeAsFileTime(&current_time);
+
+    PCCERT_CONTEXT cert_context = nullptr;
+
+    std::vector<char> eku_buffer;
+    while ((cert_context = CertEnumCertificatesInStore(
+                system_store, cert_context)) != nullptr) {
+      // Check that the certificate is not expired or not valid yet
+      if (CertVerifyTimeValidity(&current_time, cert_context->pCertInfo) != 0) {
+        continue;
+      }
+
+      WORD key_usage = 0;
       BOOL has_key_usage =
           CertGetIntendedKeyUsage(X509_ASN_ENCODING,
-                                  pContext->pCertInfo,
+                                  cert_context->pCertInfo,
                                   reinterpret_cast<BYTE*>(&key_usage),
                                   sizeof(key_usage));
 
+      /* We check that the CA has a key usage for Certificate Signing;
+         if getting it didn't cause an error, the cert may be for all usages. */
       if (has_key_usage) {
         if (!(key_usage & CERT_KEY_CERT_SIGN_KEY_USAGE)) {
           continue;
         }
+      } else if (GetLastError()) {
+        continue;
       }
 
-      /* We search the usage/purpose property, if present, to select
-         certificates that are valid for Server Auth. if there's no property, so
-         if the API fails, it means the certificate can be used for all
-         purposes. */
-      // DWORD usage_size = 0;
-      //  if (CertGetEnhancedKeyUsage(pContext,
-      //                              CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG,
-      //                              nullptr,
-      //                              &usage_size)) {
-      //    std::vector<char> buffer(usage_size);
+      /*
+        We search the extended key usage/purpose property. If it's present,
+        but there's no usage, we have to differentiate between all purposes
+        being valid, and the total opposite.
+        If usages are present, we want to ensure that's valid for Server Auth.
+       */
+      DWORD usage_size = 0;
+      if (CertGetEnhancedKeyUsage(cert_context, 0, nullptr, &usage_size)) {
+        if (usage_size > 0) {
+          eku_buffer.resize(usage_size);
+        }
 
-      //   if (!CertGetEnhancedKeyUsage(
-      //           pContext,
-      //           CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG,
-      //           reinterpret_cast<PCERT_ENHKEY_USAGE>(buffer.data()),
-      //           &usage_size)) {
-      //     continue;
-      //   }
+        if (!CertGetEnhancedKeyUsage(
+                cert_context,
+                0,
+                reinterpret_cast<PCERT_ENHKEY_USAGE>(eku_buffer.data()),
+                &usage_size)) {
+          continue;
+        }
 
-      //   CERT_ENHKEY_USAGE usage;
-      //   std::memcpy(&usage, buffer.data(), sizeof(usage));
+        if (eku_buffer.size() < sizeof(CERT_ENHKEY_USAGE)) {
+          // Something went awry, the buffer is not big enough
+          continue;
+        }
 
-      //   bool found_correct_usage = false;
-      //   for (DWORD i = 0; i < usage.cUsageIdentifier; ++i) {
-      //     if (strcmp(usage.rgpszUsageIdentifier[i],
-      //                szOID_PKIX_KP_SERVER_AUTH) == 0) {
-      //       found_correct_usage = true;
-      //       break;
-      //     }
-      //   }
+        CERT_ENHKEY_USAGE usage;
+        std::memcpy(&usage, eku_buffer.data(), sizeof(usage));
 
-      //   if (!found_correct_usage) {
-      //     continue;
-      //   }
-      // }
+        // If no usage is found
+        if (usage.cUsageIdentifier == 0) {
+          /* And the CRYPT_E_NOT_FOUND error is NOT returned,
+             then it's NOT valid for any use. Otherwise it means
+             it's valid for all uses. */
+          if (GetLastError() != CRYPT_E_NOT_FOUND) {
+            continue;
+          }
+        } else {
+          bool found_correct_usage = false;
+          for (DWORD i = 0; i < usage.cUsageIdentifier; ++i) {
+            if (strcmp(usage.rgpszUsageIdentifier[i],
+                       szOID_PKIX_KP_SERVER_AUTH) == 0) {
+              found_correct_usage = true;
+              break;
+            }
+          }
 
-      X509* x509 = d2i_X509(nullptr,
-                            (const unsigned char**)&pContext->pbCertEncoded,
-                            pContext->cbCertEncoded);
+          if (!found_correct_usage) {
+            continue;
+          }
+        }
+      }
+
+      if (!search_params.organizational_unit.empty()) {
+        CERT_NAME_INFO* name_info = nullptr;
+        DWORD size;
+        PCERT_RDN_ATTR ou_attr = nullptr;
+
+        if (!CryptDecodeObjectEx(X509_ASN_ENCODING,
+                                 reinterpret_cast<LPCSTR>(7),
+                                 cert_context->pCertInfo->Subject.pbData,
+                                 cert_context->pCertInfo->Subject.cbData,
+                                 CRYPT_DECODE_ALLOC_FLAG,
+                                 nullptr,
+                                 &name_info,
+                                 &size)) {
+          continue;
+        }
+
+        ou_attr = CertFindRDNAttr(szOID_ORGANIZATIONAL_UNIT_NAME, name_info);
+
+        if (ou_attr == nullptr) {
+          LocalFree(name_info);
+          continue;
+        }
+
+        // std::cout << "OU_TYPE: 0x" << std::setfill('0') << std::setw(2)
+        //           << std::hex << ou_attr->dwValueType << std::endl;
+
+        if (ou_attr->dwValueType != CERT_RDN_PRINTABLE_STRING) {
+          continue;
+        }
+
+        // TODO: This should actually be a lowercase check and ignore
+        // leading or following whitespaces
+        auto cert_ou =
+            std::string_view(reinterpret_cast<char*>(ou_attr->Value.pbData),
+                             ou_attr->Value.cbData);
+
+        if (cert_ou != search_params.organizational_unit) {
+          LocalFree(name_info);
+          continue;
+        }
+
+        LocalFree(name_info);
+      }
+
+      X509* x509 = d2i_X509(
+          nullptr,
+          const_cast<const unsigned char**>(&cert_context->pbCertEncoded),
+          cert_context->cbCertEncoded);
       if (x509) {
-        DWORD str_type = CERT_SIMPLE_NAME_STR;
-        DWORD str_size = CertGetNameStringW(
-            pContext, CERT_NAME_RDN_TYPE, 0, &str_type, nullptr, 0);
+        // DWORD str_type = CERT_SIMPLE_NAME_STR;
+        // DWORD str_size = CertGetNameStringW(
+        //     cert_context, CERT_NAME_RDN_TYPE, 0, &str_type, nullptr, 0);
 
-        std::wstring name_buffer(str_size, 0);
-        CertGetNameStringW(pContext,
-                           CERT_NAME_RDN_TYPE,
-                           0,
-                           &str_type,
-                           name_buffer.data(),
-                           static_cast<DWORD>(name_buffer.size()));
+        // std::wstring name_buffer(str_size, 0);
+        // CertGetNameStringW(cert_context,
+        //                    CERT_NAME_RDN_TYPE,
+        //                    0,
+        //                    &str_type,
+        //                    name_buffer.data(),
+        //                    static_cast<DWORD>(name_buffer.size()));
 
         // std::wcout << "Loading certificate: " << name_buffer << std::endl;
 
@@ -382,9 +478,9 @@ X509_STORE* getCABundleFromSearchParameters(
       }
     }
 
-    CertFreeCertificateContext(pContext);
+    CertFreeCertificateContext(cert_context);
     // TODO: change flag to 0
-    CertCloseStore(hStore, CERT_CLOSE_STORE_CHECK_FLAG);
+    CertCloseStore(system_store, CERT_CLOSE_STORE_CHECK_FLAG);
   }
 
   if (X509_STORE_set_purpose(store, X509_PURPOSE_SSL_SERVER) == 0) {

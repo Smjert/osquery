@@ -129,7 +129,7 @@ int OsqueryCNGProviderInit([[maybe_unused]] const OSSL_CORE_HANDLE* handle,
                            const OSSL_DISPATCH* in,
                            const OSSL_DISPATCH** out,
                            void** prov_ctx) {
-  std::cout << "CNG provider initialized" << std::endl;
+  // std::cout << "CNG provider initialized" << std::endl;
   *out = osquery::cng_dispatch_table;
 
   osquery::CNGProviderCtx* context = nullptr;
