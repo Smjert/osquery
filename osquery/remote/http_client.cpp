@@ -210,6 +210,12 @@ void Client::encryptConnection() {
       const auto& openssl_parameters = std::get<DefaultOpenSSLParameters>(
           *client_options_.openssl_parameters_);
 
+      if (client_options_.always_verify_peer_) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+      } else {
+        ctx.set_verify_mode(boost::asio::ssl::verify_none);
+      }
+
       if (!openssl_parameters.server_certificate_file_.empty()) {
         ctx.set_verify_mode(boost::asio::ssl::verify_peer);
         ctx.load_verify_file(openssl_parameters.server_certificate_file_);
@@ -232,6 +238,7 @@ void Client::encryptConnection() {
 
       return ctx;
     } else {
+      // TODO: cleanup
       // auto start = std::chrono::system_clock::now();
 
       const auto& openssl_parameters = std::get<NativeOpenSSLParameters>(
@@ -243,6 +250,12 @@ void Client::encryptConnection() {
 
       boost::asio::ssl::context ctx{ssl_ctx};
 
+      if (client_options_.always_verify_peer_) {
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+      } else {
+        ctx.set_verify_mode(boost::asio::ssl::verify_none);
+      }
+
       if (openssl_parameters.server_search_parameters.has_value()) {
         // TODO: filter by the search parameters given
         X509_STORE* ca_store = getCABundleFromSearchParameters(
@@ -253,6 +266,8 @@ void Client::encryptConnection() {
           throw std::runtime_error(
               "Could not retrieve the current user CA certificates");
         }
+
+        ctx.set_verify_mode(boost::asio::ssl::verify_peer);
 
         // NOTE: The SSL_CTX takes ownership here
         SSL_CTX_set_cert_store(ssl_ctx, ca_store);
@@ -302,14 +317,6 @@ void Client::encryptConnection() {
       return ctx;
     }
   }();
-
-  // TODO: check the order of evaluation with this and setting the certificate
-  // files
-  if (client_options_.always_verify_peer_) {
-    ctx.set_verify_mode(boost::asio::ssl::verify_peer);
-  } else {
-    ctx.set_verify_mode(boost::asio::ssl::verify_none);
-  }
 
   if (client_options_.ciphers_) {
     ::SSL_CTX_set_cipher_list(ctx.native_handle(),
