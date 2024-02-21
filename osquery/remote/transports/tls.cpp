@@ -111,8 +111,6 @@ std::optional<OpenSSLMode> detectOpenSSLMode(std::string_view uri) {
 
 std::optional<NativeOpenSSLParameters::CertificateSearchParameters>
 parseCertParams(std::string_view cert_params_string) {
-  // TODO: parse for cert://all mode
-
   if (cert_params_string == "all") {
     return NativeOpenSSLParameters::CertificateFields{};
   }
@@ -319,10 +317,6 @@ createOpenSSLParametersFrom(std::string client_certificate_uri,
       } else {
         openssl_parameters.client_certificate_file_ = client_certificate_params;
         openssl_parameters.client_private_key_file_ = client_private_key_params;
-        VLOG(1) << "client cert: "
-                << openssl_parameters.client_certificate_file_;
-        VLOG(1) << "client priv key: "
-                << openssl_parameters.client_private_key_file_;
       }
     }
 
@@ -358,9 +352,7 @@ createOpenSSLParametersFrom(std::string client_certificate_uri,
 
       last_detected_openssl_mode = OpenSSLMode::Native;
 
-      openssl_parameters.client_cert_search_parameters =
-          std::get<NativeOpenSSLParameters::CertificateFields>(
-              *opt_cert_params);
+      openssl_parameters.client_cert_search_parameters = *opt_cert_params;
     }
 
     return openssl_parameters;
@@ -393,7 +385,8 @@ http::Client::Options TLSTransport::getOptions() {
 }
 
 http::Client::Options TLSTransport::getInternalOptions() {
-  auto start = std::chrono::system_clock::now();
+  // TODO: cleanup
+  // auto start = std::chrono::system_clock::now();
 
   http::Client::Options options = createCommonOptions(verify_peer_);
 
@@ -414,11 +407,12 @@ http::Client::Options TLSTransport::getInternalOptions() {
   options.openssl_options(SSL_OP_NO_SSLv3 | SSL_OP_NO_SSLv2 | SSL_OP_NO_TLSv1 |
                           SSL_OP_NO_TLSv1_1 | SSL_OP_ALL);
 
-  auto end = std::chrono::system_clock::now();
+  // auto end = std::chrono::system_clock::now();
 
-  VLOG(1) << "Getting options ms: "
-          << std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-                 .count();
+  // VLOG(1) << "Getting options ms: "
+  //         << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+  //         start)
+  //                .count();
 
   return options;
 }
