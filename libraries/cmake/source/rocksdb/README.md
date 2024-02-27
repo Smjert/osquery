@@ -83,7 +83,6 @@ cmake \
   -G Ninja \
   -DFAIL_ON_WARNINGS=OFF \
   -DROCKSDB_BUILD_SHARED=OFF \
-  -DROCKSDB_LITE=OFF \
   -DWITH_ALL_TESTS=OFF \
   -DWITH_BENCHMARK_TOOLS=OFF \
   -DWITH_CORE_TOOLS=OFF \
@@ -91,9 +90,8 @@ cmake \
   -DWITH_TOOLS=OFF \
   -DWITH_PERF_CONTEXT=OFF \
   -DPORTABLE=ON \
-  -DFORCE_SSE42=ON \
-  -DCMAKE_OSX_SYSROOT=/Applications/Xcode_13.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 \
+  -DCMAKE_OSX_SYSROOT=/Applications/Xcode_15.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 \
   -DCMAKE_OSX_ARCHITECTURES=x86_64
 ```
 
@@ -107,7 +105,6 @@ cmake \
   -G Ninja \
   -DFAIL_ON_WARNINGS=OFF \
   -DROCKSDB_BUILD_SHARED=OFF \
-  -DROCKSDB_LITE=OFF \
   -DWITH_ALL_TESTS=OFF \
   -DWITH_BENCHMARK_TOOLS=OFF \
   -DWITH_CORE_TOOLS=OFF \
@@ -115,9 +112,8 @@ cmake \
   -DWITH_TOOLS=OFF \
   -DWITH_PERF_CONTEXT=OFF \
   -DPORTABLE=ON \
-  -DHAVE_SSE42:BOOL=OFF \
   -DWITH_IOSTATS_CONTEXT=OFF \
-  -DCMAKE_OSX_SYSROOT=/Applications/Xcode_13.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk \
+  -DCMAKE_OSX_SYSROOT=/Applications/Xcode_15.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 \
   -DCMAKE_OSX_ARCHITECTURES=arm64
 ```
