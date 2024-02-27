@@ -356,16 +356,6 @@ function(rocksdbMain)
     )
   endif()
 
-  if(NOT PLATFORM_MACOS)
-    target_sources(thirdparty_rocksdb PRIVATE
-      "${library_root}/third-party/folly/folly/detail/Futex.cpp"
-      "${library_root}/third-party/folly/folly/synchronization/AtomicNotification.cpp"
-      "${library_root}/third-party/folly/folly/synchronization/DistributedMutex.cpp"
-      "${library_root}/third-party/folly/folly/synchronization/ParkingLot.cpp"
-      "${library_root}/third-party/folly/folly/synchronization/WaitOptions.cpp"
-    )
-  endif()
-
   if(TARGET_PROCESSOR STREQUAL "x86_64")
     if(NOT PLATFORM_WINDOWS)
       set_source_files_properties("${crc32_impl}" PROPERTIES
@@ -381,28 +371,23 @@ function(rocksdbMain)
   endif()
 
   if(PLATFORM_LINUX)
-    if(TARGET_PROCESSOR STREQUAL "x86_64")
-      target_compile_definitions(thirdparty_rocksdb PRIVATE
-          NPERF_CONTEXT
-          OS_LINUX
-          ROCKSDB_FALLOCATE_PRESENT
-          ROCKSDB_LIB_IO_POSIX
-          ROCKSDB_MALLOC_USABLE_SIZE
-          ROCKSDB_NO_DYNAMIC_EXTENSION
-          ROCKSDB_PLATFORM_POSIX
-          ROCKSDB_PTHREAD_ADAPTIVE_MUTEX
-          ROCKSDB_RANGESYNC_PRESENT
-          ROCKSDB_SCHED_GETCPU_PRESENT
-      )
+    target_compile_definitions(thirdparty_rocksdb PRIVATE
+      NPERF_CONTEXT
+      OS_LINUX
+      ROCKSDB_AUXV_GETAUXVAL_PRESENT
+      ROCKSDB_FALLOCATE_PRESENT
+      ROCKSDB_LIB_IO_POSIX
+      ROCKSDB_MALLOC_USABLE_SIZE
+      ROCKSDB_NO_DYNAMIC_EXTENSION
+      ROCKSDB_PLATFORM_POSIX
+      ROCKSDB_PTHREAD_ADAPTIVE_MUTEX
+      ROCKSDB_RANGESYNC_PRESENT
+      ROCKSDB_SCHED_GETCPU_PRESENT
+    )
 
-    elseif(TARGET_PROCESSOR STREQUAL "aarch64")
+    if(TARGET_PROCESSOR STREQUAL "aarch64")
       target_compile_definitions(thirdparty_rocksdb PRIVATE
-        NIOSTATS_CONTEXT
-        NPERF_CONTEXT
-        OS_LINUX
-        ROCKSDB_LIB_IO_POSIX
-        ROCKSDB_NO_DYNAMIC_EXTENSION
-        ROCKSDB_PLATFORM_POSIX
+        -DNIOSTATS_CONTEXT
       )
     endif()
 
