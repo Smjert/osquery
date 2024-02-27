@@ -358,13 +358,16 @@ function(rocksdbMain)
 
   if(TARGET_PROCESSOR STREQUAL "x86_64")
     if(NOT PLATFORM_WINDOWS)
-      set_source_files_properties("${crc32_impl}" PROPERTIES
-        COMPILE_FLAGS
-          "-msse4.2 -mpclmul"
+      target_compile_options(thirdparty_rocksdb PRIVATE
+        "-msse4.2 -mpclmul"
       )
     endif()
-
   elseif(TARGET_PROCESSOR STREQUAL "aarch64")
+    if(NOT PLATFORM_WINDOWS)
+      target_compile_options(thirdparty_rocksdb PRIVATE
+        "-march=armv8-a+crc+crypto"
+      )
+    endif()
     target_sources(thirdparty_rocksdb PRIVATE
       "${library_root}/util/crc32c_arm64.cc"
     )
@@ -373,6 +376,7 @@ function(rocksdbMain)
   if(PLATFORM_LINUX)
     target_compile_definitions(thirdparty_rocksdb PRIVATE
       NPERF_CONTEXT
+      NIOSTATS_CONTEXT
       OS_LINUX
       ROCKSDB_AUXV_GETAUXVAL_PRESENT
       ROCKSDB_FALLOCATE_PRESENT
@@ -385,27 +389,16 @@ function(rocksdbMain)
       ROCKSDB_SCHED_GETCPU_PRESENT
     )
 
-    if(TARGET_PROCESSOR STREQUAL "aarch64")
-      target_compile_definitions(thirdparty_rocksdb PRIVATE
-        -DNIOSTATS_CONTEXT
-      )
-    endif()
-
   elseif(PLATFORM_MACOS)
     target_compile_definitions(thirdparty_rocksdb PRIVATE
       HAVE_FULLSYNC
       NPERF_CONTEXT
+      NIOSTATS_CONTEXT
       OS_MACOSX
       ROCKSDB_LIB_IO_POSIX
       ROCKSDB_NO_DYNAMIC_EXTENSION
       ROCKSDB_PLATFORM_POSIX
     )
-
-    if(TARGET_PROCESSOR STREQUAL "aarch64")
-      target_compile_definitions(thirdparty_rocksdb PRIVATE
-        NIOSTATS_CONTEXT
-      )
-    endif()
 
   elseif(PLATFORM_WINDOWS)
     if(TARGET_PROCESSOR STREQUAL "x86_64")
