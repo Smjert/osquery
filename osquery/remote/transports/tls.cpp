@@ -45,7 +45,7 @@ CLI_FLAG(string, proxy_hostname, "", "Optional HTTP proxy hostname");
 /// Path to optional TLS server/CA certificate(s), used for pinning.
 CLI_FLAG(string,
          tls_server_certs,
-         OSQUERY_CERTS_HOME "certs.pem",
+         "file://" OSQUERY_CERTS_HOME "certs.pem",
          "Optional path to a TLS server PEM certificate(s) bundle");
 
 /// Path to optional TLS client certificate, used for enrollment/requests.
