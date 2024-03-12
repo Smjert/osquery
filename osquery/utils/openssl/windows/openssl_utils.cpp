@@ -161,9 +161,12 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
         // Now filter the cert by CN and OU
         X509_NAME* subject_name = X509_get_subject_name(cert);
 
-        bool certificate_found = false;
+        bool certificate_found = true;
 
         if (!cert_fields.common_name.empty()) {
+          // We set it to false here because we have CN to search for,
+          // but we don't know yet if we've found it
+          certificate_found = false;
           /* NOTE: Per RFC 5280 the Common Name should be max 64 characters;
             here we add the null terminator too. */
           std::array<char, 65> cert_common_name;
@@ -173,13 +176,17 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
                                         NID_commonName,
                                         cert_common_name.data(),
                                         buffer_length)) {
+            // std::cout << "Searching for " << cert_fields.common_name
+            //           << " and comparing with CN: " <<
+            //           cert_common_name.data()
+            //           << std::endl;
             if (cert_fields.common_name == cert_common_name.data()) {
               certificate_found = true;
             }
           }
         }
 
-        if (!cert_fields.organizational_unit.empty()) {
+        if (certificate_found && !cert_fields.organizational_unit.empty()) {
           // std::cout << "Trying to search for ou: "
           //           << cert_fields.organizational_unit << std::endl;
           certificate_found = false;
