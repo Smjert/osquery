@@ -238,7 +238,7 @@ createOpenSSLParametersFrom(std::string client_certificate_uri,
   // TODO: Cleanup, group this with the client cert check, since they need to be
   // both present
   if (!client_private_key_uri.empty()) {
-    auto opt_openssl_mode = detectOpenSSLMode(client_certificate_uri);
+    auto opt_openssl_mode = detectOpenSSLMode(client_private_key_uri);
 
     if (!opt_openssl_mode.has_value()) {
       LOG(ERROR) << "Could not properly parse the tls_client_cert flag, "
