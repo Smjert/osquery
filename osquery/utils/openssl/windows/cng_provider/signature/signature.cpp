@@ -68,16 +68,6 @@ int OsqueryCNGSignatureSetCtxParams(void* ctx,
                                     const OSSL_PARAM params[]) noexcept;
 const OSSL_PARAM* OsqueryCNGSignatureSettableCtxMdParams(
     void* ctx, void* prov_ctx) noexcept;
-
-int OsqueryCNGSignatureSignInit(void* ctx,
-                                void* prov_key,
-                                const OSSL_PARAM params[]);
-int OsqueryCNGSignatureSign(void* ctx,
-                            unsigned char* sig,
-                            size_t* sig_len,
-                            size_t sig_size,
-                            const unsigned char* data,
-                            size_t data_len);
 }
 
 namespace osquery {
@@ -116,6 +106,7 @@ const OSSL_DISPATCH signature_functions[] = {
          OsqueryCNGSignatureSettableCtxMdParams)},
     {0, nullptr}};
 
+// TODO: Use openssl hashing instead of Windows.
 std::optional<const wchar_t*> OSSLDigestNameToCNG(
     const char* ossl_digest_name) {
   const EVP_MD* md = EVP_MD_fetch(nullptr, ossl_digest_name, nullptr);
@@ -316,51 +307,6 @@ int OsqueryCNGSignatureSetCtxMdParams(void* ctx,
 const OSSL_PARAM* OsqueryCNGSignatureSettableCtxMdParams(
     void* ctx, void* prov_ctx) noexcept {
   return OsqueryCNGSignatureSettableCtxParams(ctx, prov_ctx);
-}
-
-int OsqueryCNGSignatureSignInit(void* ctx,
-                                void* prov_key,
-                                const OSSL_PARAM params[]) {
-  if (ctx == nullptr || prov_key == nullptr) {
-    return 0;
-  }
-
-  osquery::SignatureCtx* sig_ctx = static_cast<osquery::SignatureCtx*>(ctx);
-
-  if (params == nullptr) {
-    DBGERR("Params is nullptr")
-  }
-
-  return sig_ctx->initSignature(
-             *static_cast<osquery::ProviderKey*>(prov_key)) &&
-         sig_ctx->updateParams(params);
-}
-int OsqueryCNGSignatureSign(void* ctx,
-                            unsigned char* sig,
-                            size_t* sig_len,
-                            size_t sig_size,
-                            const unsigned char* data,
-                            size_t data_len) {
-  if (ctx == nullptr || sig_len == nullptr || data == nullptr) {
-    return 0;
-  }
-
-  osquery::SignatureCtx* sig_ctx = static_cast<osquery::SignatureCtx*>(ctx);
-
-  if (sig == nullptr) {
-    auto opt_length = sig_ctx->getSignatureLength();
-
-    if (!opt_length.has_value()) {
-      return 0;
-    }
-
-    *sig_len = *opt_length;
-
-    return 1;
-  }
-
-  return sig_ctx->finishSignature(
-      std::basic_string_view<BYTE>(data, data_len), sig_size, sig, *sig_len);
 }
 
 const OSSL_ALGORITHM* OsqueryGetSignatureAlgorithms() {
