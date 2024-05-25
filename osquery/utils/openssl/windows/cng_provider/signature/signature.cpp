@@ -613,6 +613,7 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
     }
   }
 
+  // TODO: Ensure salt is always as long as the hash in input
   // Get PSS padding salt length
   param = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_PSS_SALTLEN);
 
@@ -646,7 +647,7 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
           return 0;
         }
       } else if (strcmp(static_cast<char*>(param->data),
-                        OSSL_PKEY_RSA_PSS_SALT_LEN_MAX)) {
+                        OSSL_PKEY_RSA_PSS_SALT_LEN_MAX) == 0) {
         auto key_length = provider_key_->getKeyLengthBits();
         if (key_length == 0) {
           return false;
@@ -654,7 +655,7 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
 
         // TODO: calculate saltlength based on the key length
       }
-      break;
+      return false;
     }
     default:
       return false;
