@@ -370,6 +370,7 @@ const OSSL_PARAM* OsqueryCNGKeyManagementImportTypes(int selection) {
   in our provider form, so that it can later use it with our functions.
 
   TODO: This import function for now is RSA specific.
+  TODO: deallocate BN
 */
 int OsqueryCNGKeyManagementImport(void* key_data,
                                   int selection,
