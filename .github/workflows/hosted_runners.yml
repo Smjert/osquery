@@ -23,6 +23,7 @@ on:
     branches:
       - 'master'
       - 'main'
+      - 'stefano/ci/test-macos'
 
     tags:
       - '*'
@@ -257,6 +258,7 @@ jobs:
   # has been properly formatted
   build_linux:
     needs: [check_code_style, check_libraries_manifest]
+    if: false
 
     runs-on: ${{ matrix.os }}
 
@@ -800,6 +802,8 @@ jobs:
     - name: Package the tests for the x86_64 macOS-11 worker
       if: matrix.architecture == 'x86_64'
       run: |
+        pwd
+        ls -lh
         ( cd workspace && ${{ steps.build_paths.outputs.SOURCE }}/tools/ci/scripts/macos/package_tests.sh build macos_tests_${{ matrix.build_type }} )
 
     - name: Store the packaged tests for the x86_64 macOS-11 worker
@@ -978,6 +982,7 @@ jobs:
   # has been properly formatted
   build_windows:
     needs: [check_code_style, check_libraries_manifest]
+    if: false
 
     runs-on: ${{ matrix.os }}
 
