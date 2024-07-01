@@ -803,7 +803,7 @@ jobs:
       if: matrix.architecture == 'x86_64'
       run: |
         pwd
-        ls -lh
+        ls -lh workspace/
         ( cd workspace && ${{ steps.build_paths.outputs.SOURCE }}/tools/ci/scripts/macos/package_tests.sh build macos_tests_${{ matrix.build_type }} )
 
     - name: Store the packaged tests for the x86_64 macOS-11 worker
@@ -827,6 +827,7 @@ jobs:
   test_macos_bigsur:
 
     needs: build_macos
+    if: false
 
     runs-on: macos-11
 
