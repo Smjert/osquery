@@ -13,18 +13,7 @@
 # This configuration file takes care of the AArch64 Linux build
 name: build_aarch64
 
-on:
-  # Run this workflow once every 6 hours against the master branch
-  schedule:
-   - cron: "0 */6 * * *"
-
-  # Do not run this on pull requests
-  push:
-    branches:
-      - '**'
-
-    tags:
-      - '**'
+on: workflow_dispatch
 
 # Please remember to update values for both x86 and aarch64 workflows.
 env:
