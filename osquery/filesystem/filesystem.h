@@ -61,15 +61,9 @@ Status readFile(const boost::filesystem::path& path,
                 std::string& content,
                 bool log = true);
 
-Status readWithSize(const boost::filesystem::path& path,
-                    char* buffer,
-                    std::size_t& size,
-                    bool retry_pending);
-
-Status readWithSize(PlatformFile& file_handle,
-                    char* buffer,
-                    std::size_t& size,
-                    bool retry_pending);
+Status readFile(const boost::filesystem::path& path,
+                        std::function<void(std::string_view)> predicate,
+                        bool log = true);
 #elif 1
 /**
  * @brief Read a file from disk.
@@ -87,9 +81,7 @@ Status readWithSize(const boost::filesystem::path& path,
                     char* buffer,
                     std::size_t& size);
 
-Status readWithSize(PlatformFile& file_handle,
-                    char* buffer,
-                    std::size_t& size);
+Status readWithSize(PlatformFile& file_handle, char* buffer, std::size_t& size);
 #else
 /**
  * @brief Read a file from disk.

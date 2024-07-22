@@ -124,47 +124,62 @@ MultiHashes hashMultiFromFile(int mask, const std::string& path) {
   hashes.emplace(HASH_TYPE_SHA1, Hash{HASH_TYPE_SHA1});
   hashes.emplace(HASH_TYPE_SHA256, Hash{HASH_TYPE_SHA256});
 
-  PlatformFile file_to_hash(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
-
-  if (!file_to_hash.isValid()) {
-    LOG(WARNING) << "Could not open file " << path << " for hashing";
-    return {};
-  }
-
-  if (file_to_hash.size() > FLAGS_read_max) {
-    LOG(WARNING) << formatReadMaxErrorMessage(path, file_to_hash.size());
-    return {};
-  }
-
-  char buffer[4096 * 4];
-  std::size_t read_total = 0;
-
-  ssize_t res = 0;
-
-  do {
-    res = file_to_hash.read(buffer, sizeof(buffer));
-
-    if (res > 0) {
-      read_total += res;
-
-      if (read_total > FLAGS_read_max) {
-        LOG(WARNING) << formatReadMaxErrorMessage(path, read_total);
-        return {};
-      }
-
-      for (auto& hash : hashes) {
-        if (mask & hash.first) {
-          hash.second.update(buffer, res);
-        }
+  auto updateHash = [&hashes, &mask](std::string_view buffer) {
+    for (auto& hash : hashes) {
+      if (mask & hash.first) {
+        hash.second.update(buffer.data(), buffer.size());
       }
     }
+  };
 
-  } while (res > 0);
+  auto status = readFile(path, updateHash);
 
-  if (res < 0) {
+  if (!status.ok()) {
     LOG(WARNING) << "Failed to hash " << path;
     return {};
   }
+
+  // PlatformFile file_to_hash(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
+
+  // if (!file_to_hash.isValid()) {
+  //   LOG(WARNING) << "Could not open file " << path << " for hashing";
+  //   return {};
+  // }
+
+  // if (file_to_hash.size() > FLAGS_read_max) {
+  //   LOG(WARNING) << formatReadMaxErrorMessage(path, file_to_hash.size());
+  //   return {};
+  // }
+
+  // char buffer[4096 * 4];
+  // std::size_t read_total = 0;
+
+  // ssize_t res = 0;
+
+  // do {
+  //   res = file_to_hash.read(buffer, sizeof(buffer));
+
+  //   if (res > 0) {
+  //     read_total += res;
+
+  //     if (read_total > FLAGS_read_max) {
+  //       LOG(WARNING) << formatReadMaxErrorMessage(path, read_total);
+  //       return {};
+  //     }
+
+  //     for (auto& hash : hashes) {
+  //       if (mask & hash.first) {
+  //         hash.second.update(buffer, res);
+  //       }
+  //     }
+  //   }
+
+  // } while (res > 0);
+
+  // if (res < 0) {
+  //   LOG(WARNING) << "Failed to hash " << path;
+  //   return {};
+  // }
 
   MultiHashes mh = {};
 

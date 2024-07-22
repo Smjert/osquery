@@ -99,7 +99,9 @@ void initializeFilesystemAPILocale() {
 }
 
 #if 2
-Status readFile(const fs::path& path, std::string& content, bool log) {
+Status readFile(const fs::path& path,
+                std::function<void(std::string_view)> predicate,
+                bool log) {
   PlatformFile file_handle(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
 
   if (!file_handle.isValid()) {
@@ -124,11 +126,82 @@ Status readFile(const fs::path& path, std::string& content, bool log) {
 
   const bool isSpecialFile = file_handle.isSpecialFile();
 
-  std::size_t read_size = 0;
+  /* If the file is a regular file on disk and has no data,
+     do not attempt to read */
   if (!isSpecialFile && file_size == 0) {
     return Status::success();
   }
 
+  ssize_t res = 0;
+  std::size_t total_bytes = 0;
+  char buffer[kBlockSize];
+
+  do {
+    res = file_handle.read(buffer, kBlockSize);
+
+    if (res == 0) {
+      break;
+    }
+
+    if (res > 0) {
+      total_bytes += res;
+      if (total_bytes > read_max) {
+        auto error_message =
+            "Cannot read " + path.string() +
+            " size exceeds limit: " + std::to_string(total_bytes) + " > " +
+            std::to_string(read_max);
+        if (log) {
+          LOG(WARNING) << error_message;
+        }
+
+        return Status::failure(error_message);
+      }
+
+      predicate({buffer, static_cast<std::size_t>(res)});
+    }
+  } while (res > 0 || (!isSpecialFile && file_handle.hasPendingIo()));
+
+  if (res < 0) {
+    return Status::failure("Failed to read " + path.string());
+  }
+
+  return Status::success();
+}
+
+Status readFile(const fs::path& path, std::string& content, bool log) {
+  PlatformFile file_handle(path, PF_OPEN_EXISTING | PF_READ | PF_NONBLOCK);
+
+  if (!file_handle.isValid()) {
+    return Status::failure("Cannot open file for reading: " +
+                           file_handle.getFilePath().string());
+  }
+
+  const std::uint64_t file_size = file_handle.size();
+
+  // Fail to read if the file is bigger than the configured limit
+  const auto read_max = FLAGS_read_max;
+
+  if (file_size > read_max) {
+    auto error_message = "Cannot read " + path.string() +
+                         " size exceeds limit: " + std::to_string(file_size) +
+                         " > " + std::to_string(read_max);
+    if (log) {
+      LOG(WARNING) << error_message;
+    }
+    return Status::failure(error_message);
+  }
+
+  const bool isSpecialFile = file_handle.isSpecialFile();
+
+  /* If the file is a regular file on disk and has no data,
+   do not attempt to read */
+  if (!isSpecialFile && file_size == 0) {
+    return Status::success();
+  }
+
+  /* We read in blocks only if we don't know the file size;
+     otherwise use the file size for efficiency */
+  std::size_t read_size = 0;
   if (file_size > 0) {
     read_size = file_size;
     content.resize(file_size);

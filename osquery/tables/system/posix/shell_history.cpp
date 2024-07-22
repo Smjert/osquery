@@ -76,6 +76,7 @@ void genShellHistoryFromFile(
     predicate(r);
   };
 
+  // TODO readFile: check this parsing function, especially the size - 1
   auto parseChunk = [&history_state, &parseLine](std::string_view buffer) {
     history_state.content += buffer;
 
