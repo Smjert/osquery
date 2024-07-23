@@ -124,6 +124,7 @@ function(generateOsqueryFilesystemTest)
   if(DEFINED PLATFORM_POSIX)
     list(APPEND source_files
       tests/posix/xattrs.cpp
+      tests/posix/filesystem_tests.cpp
     )
   endif()
 
@@ -139,6 +140,12 @@ function(generateOsqueryFilesystemTest)
       tests/linux/proc_tests.cpp
     )
   endif()
+
+  if (DEFINED PLATFORM_WINDOWS)
+    list(APPEND source_files
+    tests/windows/filesystem_tests.cpp
+  )
+endif()
 
   add_osquery_executable(osquery_filesystem_filesystemtests-test ${source_files})
 
