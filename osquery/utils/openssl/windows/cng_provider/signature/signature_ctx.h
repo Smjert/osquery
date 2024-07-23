@@ -31,7 +31,6 @@ namespace osquery
     SignatureCtx &operator=(const SignatureCtx &other) = delete;
     ~SignatureCtx();
 
-    bool initSignature(ProviderKey &provider_key);
     bool finishSignature(std::basic_string_view<BYTE> hash_data,
                          std::size_t max_signature_length,
                          unsigned char *signature,
