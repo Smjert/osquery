@@ -329,14 +329,6 @@ SignatureCtx::~SignatureCtx() {
   provider_key_ = nullptr;
 }
 
-bool SignatureCtx::initSignature(ProviderKey& provider_key) {
-  provider_key_ = &provider_key;
-
-  DBGERR("Initializing signature")
-
-  return true;
-}
-
 bool SignatureCtx::initHash(const wchar_t* algorithm_id,
                             BCRYPT_HASH_HANDLE hash_handle,
                             ProviderKey& key) {
