@@ -5,14 +5,14 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
 
-function(osqueryUtilsOpensslCngProviderMain)
-  generateOsqueryUtilsOpensslCngProvider()
-  generateOsqueryUtilsOpensslCngProviderTests()
+function(osqueryUtilsOpenSSLCngProviderMain)
+  generateOsqueryUtilsOpenSSLCngProvider()
+  generateOsqueryUtilsOpenSSLCngProviderTests()
 endfunction()
 
-function(generateOsqueryUtilsOpensslCngProvider)
+function(generateOsqueryUtilsOpenSSLCngProvider)
 
-  add_library(osquery_utils_openssl_cngprovider STATIC
+  add_osquery_library(osquery_utils_openssl_cngprovider STATIC
     signature/signature.cpp
     keymanagement/key_management.cpp
     keymanagement/provider_key.cpp
@@ -24,7 +24,6 @@ function(generateOsqueryUtilsOpensslCngProvider)
     osquery_cxx_settings
     osquery_utils_conversions
     thirdparty_openssl
-    Ncrypt.lib
   )
 
   if(OSQUERY_BUILD_TESTS)
@@ -45,9 +44,9 @@ function(generateOsqueryUtilsOpensslCngProvider)
   generateIncludeNamespace(osquery_utils_openssl_cngprovider "osquery/utils/openssl/windows/cng_provider" "FULL_PATH" ${public_header_files})
 endfunction()
 
-function(generateOsqueryUtilsOpensslCngProviderTests)
+function(generateOsqueryUtilsOpenSSLCngProviderTests)
   
-  add_executable(osquery_utils_openssl_cngprovider_tests-test
+  add_osquery_executable(osquery_utils_openssl_cngprovider_tests-test
     tests/openssl_tests.cpp
   )
 
@@ -62,4 +61,4 @@ function(generateOsqueryUtilsOpensslCngProviderTests)
   )
 endfunction()
 
-osqueryUtilsOpensslCngProviderMain()
+osqueryUtilsOpenSSLCngProviderMain()

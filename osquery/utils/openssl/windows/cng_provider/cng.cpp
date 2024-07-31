@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014-present, The osquery authors
+ *
+ * This source code is licensed as defined by the LICENSE file found in the
+ * root directory of this source tree.
+ *
+ * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
+ */
+
 #include "cng.h"
 
 #include <iostream>
@@ -146,33 +155,3 @@ int OsqueryCNGProviderInit([[maybe_unused]] const OSSL_CORE_HANDLE* handle,
   return 1;
 }
 }
-
-namespace osquery {
-
-// OpenSSLCNGContext::OpenSSLCNGContext(OSSL_LIB_CTX& lib_ctx,
-//                                      OSSL_PROVIDER& default_provider,
-//                                      OSSL_PROVIDER& cng_provider) {}
-
-// std::optional<OpenSSLCNGContext> InitializeOpenSSLCNGProvider() {
-//   auto* lib_ctx = OSSL_LIB_CTX_new();
-
-//   if (OSSL_PROVIDER_add_builtin(
-//           lib_ctx, "cng_provider", OsqueryCNGProviderInit) != 1) {
-//     return std::nullopt;
-//   }
-
-//   OSSL_PROVIDER* default_provider = OSSL_PROVIDER_load(lib_ctx, "default");
-
-//   if (default_provider == nullptr) {
-//     return std::nullopt;
-//   }
-
-//   OSSL_PROVIDER* cng_provider = OSSL_PROVIDER_load(lib_ctx, "cng_provider");
-
-//   if (cng_provider == nullptr) {
-//     return std::nullopt;
-//   }
-
-//   return OpenSSLCNGContext{*lib_ctx, *default_provider, *cng_provider};
-// }
-} // namespace osquery

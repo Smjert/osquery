@@ -363,9 +363,9 @@ createOpenSSLParametersFrom(std::string client_certificate_uri,
 } // namespace
 
 TLSTransport::TLSTransport()
-    : server_certificate_file_(FLAGS_tls_server_certs),
-      client_certificate_file_(FLAGS_tls_client_cert),
-      client_private_key_file_(FLAGS_tls_client_key) {}
+    : client_certificate_file_(FLAGS_tls_client_cert),
+      client_private_key_file_(FLAGS_tls_client_key),
+      server_certificate_file_(FLAGS_tls_server_certs) {}
 
 void TLSTransport::decorateRequest(http::Request& r) {
   r << http::Request::Header("Content-Type", serializer_->getContentType());
