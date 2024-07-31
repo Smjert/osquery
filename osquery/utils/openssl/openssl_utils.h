@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014-present, The osquery authors
+ *
+ * This source code is licensed as defined by the LICENSE file found in the
+ * root directory of this source tree.
+ *
+ * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
+ */
+
 #pragma once
 
 #include <array>
@@ -8,9 +17,8 @@
 #include <vector>
 
 #include <openssl/provider.h>
+#include <openssl/store.h>
 #include <openssl/x509.h>
-
-#include <osquery/utils/expected/expected.h>
 
 namespace osquery {
 
@@ -147,5 +155,13 @@ std::optional<std::pair<X509*, EVP_PKEY*>>
 getClientCertificateFromSearchParameters(
     OSSL_LIB_CTX& lib_ctx,
     const NativeOpenSSLParameters::CertificateSearchParameters& search_params);
+
+std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromHash(
+    OSSL_STORE_CTX& store_ctx,
+    const NativeOpenSSLParameters::CertificateHash& cert_hash);
+
+std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
+    OSSL_STORE_CTX& store_ctx,
+    const NativeOpenSSLParameters::CertificateFields& cert_fields);
 
 } // namespace osquery

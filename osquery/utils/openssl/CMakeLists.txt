@@ -16,13 +16,26 @@ function(osqueryUtilsOpenSSLMain)
 endfunction()
 
 function(generateOsqueryUtilsOpenSSLUtils)
-  set(sources rsa_utils.cpp)
+  set(sources 
+    rsa_utils.cpp
+    openssl_utils.cpp
+  )
 
   if(DEFINED PLATFORM_WINDOWS)
     list(APPEND sources
       windows/openssl_utils.cpp
     )
+  elseif(DEFINED PLATFORM_MACOS)
+    list(APPEND sources
+      darwin/openssl_utils.cpp
+    )
+  endif()
 
+  add_osquery_library(osquery_utils_openssl_utils
+    ${sources}
+  )
+
+  if (DEFINED PLATFORM_WINDOWS)
     target_link_libraries(osquery_utils_openssl_utils
       cxx_settings
       osquery_utils_openssl_cngprovider
@@ -30,10 +43,6 @@ function(generateOsqueryUtilsOpenSSLUtils)
       thirdparty_openssl
     )
   elseif(DEFINED PLATFORM_MACOS)
-    list(APPEND sources
-      darwin/openssl_utils.cpp
-    )
-
     target_link_libraries(osquery_utils_openssl_utils
       cxx_settings
       osquery_utils_openssl_keychainprovider
@@ -41,12 +50,9 @@ function(generateOsqueryUtilsOpenSSLUtils)
     )
   endif()
 
-  add_library(osquery_utils_openssl_utils
-    ${sources}
-  )
-
   set(public_header_files
     openssl_utils.h
+    rsa_utils.h
   )
 
   generateIncludeNamespace(osquery_utils_openssl_utils "osquery/utils/openssl" "FILE_ONLY" ${public_header_files})

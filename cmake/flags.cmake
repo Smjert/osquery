@@ -324,6 +324,7 @@ function(setupBuildFlags)
       mswsock.lib
       comsuppw.lib
       SearchSDK.lib
+      Ncrypt.lib
     )
 
     if(OSQUERY_ENABLE_INCREMENTAL_LINKING)

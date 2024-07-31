@@ -257,7 +257,6 @@ void Client::encryptConnection() {
       }
 
       if (openssl_parameters.server_search_parameters.has_value()) {
-        // TODO: filter by the search parameters given
         X509_STORE* ca_store = getCABundleFromSearchParameters(
             *provider_library_context,
             *openssl_parameters.server_search_parameters);
