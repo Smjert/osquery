@@ -1,5 +1,9 @@
-#include <gtest/gtest.h>
+#include <future>
+#include <iostream>
+
 #include <boost/filesystem.hpp>
+
+#include <gtest/gtest.h>
 
 #include <osquery/filesystem/filesystem.h>
 
@@ -22,17 +26,15 @@ class PosixFilesystemTests : public testing::Test {
   }
 };
 
-TEST_F(PosixFilesystemTests, test_read_fifo) {
+TEST_F(PosixFilesystemTests, test_read_unopened_fifo) {
   // This test verifies that open and read operations do not hang when using
   // non-blocking mode for pipes.
   auto test_file = test_working_dir_ / "fifo";
   ASSERT_EQ(::mkfifo(test_file.c_str(), S_IRUSR | S_IWUSR), 0);
 
-  // The failure behavior is that this test will just hang forever, so
-  // maybe it should be run in another thread with a timeout.
   std::string content;
   ASSERT_TRUE(readFile(test_file, content));
   ASSERT_TRUE(content.empty());
   ::unlink(test_file.c_str());
 }
-}
+} // namespace osquery
