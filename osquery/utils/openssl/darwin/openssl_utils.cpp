@@ -16,6 +16,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include <Security/Security.h>
+
 #include <osquery/utils/openssl/darwin/keychain_provider/keychain.h>
 #include <osquery/utils/openssl/darwin/keychain_provider/store/store.h>
 #include <osquery/utils/openssl/openssl_utils.h>
@@ -70,7 +72,11 @@ X509_STORE* getCABundleFromSearchParameters(
     const NativeOpenSSLParameters::CertificateFields& search_params) {
   X509_STORE* store = X509_STORE_new();
   for (const auto& store_name : kStores) {
-    auto keychain_path = storeNameToPath(store_name);
+    auto opt_keychain_path = storeNameToPath(store_name);
+
+    if (!opt_keychain_path.has_value()) {
+      return nullptr;
+    }
 
     SecKeychainRef keychain;
     auto result = SecKeychainOpen(*opt_keychain_path, &keychain);
