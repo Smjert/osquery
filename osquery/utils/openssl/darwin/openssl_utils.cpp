@@ -9,6 +9,8 @@
 
 #include <array>
 #include <string>
+// TODO: remove me
+#include <iostream>
 
 #include <openssl/provider.h>
 #include <openssl/ssl.h>
@@ -21,6 +23,18 @@
 #include <osquery/utils/openssl/darwin/keychain_provider/keychain.h>
 #include <osquery/utils/openssl/darwin/keychain_provider/store/store.h>
 #include <osquery/utils/openssl/openssl_utils.h>
+
+#define DBGOUTPUT 1
+
+#ifdef DBGOUTPUT
+#define DBGERR(message) std::cerr << message << std::endl;
+#define DBGWERR(message) std::wcerr << message << std::endl;
+#define DBGINFO(message) std::cout << message << std::endl;
+#else
+#define DBGERR(message)
+#define DBGWERR(message)
+#define DBGINFO(message)
+#endif
 
 namespace osquery {
 
@@ -111,13 +125,84 @@ X509_STORE* getCABundleFromSearchParameters(
     }
 
     CFArrayRef certificates = nullptr;
-    OSStatus osStatus = SecItemCopyMatching(query, (CFTypeRef*)&certificates);
-    if (osStatus != noErr) {
+    OSStatus os_status =
+        SecItemCopyMatching(query, reinterpret_cast<CFTypeRef*>(&certificates));
+    if (os_status != noErr) {
       DBGERR("Failed to find certificates in store: "
-             << store_name << ", error: " << osStatus);
+             << store_name << ", error: " << os_status);
       return nullptr;
     }
+
+    auto certificates_count = CFArrayGetCount(certificates);
+
+    const void* certificate_attributes_keys{kSecOIDX509V1SubjectName};
+    for (std::int32_t i = 0; i < certificates_count; ++i) {
+      auto certificate =
+          (SecCertificateRef)CFArrayGetValueAtIndex(certificates, i);
+      auto cfArray = CFArrayCreate(
+          nullptr, &certificate_attributes_keys, 1, &kCFTypeArrayCallBacks);
+      auto certificate_attributes =
+          SecCertificateCopyValues(certificate, cfArray, nullptr);
+
+      CFRelease(cfArray);
+
+      if (certificate_attributes != nullptr) {
+        CFDictionaryRef subject_attributes =
+            (CFDictionaryRef)CFDictionaryGetValue(certificate_attributes,
+                                                  kSecOIDX509V1SubjectName);
+
+        std::vector<const void*> keys(CFDictionaryGetCount(subject_attributes));
+        std::vector<const void*> values(
+            CFDictionaryGetCount(subject_attributes));
+
+        CFDictionaryGetKeysAndValues(
+            subject_attributes, keys.data(), values.data());
+
+        for (const auto key : keys) {
+          CFTypeID key_id = CFGetTypeID(key);
+
+          std::cout << "Key type: " << key_id << std::endl;
+
+          if (key_id == CFStringGetTypeID()) {
+            const CFStringRef key_str = (const CFStringRef)key;
+            auto utf16_length = CFStringGetLength(key_str);
+            auto length = CFStringGetMaximumSizeForEncoding(
+                utf16_length, kCFStringEncodingUTF8);
+
+            if (length == kCFNotFound) {
+              std::cerr << "Failed to get string length" << std::endl;
+              continue;
+            }
+
+            std::string key_c_str(length, '\0');
+
+            CFStringGetCString(key_str,
+                               key_c_str.data(),
+                               key_c_str.size(),
+                               kCFStringEncodingUTF8);
+
+            std::cout << "Key: " << key_c_str << std::endl;
+          }
+        }
+        // CFArrayRef subject_values =
+        // (CFArrayRef)CFDictionaryGetValue(subject_attributes,
+        // kSecPropertyKeyValue); for (CFIndex i = 0; i <
+        // CFArrayGetCount(subject_values); i++) {
+        //     CFDictionaryRef element = CFArrayGetValueAtIndex(subject_values,
+        //     i); CFStringRef label = CFDictionaryGetValue(element,
+        //     kSecPropertyKeyLabel); if (CFStringCompare(label,
+        //     CFSTR("2.5.4.3"), 0) == kCFCompareEqualTo) { // OID 2.5.4.3
+        //     stands for Common Name
+        //         CFStringRef commonName = CFDictionaryGetValue(element,
+        //         kSecPropertyKeyValue); NSLog(@"Certificate Common Name: %@",
+        //         commonName); break;
+        //     }
+        // }
+      }
+    }
   }
+
+  return store;
 }
 
 } // namespace osquery
