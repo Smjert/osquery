@@ -726,7 +726,7 @@ void Initializer::start() const {
     return;
   }
 
-#if defined(WIN32) || defined(__apple__)
+#if defined(WIN32) || defined(__APPLE__)
   if (isWorker() || !isWatcher()) {
     auto opt_provider_context = createSystemOpenSSLProviderContext();
 
