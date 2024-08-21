@@ -26,6 +26,48 @@ const std::string kProxyDefaultPort{"3128"};
 
 const long kSSLShortReadError{0x140000dbL};
 
+int write_cert_to_file(X509* cert, const char* filename) {
+  FILE* fp;
+  int ret_val;
+
+  /* Convert certificate into PEM format */
+  BIO* bio = BIO_new(BIO_s_mem());
+  if (!bio) {
+    /* handle error */
+    printf("Failed to create BIO for writing certificate\n");
+    return -1;
+  }
+
+  /* PEM_write_bio_X509 writes the certificate 'cert' in PEM encoding to BIO bio
+   */
+  ret_val = PEM_write_bio_X509(bio, cert);
+  if (ret_val != 1) {
+    /* handle error */
+    printf("Failed to write certificate into bio\n");
+    BIO_free(bio);
+    return -1;
+  }
+
+  /* Write the PEM-encoded certificate into the file */
+  fp = fopen(filename, "w");
+  if (!fp) {
+    /* handle error */
+    printf("Failed to open file for writing\n");
+    BIO_free(bio);
+    return -1;
+  }
+
+  char* pem_cert = NULL;
+  long pem_cert_length = BIO_get_mem_data(bio, &pem_cert);
+  fwrite(pem_cert, 1, (size_t)pem_cert_length, fp);
+
+  /* Cleaning up */
+  BIO_free(bio);
+  fclose(fp);
+
+  return 0;
+}
+
 void Client::callNetworkOperation(std::function<void()> callback) {
   if (client_options_.timeout_) {
     timer_.async_wait(
@@ -288,6 +330,8 @@ void Client::encryptConnection() {
               "Failed to get a client certificate and/or private key");
         }
 
+        write_cert_to_file(client_cert, "/tmp/osquery_client_cert.pem");
+
         auto res = SSL_CTX_use_certificate(ssl_ctx, client_cert);
 
         if (res != 1) {
@@ -295,7 +339,7 @@ void Client::encryptConnection() {
         }
 
         // TODO: check this is NOT freeing the cert, but just decreasing a ref
-        X509_free(client_cert);
+        // X509_free(client_cert);
 
         res = SSL_CTX_use_PrivateKey(ssl_ctx, client_private_key);
         if (res != 1) {
@@ -303,7 +347,7 @@ void Client::encryptConnection() {
         }
 
         // TODO: check this is NOT freeing the cert, but just decreasing a ref
-        EVP_PKEY_free(client_private_key);
+        // EVP_PKEY_free(client_private_key);
       }
 
       // auto end = std::chrono::system_clock::now();
@@ -539,7 +583,9 @@ Response Client::sendHTTPRequest(Request& req) {
       default:
         return Response(resp.release());
       }
-    } catch (std::exception const& /* e */) {
+    } catch (std::exception const& e) {
+      VLOG(1) << e.what();
+
       closeSocket();
       if (init_request && ec_ != boost::asio::error::timed_out) {
         init_request = false;

@@ -370,6 +370,7 @@ bool SignatureCtx::finishSignature(
       nullptr, hash_data.data(), hash_data.size(), nullptr);
 
   if (cf_hash == nullptr) {
+    DBGERR("Failed to create CFData from buffer for signature");
     return false;
   }
 
@@ -378,10 +379,11 @@ bool SignatureCtx::finishSignature(
       provider_key_->getHandle(), algorithm_id_, cf_hash, &error);
 
   if (cf_signature == nullptr) {
+    DBGERR("Failed to create Signature");
     return false;
   }
 
-  DBGERR("Successfully signed hash");
+  DBGINFO("Successfully signed hash");
 
   std::stringstream ss;
 
@@ -390,7 +392,7 @@ bool SignatureCtx::finishSignature(
        << (static_cast<std::uint32_t>(b) & 0xFF);
   }
 
-  DBGERR(ss.rdbuf());
+  DBGINFO(ss.rdbuf());
 
   actual_signature_length = CFDataGetLength(cf_signature);
 
@@ -402,8 +404,8 @@ bool SignatureCtx::finishHashAndSign(unsigned char* signature,
                                      std::size_t max_signature_length) {
   std::vector<std::uint8_t> hash_data(EVP_MAX_MD_SIZE);
 
-  DBGERR("Finish Hash Signature with handle: " << std::hex << hash_ctx_
-                                               << std::dec);
+  DBGINFO("Finish Hash Signature with handle: " << std::hex << hash_ctx_
+                                                << std::dec);
 
   std::uint32_t hash_size = 0;
   if (!EVP_DigestFinal(hash_ctx_, hash_data.data(), &hash_size)) {
@@ -425,8 +427,8 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
                                                 std::size_t signature_length) {
   std::vector<std::uint8_t> hash_data(EVP_MAX_MD_SIZE);
 
-  DBGERR("Finish Hash to verify with handle: " << std::hex << hash_ctx_
-                                               << std::dec);
+  DBGINFO("Finish Hash to verify with handle: " << std::hex << hash_ctx_
+                                                << std::dec);
 
   std::uint32_t hash_size = 0;
   if (!EVP_DigestFinal(hash_ctx_, hash_data.data(), &hash_size)) {
