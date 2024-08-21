@@ -303,11 +303,10 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
 } // namespace
 
 std::optional<const char*> storeNameToPath(std::string_view store_name) {
-  const char* keychain_path = nullptr;
   if (store_name == "System") {
-    keychain_path = kSystemKeychainPath;
+    return kSystemKeychainPath;
   } else if (store_name == "SystemRoot") {
-    keychain_path = kSystemRootsKeychainPath;
+    return kSystemRootsKeychainPath;
   }
   // Unsupported
   return std::nullopt;

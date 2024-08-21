@@ -89,7 +89,7 @@ DECLARE_bool(verbose);
 namespace {
 enum class OpenSSLMode { Default, Native };
 
-constexpr bool isUnsafeTLSDisabled() {
+bool isUnsafeTLSDisabled() {
 #ifndef NDEBUG
   return !FLAGS_tls_allow_unsafe;
 #else
