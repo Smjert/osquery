@@ -18,7 +18,7 @@
 
 #include <osquery/utils/openssl/windows/cng_provider/common/defines.h>
 #include <osquery/utils/openssl/windows/cng_provider/keymanagement/provider_key.h>
-#include <osquery/utils/openssl/rsa_utils.h
+#include <osquery/utils/openssl/rsa_utils.h>
 
 // #define DBGOUTPUT 1
 
