@@ -23,6 +23,7 @@ function(generateOsqueryUtilsOpenSSLCngProvider)
   target_link_libraries(osquery_utils_openssl_cngprovider PUBLIC
     osquery_cxx_settings
     osquery_utils_conversions
+    osquery_utils_openssl_utils
     thirdparty_openssl
   )
 

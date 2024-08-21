@@ -5,7 +5,7 @@
 namespace osquery {
 
 #ifdef WIN32
-const char* clientCertStoreUri = "cng:://MY";
+const char* clientCertStoreUri = "cng://MY";
 #else
 const char* clientCertStoreUri = "keychain://System";
 #endif
