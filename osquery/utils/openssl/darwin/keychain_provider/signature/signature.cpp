@@ -367,7 +367,7 @@ bool SignatureCtx::finishSignature(
     unsigned char* signature,
     std::size_t& actual_signature_length) {
   CFDataRef cf_hash = CFDataCreateWithBytesNoCopy(
-      nullptr, hash_data.data(), hash_data.size(), nullptr);
+      nullptr, hash_data.data(), hash_data.size(), kCFAllocatorNull);
 
   if (cf_hash == nullptr) {
     DBGERR("Failed to create CFData from buffer for signature");
@@ -395,6 +395,8 @@ bool SignatureCtx::finishSignature(
   DBGINFO(ss.rdbuf());
 
   actual_signature_length = CFDataGetLength(cf_signature);
+  CFDataGetBytes(
+      cf_signature, CFRangeMake(0, actual_signature_length), signature);
 
   return true;
 }
@@ -554,7 +556,9 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
             strcmp(static_cast<char*>(param->data),
                    OSSL_PKEY_RSA_PSS_SALT_LEN_MAX) == 0 ||
             strcmp(static_cast<char*>(param->data),
-                   OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO) == 0) {
+                   OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO) == 0 ||
+            strcmp(static_cast<char*>(param->data),
+                   OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX) == 0) {
           /* Salt length is chosen by the algorithm ID anyway, and it's based on
              the digest size, so all the choices above are valid. */
           break;
