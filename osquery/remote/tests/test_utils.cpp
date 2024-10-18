@@ -155,6 +155,9 @@ bool TLSServerRunner::start(const std::string& server_cert,
   if (!started) {
     return false;
   }
+
+  LOG(WARNING) << "Python server started correctly";
+
   return true;
 }
 

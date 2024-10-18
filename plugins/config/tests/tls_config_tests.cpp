@@ -154,10 +154,10 @@ TEST_F(TLSConfigTests, test_setup) {
   request.setOption("hostname", Flag::getValue("tls_hostname"));
 
   status = request.call(JSON());
-  ASSERT_TRUE(status.ok());
+  ASSERT_TRUE(status.ok()) << status.getMessage();
 
   status = request.getResponse(response_tree);
-  ASSERT_TRUE(status.ok());
+  ASSERT_TRUE(status.ok()) << status.getMessage();
 
   // TLSConfigPlugin should *not* have sent an enroll or any other TLS request
   // It should have used the cached-key
