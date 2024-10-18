@@ -538,7 +538,7 @@ jobs:
     strategy:
       matrix:
         build_type: [Release, Debug]
-        architecture: [x86_64, arm64]
+        architecture: [arm64]
         os: [macos-14, macos-15]
 
     steps:
