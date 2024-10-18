@@ -1142,7 +1142,7 @@ jobs:
       run: |
         $long_version = "0.8.2"
 
-        $archive_name = $("sccache-v" + $long_version + "x86_64-pc-windows-msvc.zip")
+        $archive_name = $("sccache-v" + $long_version + "-x86_64-pc-windows-msvc.zip")
         $url = $("https://github.com/mozilla/sccache/releases/download/v" + $long_version + "/" + $archive_name)
 
         (New-Object System.Net.WebClient).DownloadFile($url, $archive_name)
