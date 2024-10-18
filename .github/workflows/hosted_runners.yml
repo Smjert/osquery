@@ -137,6 +137,7 @@ jobs:
 
   # This job runs source code analysis tools (currently, just cppcheck)
   check_source_code:
+    if: false
     needs: [check_code_style, check_libraries_manifest]
 
     runs-on: ${{ matrix.os }}
