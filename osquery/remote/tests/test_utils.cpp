@@ -190,17 +190,18 @@ bool TLSServerRunner::start(const std::string& server_cert,
     // in establishing a correct TLS connection,
     // but we assume that if it's not a connection timeout (TCP),
     // then the server is ready enough.
-
     if (!status.ok()) {
-      LOG(WARNING) << "Failed to ping: " << status.getMessage();
-    }
-
-    if (!status.ok() &&
-        status.getMessage().find("timeout") != std::string::npos) {
-      LOG(WARNING) << "Python HTTP Server not ready yet";
-      sleepFor(1000);
-      ++retry;
-      continue;
+      if (status.getMessage().find("Operation timed out") !=
+          std::string::npos) {
+        LOG(WARNING) << "Python HTTP Server not ready yet";
+        sleepFor(1000);
+        ++retry;
+        continue;
+      } else {
+        // We still log this error to see what was the issue,
+        // but in theory the server is ready to serve.
+        LOG(WARNING) << "Failed to ping: " << status.getMessage();
+      }
     }
 
     ready_to_serve = true;
