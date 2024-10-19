@@ -162,12 +162,34 @@ bool TLSServerRunner::start(const std::string& server_cert,
   // Verify that the server is also actually ready to serve
   retry = 0;
   bool ready_to_serve = false;
+
+  std::string client_cert = Flag::getValue("tls_client_cert");
+  Flag::updateValue(
+      "tls_client_cert",
+      (getTestConfigDirectory() / "test_client.pem").make_preferred().string());
+
+  std::string client_key = Flag::getValue("tls_client_key");
+  Flag::updateValue(
+      "tls_client_key",
+      (getTestConfigDirectory() / "test_client.key").make_preferred().string());
+
+  std::string server_ca_certs = Flag::getValue("tls_server_certs");
+  Flag::updateValue("tls_server_certs",
+                    (getTestConfigDirectory() / "test_server_ca.pem")
+                        .make_preferred()
+                        .string());
+
   while (retry < max_retry) {
     std::string ping_server_uri =
         "https://localhost:" + std::string(self.port_);
 
     Request<TLSTransport, JSONSerializer> request(ping_server_uri);
     Status status = request.call();
+
+    // The provided client settings won't always make us succeed
+    // in establishing a correct TLS connection,
+    // but we assume that if it's not a connection timeout (TCP),
+    // then the server is ready enough.
     if (!status.ok() &&
         status.getMessage().find("timeout") != std::string::npos) {
       LOG(WARNING) << "Python HTTP Server not ready yet";
@@ -179,6 +201,10 @@ bool TLSServerRunner::start(const std::string& server_cert,
     ready_to_serve = true;
     break;
   }
+
+  Flag::updateValue("tls_client_cert", client_cert);
+  Flag::updateValue("tls_client_key", client_key);
+  Flag::updateValue("tls_server_certs", server_ca_certs);
 
   if (!ready_to_serve) {
     LOG(ERROR) << "The Python server was not ready to serve in time";
