@@ -216,6 +216,8 @@ bool TLSServerRunner::start(const std::string& server_cert,
     return false;
   }
 
+  LOG(WARNING) << "Server is now ready to serve";
+
   return true;
 }
 
