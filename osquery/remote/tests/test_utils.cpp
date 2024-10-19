@@ -196,14 +196,15 @@ bool TLSServerRunner::start(const std::string& server_cert,
     if (!status.ok()) {
       if (status.getMessage().find("Operation timed out") !=
           std::string::npos) {
-        LOG(WARNING) << "Python HTTP Server not ready yet";
+        LOG(WARNING) << "The Python HTTP server is not ready yet";
         sleepFor(5000);
         ++retry;
         continue;
       } else {
         /* We still log this failure to see what was the issue,
            but in theory the server is ready to serve. */
-        LOG(WARNING) << "Failed to ping: " << status.getMessage();
+        LOG(WARNING) << "Failed to ping the Python HTTP server: "
+                     << status.getMessage();
       }
     }
 
@@ -216,11 +217,11 @@ bool TLSServerRunner::start(const std::string& server_cert,
   Flag::updateValue("tls_server_certs", server_ca_certs);
 
   if (!ready_to_serve) {
-    LOG(ERROR) << "The Python server was not ready to serve in time";
+    LOG(ERROR) << "The Python HTTP server was not ready to serve in time";
     return false;
   }
 
-  LOG(WARNING) << "Server is now ready to serve";
+  LOG(WARNING) << "The Python HTTP server is now ready to serve";
 
   return true;
 }
