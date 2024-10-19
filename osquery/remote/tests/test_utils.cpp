@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
+#include "osquery/remote/transports/tls.h"
 #include <csignal>
 #include <ctime>
 
@@ -18,14 +19,14 @@
 #include <osquery/database/database.h>
 #include <osquery/logger/logger.h>
 #include <osquery/process/process.h>
+#include <osquery/remote/requests.h>
+#include <osquery/remote/serializers/json.h>
 #include <osquery/remote/tests/test_utils.h>
 #include <osquery/sql/sql.h>
 #include <osquery/tests/test_util.h>
 #include <osquery/utils/conversions/join.h>
 #include <osquery/utils/json/json.h>
 #include <osquery/utils/system/time.h>
-
-namespace fs = boost::filesystem;
 
 namespace osquery {
 
@@ -156,7 +157,35 @@ bool TLSServerRunner::start(const std::string& server_cert,
     return false;
   }
 
-  LOG(WARNING) << "Python server started correctly";
+  LOG(WARNING) << "Python server process started correctly";
+
+  // Verify that the server is also actually ready to serve
+  retry = 0;
+  bool ready_to_serve = false;
+  setClientConfig();
+  while (retry < max_retry) {
+    std::string ping_server_uri =
+        "https://localhost:" + std::string(self.port_);
+
+    Request<TLSTransport, JSONSerializer> request(ping_server_uri);
+    Status status = request.call();
+    if (!status.ok()) {
+      LOG(WARNING) << "Python HTTP Server not ready yet: "
+                   << status.getMessage();
+      sleepFor(1000);
+      ++retry;
+      continue;
+    }
+
+    ready_to_serve = true;
+    break;
+  }
+  unsetClientConfig();
+
+  if (!ready_to_serve) {
+    LOG(ERROR) << "The Python server was not ready to serve in time";
+    return false;
+  }
 
   return true;
 }
