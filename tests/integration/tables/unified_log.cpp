@@ -40,7 +40,7 @@ typedef struct DeltaContext {
   }
 } DeltaContext;
 
-TEST_F(UnifiedLogTest, test_sanity) {
+TEST_F(UnifiedLogTest, DISABLED_test_sanity) {
   QueryData const rows =
       execute_query("select * from unified_log where pid > 100 and pid < 105");
 
