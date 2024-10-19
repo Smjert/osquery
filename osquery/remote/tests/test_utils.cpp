@@ -162,16 +162,15 @@ bool TLSServerRunner::start(const std::string& server_cert,
   // Verify that the server is also actually ready to serve
   retry = 0;
   bool ready_to_serve = false;
-  setClientConfig();
   while (retry < max_retry) {
     std::string ping_server_uri =
         "https://localhost:" + std::string(self.port_);
 
     Request<TLSTransport, JSONSerializer> request(ping_server_uri);
     Status status = request.call();
-    if (!status.ok()) {
-      LOG(WARNING) << "Python HTTP Server not ready yet: "
-                   << status.getMessage();
+    if (!status.ok() &&
+        status.getMessage().find("timeout") != std::string::npos) {
+      LOG(WARNING) << "Python HTTP Server not ready yet";
       sleepFor(1000);
       ++retry;
       continue;
@@ -180,7 +179,6 @@ bool TLSServerRunner::start(const std::string& server_cert,
     ready_to_serve = true;
     break;
   }
-  unsetClientConfig();
 
   if (!ready_to_serve) {
     LOG(ERROR) << "The Python server was not ready to serve in time";
