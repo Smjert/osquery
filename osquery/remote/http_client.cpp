@@ -339,7 +339,7 @@ void Client::encryptConnection() {
         }
 
         // TODO: check this is NOT freeing the cert, but just decreasing a ref
-        // X509_free(client_cert);
+        X509_free(client_cert);
 
         res = SSL_CTX_use_PrivateKey(ssl_ctx, client_private_key);
         if (res != 1) {
@@ -347,7 +347,7 @@ void Client::encryptConnection() {
         }
 
         // TODO: check this is NOT freeing the cert, but just decreasing a ref
-        // EVP_PKEY_free(client_private_key);
+        EVP_PKEY_free(client_private_key);
       }
 
       // auto end = std::chrono::system_clock::now();
