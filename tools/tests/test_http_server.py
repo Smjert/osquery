@@ -391,7 +391,7 @@ def run_http_server(bind_port=80, **kwargs):
 
     reset_timeout()
 
-    httpd = HTTPServer(("localhost", bind_port), RealSimpleHandler)
+    httpd = HTTPServer(("127.0.0.1", bind_port), RealSimpleHandler)
     if ARGS["tls"]:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain(certfile=ARGS["cert"], keyfile=ARGS["key"])
