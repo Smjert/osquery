@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: (Apache-2.0 OR GPL-2.0-only)
  */
 
+#include <fstream> // TODO: remove me
 #include <iomanip>
 #include <iostream> // TODO: remove me
 #include <optional>
@@ -16,6 +17,11 @@
 #include <osquery/remote/http_client.h>
 
 #include <boost/asio/connect.hpp>
+
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/trace.h>
 
 namespace osquery {
 namespace http {
@@ -61,10 +67,39 @@ int write_cert_to_file(X509* cert, const char* filename) {
   long pem_cert_length = BIO_get_mem_data(bio, &pem_cert);
   fwrite(pem_cert, 1, (size_t)pem_cert_length, fp);
 
+  printf("Writing certificate to disk: %ld\n", pem_cert_length);
+
   /* Cleaning up */
   BIO_free(bio);
   fclose(fp);
 
+  return 0;
+}
+
+static std::ofstream ssl_log("/tmp/sslkeylog.txt");
+
+void sslkeylog(const SSL* ssl, const char* line) {
+  ssl_log << line << "\n";
+  ssl_log.flush();
+}
+
+static size_t callback_function(
+    const char* buf, size_t cnt, int category, int cmd, void* vdata) {
+  /* We're not interested in the category, since it's passed to fopen() */
+  /* We're not interested in vdata right now */
+  switch (cmd) {
+  case OSSL_TRACE_CTRL_BEGIN:
+    /* A trace message begins, ensure a newline from any previous
+       complete message that may have been printed */
+    return fwrite("\n", 1, 1, stdout);
+  case OSSL_TRACE_CTRL_WRITE:
+    /* Write out the trace data as is */
+    return fwrite(buf, 1, cnt, stdout);
+  case OSSL_TRACE_CTRL_END:
+    /* A trace message ends, finish it off with a newline */
+    return fwrite("\n", 1, 1, stdout);
+  }
+  /* If we reach this, it means that |cmd| wasn't of understood value */
   return 0;
 }
 
@@ -135,6 +170,13 @@ void Client::connectHandler(boost::system::error_code const& ec,
 
 void Client::handshakeHandler(boost::system::error_code const& ec) {
   cancelTimerAndSetError(ec);
+
+  unsigned long error_code;
+  while ((error_code = ERR_get_error()) != 0) {
+    char error_string[256];
+    ERR_error_string_n(error_code, error_string, sizeof(error_string));
+    std::cerr << "OpenSSL Error: " << error_string << std::endl;
+  }
 }
 
 void Client::writeHandler(boost::system::error_code const& ec, size_t) {
@@ -289,6 +331,26 @@ void Client::encryptConnection() {
           &openssl_parameters.getSSLLibraryContext();
 
       auto* ssl_ctx = createNativeContext(openssl_parameters);
+
+      SSL_CTX_set_keylog_callback(ssl_ctx, sslkeylog);
+
+      // Set up tracing
+      OSSL_trace_set_callback(OSSL_TRACE_CATEGORY_TLS, callback_function, NULL);
+
+      // Enable all trace categories (you can customize this as needed)
+      int trace_categories[] = {
+          OSSL_TRACE_CATEGORY_TRACE,
+          OSSL_TRACE_CATEGORY_INIT,
+          OSSL_TRACE_CATEGORY_TLS,
+          // Add more categories as needed
+      };
+
+      for (size_t i = 0;
+           i < sizeof(trace_categories) / sizeof(trace_categories[0]);
+           i++) {
+        OSSL_trace_set_prefix(trace_categories[i], "OpenSSL:");
+        OSSL_trace_set_suffix(trace_categories[i], "\n");
+      }
 
       boost::asio::ssl::context ctx{ssl_ctx};
 
