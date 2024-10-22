@@ -171,11 +171,19 @@ void Client::connectHandler(boost::system::error_code const& ec,
 void Client::handshakeHandler(boost::system::error_code const& ec) {
   cancelTimerAndSetError(ec);
 
-  unsigned long error_code;
-  while ((error_code = ERR_get_error()) != 0) {
-    char error_string[256];
+  std::uint32_t error_code = 0;
+  const char* filename = nullptr;
+  std::int32_t line = 0;
+  const char* func = nullptr;
+  const char* data = nullptr;
+  std::int32_t flags = 0;
+
+  while ((error_code =
+              ERR_get_error_all(&filename, &line, &func, &data, &flags)) != 0) {
+    char error_string[1024];
     ERR_error_string_n(error_code, error_string, sizeof(error_string));
-    std::cerr << "OpenSSL Error: " << error_string << std::endl;
+    std::cerr << "OpenSSL Error (" << filename << ":" << func << ":" << line
+              << " - " << data << ":" << flags << error_string << std::endl;
   }
 }
 

@@ -379,7 +379,25 @@ bool SignatureCtx::finishSignature(
       provider_key_->getHandle(), algorithm_id_, cf_hash, &error);
 
   if (cf_signature == nullptr) {
-    DBGERR("Failed to create Signature");
+    CFStringRef error_desc = CFErrorCopyDescription(error);
+    auto utf16_length = CFStringGetLength(error_desc);
+    auto length =
+        CFStringGetMaximumSizeForEncoding(utf16_length, kCFStringEncodingUTF8);
+
+    if (length == kCFNotFound) {
+      CFRelease(error_desc);
+      CFRelease(error);
+    }
+
+    std::string error_str(length, '\0');
+
+    CFStringGetCString(
+        error_desc, error_str.data(), error_str.size(), kCFStringEncodingUTF8);
+
+    DBGERR("Failed to create Signature: ") << error_str << "\n";
+
+    CFRelease(error_desc);
+    CFRelease(error);
     return false;
   }
 
