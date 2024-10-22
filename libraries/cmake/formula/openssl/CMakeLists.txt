@@ -106,6 +106,7 @@ function(opensslMain)
 
         enable-ec_nistp_64_gcc_128
         ${platform_c_flags}
+        -g3
     )
 
     # Don't be afraid to manually patch the build scripts; for some settings, there is no

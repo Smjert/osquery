@@ -468,6 +468,8 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
 
 bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
   auto new_padding = padding_;
+
+  DBGINFO("Starting padding is: " << static_cast<std::int32_t>(new_padding));
   if (params != nullptr) {
     // Get pad mode parameter
     const OSSL_PARAM* param =
@@ -498,6 +500,8 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
         }
         }
 
+        DBGINFO("Padding now is: " << static_cast<std::int32_t>(new_padding));
+
         break;
       }
       case OSSL_PARAM_UTF8_STRING: {
@@ -511,6 +515,8 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
         } else {
           return false;
         }
+
+        DBGINFO("Padding now is: " << static_cast<std::int32_t>(new_padding));
 
         break;
       }
@@ -539,12 +545,14 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
 
         // In theory this should always be a ULONG, but we do some validations
         if (param->data_size <= sizeof(pss_salt_length)) {
+          DBGERR("Data size not expected");
           return false;
         }
 
         std::memcpy(&pss_salt_length, param->data, param->data_size);
 
         if (pss_salt_length != *opt_expected_pss_salt_length) {
+          DBGERR("Unexpected salt length");
           return false;
         }
 
@@ -568,16 +576,19 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
           std::int32_t pss_salt_length = std::strtol(value, &end, 10);
 
           if (value == end) {
+            DBGERR("Failed to parse salt length from string");
             return false;
           }
 
           if (pss_salt_length != *opt_expected_pss_salt_length) {
+            DBGERR("Parsed salt length from string is not as expected");
             return false;
           }
         }
         break;
       }
       default:
+        DBGERR("No saltlen parameter recognized");
         return false;
       }
     }
@@ -585,6 +596,7 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
 
   auto opt_algorithm_id = hashAndPaddingToSignAlgorithm(hash_ctx_, new_padding);
   if (!opt_algorithm_id.has_value()) {
+    DBGERR("Could not find an algorithm id");
     return false;
   }
 

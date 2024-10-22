@@ -245,7 +245,7 @@ X509_STORE* getCABundleFromSearchParameters(
       CFStringRef certificate_desc = SecCertificateCopyLongDescription(
           kCFAllocatorDefault, certificate, nullptr);
 
-      CFShow(certificate_desc);
+      // CFShow(certificate_desc);
 
       auto key_usage = (CFDictionaryRef)CFDictionaryGetValue(
           certificate_attributes, kSecOIDKeyUsage);
@@ -258,7 +258,7 @@ X509_STORE* getCABundleFromSearchParameters(
           continue;
         }
 
-        CFShow(key_usage_number);
+        // CFShow(key_usage_number);
 
         std::int32_t key_usage_value = 0;
         if (!CFNumberGetValue(key_usage_number,
@@ -412,8 +412,8 @@ X509_STORE* getCABundleFromSearchParameters(
           }
 
           for (const auto& param : params) {
-            std::cout << "CA label: ";
-            CFShow(label);
+            // std::cout << "CA label: ";
+            // CFShow(label);
             if (CFStringCompare(label, param.first, 0) == kCFCompareEqualTo) {
               CFStringRef value = (CFStringRef)CFDictionaryGetValue(
                   element, kSecPropertyKeyValue);
@@ -431,8 +431,8 @@ X509_STORE* getCABundleFromSearchParameters(
                 break;
               }
 
-              std::cout << "CA: ";
-              CFShow(value);
+              // std::cout << "CA: ";
+              // CFShow(value);
 
               if (CFStringCompare(value, expected_value, 0) ==
                   kCFCompareEqualTo) {
@@ -467,7 +467,7 @@ X509_STORE* getCABundleFromSearchParameters(
         char name_buffer[1024];
         X509_NAME_oneline(name, name_buffer, sizeof(name_buffer));
 
-        std::cout << "Issuer name: " << name_buffer << std::endl;
+        // std::cout << "Issuer name: " << name_buffer << std::endl;
 
         auto res = X509_STORE_add_cert(store, x509_cert);
 
