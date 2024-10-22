@@ -49,8 +49,10 @@ std::size_t ProviderKey::getKeyLengthBits() const {
     return 0;
   }
 
+  std::size_t block_size = SecKeyGetBlockSize(handle_);
+
   // NOTE: This calculation is only valid for RSA keys!
-  return SecKeyGetBlockSize(handle_) * 8;
+  return block_size * 8;
 }
 
 ProviderKey* ProviderKey::clone() const {
