@@ -137,7 +137,9 @@ int OsqueryKeychainKeyManagementGetParams(void* key_data, OSSL_PARAM params[]) {
   param = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS);
 
   if (param != nullptr) {
-    return provider_key->getKeyLengthBits();
+    if (!OSSL_PARAM_set_int(param, provider_key->getKeyLengthBits())) {
+      return 0;
+    }
   }
 
   param = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS);
@@ -654,7 +656,7 @@ const OSSL_ALGORITHM* OsqueryKeychainGetKeyManagementAlgorithms() {
       {"rsaEncryption",
        osquery::algorithm_properties,
        osquery::key_management_functions,
-       "RSA Implementation backed by Windows Keychain"},
+       "RSA Implementation backed by macOS Keychain"},
       {nullptr, nullptr, nullptr}};
 
   return key_management_algorithms;
