@@ -124,7 +124,6 @@ int OsqueryKeychainProviderInit(const OSSL_CORE_HANDLE* handle,
                                 const OSSL_DISPATCH* in,
                                 const OSSL_DISPATCH** out,
                                 void** prov_ctx) {
-  std::cout << "Keychain provider initialized" << std::endl;
   *out = osquery::keychain_dispatch_table;
 
   osquery::KeychainProviderCtx* context = nullptr;

@@ -157,59 +157,6 @@ const OSSL_ALGORITHM* OsqueryKeychainGetStoreAlgorithms() {
 
 namespace osquery {
 namespace {
-/*NCRYPT_KEY_HANDLE loadPrivateKeyFromCert(PCCERT_CONTEXT cert) {
-  DWORD key_spec = 0;
-  BOOL caller_must_free = FALSE;
-  NCRYPT_KEY_HANDLE tmp_key_handle = 0;
-  BOOL retval = CryptAcquireCertificatePrivateKey(
-      cert,
-      CRYPT_ACQUIRE_PREFER_NCRYPT_KEY_FLAG | CRYPT_ACQUIRE_SILENT_FLAG,
-      nullptr,
-      &tmp_key_handle,
-      &key_spec,
-      &caller_must_free);
-
-  if (retval != TRUE) {
-    std::wstring subject_name;
-    DWORD subject_size = 0;
-    DWORD error = GetLastError();
-
-    auto res = CertNameToStrW(X509_ASN_ENCODING,
-                              &cert->pCertInfo->Subject,
-                              CERT_SIMPLE_NAME_STR,
-                              nullptr,
-                              subject_size);
-
-    if (res != 0) {
-      subject_size = res;
-      subject_name.resize(subject_size);
-
-      res = CertNameToStrW(X509_ASN_ENCODING,
-                           &cert->pCertInfo->Subject,
-                           CERT_SIMPLE_NAME_STR,
-                           subject_name.data(),
-                           subject_size);
-      if (res == 0) {
-        DBGERR("Failed to get the certificate subject name");
-      } else {
-        subject_name.pop_back();
-      }
-    } else {
-      DBGERR("Failed to get the certificate subject name size");
-    }
-
-    DBGWERR("Failed to load private key from certificate "
-            << subject_name << ", error: " << std::hex << error << std::dec);
-  }
-
-  if (caller_must_free != TRUE) {
-    return 0;
-  }
-
-  DBGERR("Loading key handle: " << std::hex << tmp_key_handle << std::dec);
-
-  return tmp_key_handle;
-}*/
 
 std::optional<ProviderKeyAlgorithm> getKeyAlgorithmType(const SecKeyRef key) {
   CFDictionaryRef attrs = SecKeyCopyAttributes(key);
@@ -236,8 +183,6 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
 
   const std::array<const void*, 3> keys = {
       kSecClass, kSecReturnRef, kSecValueRef};
-  std::array<const void*, 3> values = {
-      kSecClassIdentity, kCFBooleanTrue, nullptr};
   auto dict = CFDictionaryCreateMutable(nullptr,
                                         keys.size(),
                                         &kCFTypeDictionaryKeyCallBacks,
@@ -278,6 +223,7 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
       continue;
     }
 
+#if DBGOUTPUT
     CFStringRef certSummary = SecCertificateCopySubjectSummary(cert);
     char certSummaryBuf[512];
     DBGINFO("Found private key: " << std::hex << current_private_key
@@ -290,6 +236,7 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
     }
 
     CFRelease(certSummary);
+#endif
     private_key = current_private_key;
   }
 
