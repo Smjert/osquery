@@ -47,6 +47,8 @@ using UniqueIoIterator =
 using UniqueIoService =
     std::unique_ptr<io_service_t, ObjectDeleter<io_service_t>>;
 
+using UniqueCFRef = std::unique_ptr<CFTypeRef, TypeDeleter<CFTypeRef>>;
+
 using UniqueCFStringRef =
     std::unique_ptr<CFStringRef, TypeDeleter<CFStringRef>>;
 using UniqueCFTypeRef = std::unique_ptr<CFTypeRef, TypeDeleter<CFTypeRef>>;

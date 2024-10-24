@@ -138,6 +138,8 @@ X509_STORE* getCABundleFromSearchParameters(
                            &kCFCopyStringDictionaryKeyCallBacks,
                            &kCFTypeDictionaryValueCallBacks);
 
+    CFRelease(keychains);
+
     if (query == nullptr) {
       DBGERR("Failed to initialize the certificates query");
       return nullptr;
@@ -361,12 +363,16 @@ X509_STORE* getCABundleFromSearchParameters(
                 ++attributesFound;
               }
 
+              CFRelease(expected_value);
+
               if (attributesFound == params.size()) {
                 break;
               }
             }
           }
         }
+
+        CFRelease(certificate_attributes);
 
         if (attributesFound != params.size()) {
           continue;
@@ -377,9 +383,8 @@ X509_STORE* getCABundleFromSearchParameters(
 
       const std::uint8_t* certificate_data_buffer =
           CFDataGetBytePtr(certificate_data);
-      std::size_t certificate_data_length = CFDataGetLength(certificate_data);
-      X509* x509_cert =
-          d2i_X509(nullptr, &certificate_data_buffer, certificate_data_length);
+      X509* x509_cert = d2i_X509(
+          nullptr, &certificate_data_buffer, CFDataGetLength(certificate_data));
 
       CFRelease(certificate_data);
 
@@ -393,12 +398,15 @@ X509_STORE* getCABundleFromSearchParameters(
 
         if (res == 0) {
           DBGERR("Failed to add a certificate!");
+          X509_free(x509_cert);
           return nullptr;
         }
 
         X509_free(x509_cert);
       }
     }
+
+    CFRelease(certificates);
   }
 
   if (X509_STORE_set_purpose(store, X509_PURPOSE_SSL_SERVER) == 0) {
