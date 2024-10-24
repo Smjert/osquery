@@ -45,23 +45,6 @@ std::array<std::string, 2> kStores = {
     "SystemRoot",
 };
 
-void describe255(CFTypeRef tested) {
-  char buffer[256];
-  CFIndex got;
-  CFStringRef description = CFCopyDescription(tested);
-  CFStringGetBytes(description,
-                   CFRangeMake(0, CFStringGetLength(description)),
-                   CFStringGetSystemEncoding(),
-                   '?',
-                   TRUE,
-                   reinterpret_cast<std::uint8_t*>(buffer),
-                   255,
-                   &got);
-  buffer[got] = (char)0;
-  fprintf(stdout, "%s\n", buffer);
-  CFRelease(description);
-}
-
 } // namespace
 
 SSL_CTX* createNativeContext(
