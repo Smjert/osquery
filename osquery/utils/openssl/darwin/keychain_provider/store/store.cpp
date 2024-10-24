@@ -240,6 +240,8 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
     private_key = current_private_key;
   }
 
+  CFRelease(dict);
+
   if (private_key == nullptr) {
     DBGINFO("End of private key store");
     return std::nullopt;
