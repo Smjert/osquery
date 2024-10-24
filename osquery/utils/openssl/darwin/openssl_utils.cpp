@@ -190,11 +190,10 @@ X509_STORE* getCABundleFromSearchParameters(
       CFRelease(cert_attr_key_array);
 
       if (certificate_attributes == nullptr) {
+        if (error != nullptr) {
+          DBGERR("Error code: " << CFErrorGetCode(error));
+        }
         continue;
-      }
-
-      if (error != nullptr) {
-        std::cout << "Error code: " << CFErrorGetCode(error) << std::endl;
       }
 
       CFDictionaryRef not_before_attribute =
@@ -202,7 +201,7 @@ X509_STORE* getCABundleFromSearchParameters(
                                                 kSecOIDX509V1ValidityNotBefore);
 
       if (not_before_attribute == nullptr) {
-        std::cerr << "No not before attribute" << std::endl;
+        DBGERR("No not before attribute");
         continue;
       }
 
@@ -211,7 +210,7 @@ X509_STORE* getCABundleFromSearchParameters(
                                                 kSecOIDX509V1ValidityNotAfter);
 
       if (not_after_attribute == nullptr) {
-        std::cerr << "No not after attribute" << std::endl;
+        DBGERR("No not after attribute");
         continue;
       }
 
@@ -260,7 +259,7 @@ X509_STORE* getCABundleFromSearchParameters(
 
         // Bit for Key Cert Sign
         if (key_usage_value > 0 && (key_usage_value & 0x20) != 0x20) {
-          std::cout << "Incorrect key usage purpose" << std::endl;
+          DBGERR("Incorrect key usage purpose");
           continue;
         }
       }
@@ -276,10 +275,6 @@ X509_STORE* getCABundleFromSearchParameters(
           continue;
         }
 
-        if (CFGetTypeID(extended_key_usage_array) != CFArrayGetTypeID()) {
-          std::cerr << "Not an array!" << std::endl;
-        }
-
         bool has_correct_purpose = false;
         for (CFIndex i = 0; i < CFArrayGetCount(extended_key_usage_array);
              ++i) {
@@ -292,12 +287,6 @@ X509_STORE* getCABundleFromSearchParameters(
 
           auto eku_data = CFDataGetBytePtr(extended_key_usage_value);
           auto eku_data_length = CFDataGetLength(extended_key_usage_value);
-
-          for (std::size_t i = 0; i < eku_data_length; ++i) {
-            std::cout << std::hex << (static_cast<int>(eku_data[i]) & 0xFF)
-                      << std::setw(2) << std::setfill('0');
-          }
-          std::cout << std::endl;
 
           if (eku_data_length != sizeof(oid_server_auth_bytes) &&
               eku_data_length != sizeof(oid_any_usage_bytes)) {
@@ -400,12 +389,10 @@ X509_STORE* getCABundleFromSearchParameters(
         char name_buffer[1024];
         X509_NAME_oneline(name, name_buffer, sizeof(name_buffer));
 
-        // std::cout << "Issuer name: " << name_buffer << std::endl;
-
         auto res = X509_STORE_add_cert(store, x509_cert);
 
         if (res == 0) {
-          std::cout << "Failed to add a certificate!" << std::endl;
+          DBGERR("Failed to add a certificate!");
           return nullptr;
         }
 
