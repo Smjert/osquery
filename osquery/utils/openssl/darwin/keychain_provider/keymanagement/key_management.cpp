@@ -211,13 +211,9 @@ int OsqueryKeychainKeyManagementHas(const void* key_data, int selection) {
           can_sign != nullptr && CFBooleanGetValue(can_sign);
     }
 
-    if (has_required_features) {
-      CFRelease(attributes);
-      return 1;
-    }
-
     CFRelease(attributes);
-    return 0;
+
+    return has_required_features ? 0 : 1;
   }
 
   // OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS for RSA keys doesn't exist,
@@ -245,11 +241,15 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
 
   if (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
     SecKeyRef public_key = nullptr;
+
+    bool should_release_key = false;
     if (provider_key->getKeyType() == osquery::ProviderKeyType::Private) {
+      // We try to export the public part of the private key
       DBGERR("Requested public key of a private key: "
              << std::hex << provider_key->getHandle() << std::dec);
 
       public_key = SecKeyCopyPublicKey(provider_key->getHandle());
+      should_release_key = true;
 
       if (public_key == nullptr) {
         DBGERR("Failed to find public key from private key: "
@@ -273,7 +273,11 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
                                0,
                                &keyParams,
                                &key_data);
+
     if (error != errSecSuccess) {
+      if (should_release_key) {
+        CFRelease(public_key);
+      }
       DBGERR("SecItemExport failed: " << error);
       return 0;
     }
@@ -282,12 +286,21 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     int key_bytes_len = static_cast<int>(CFDataGetLength(key_data));
 
     if (key_bytes == nullptr) {
+      CFRelease(key_data);
+      if (should_release_key) {
+        CFRelease(public_key);
+      }
       DBGERR("Failed to get pointer to public key data bytes");
       return 0;
     }
 
+    if (should_release_key) {
+      CFRelease(public_key);
+    }
+
     BIO* bio = BIO_new_mem_buf(key_bytes, key_bytes_len);
     if (bio == nullptr) {
+      CFRelease(key_data);
       DBGERR("Failed to allocate BIO");
       return 0;
     }
@@ -297,10 +310,12 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     if (key == nullptr) {
       DBGERR("Failed to convert macOS key to openssl key");
       CFRelease(key_data);
+      BIO_free(bio);
       return 0;
     }
 
     BIO_free(bio);
+    CFRelease(key_data);
 
     // Extract 'e' and 'n'.
     BIGNUM* n = nullptr;
@@ -310,7 +325,6 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
 
     if (res == 0) {
       EVP_PKEY_free(key);
-      CFRelease(key_data);
       BN_free(n);
       BN_free(e);
       return 0;
@@ -320,14 +334,12 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
 
     if (res == 0) {
       EVP_PKEY_free(key);
-      CFRelease(key_data);
       BN_free(n);
       BN_free(e);
       return 0;
     }
 
     EVP_PKEY_free(key);
-    CFRelease(key_data);
 
     OSSL_PARAM_BLD* bld = OSSL_PARAM_BLD_new();
     if (bld == nullptr) {
@@ -337,11 +349,13 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
 
     if (!OSSL_PARAM_BLD_push_BN(bld, "n", n)) {
       DBGERR("Failed to push N parameter as OSSL_PARAM");
+      OSSL_PARAM_BLD_free(bld);
       return 0;
     }
 
     if (!OSSL_PARAM_BLD_push_BN(bld, "e", e)) {
       DBGERR("Failed to push E parameter as OSSL_PARAM");
+      OSSL_PARAM_BLD_free(bld);
       return 0;
     }
 
@@ -349,6 +363,7 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     OSSL_PARAM* params = OSSL_PARAM_BLD_to_param(bld);
     if (params == nullptr) {
       DBGERR("Failed to convert param builder to param array");
+      OSSL_PARAM_BLD_free(bld);
       return 0;
     }
 
