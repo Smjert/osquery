@@ -283,14 +283,20 @@ void Client::encryptConnection() {
 
         auto [client_cert, client_private_key] = *opt_client_cert_data;
 
-        if (client_cert == nullptr || client_private_key == nullptr) {
-          throw std::runtime_error(
-              "Failed to get a client certificate and/or private key");
+        if (client_cert == nullptr) {
+          EVP_PKEY_free(client_private_key);
+          throw std::runtime_error("Failed to get a client certificate");
+        }
+
+        if (client_private_key == nullptr) {
+          X509_free(client_cert);
+          throw std::runtime_error("Failed to get a client private key");
         }
 
         auto res = SSL_CTX_use_certificate(ssl_ctx, client_cert);
 
         if (res != 1) {
+          X509_free(client_cert);
           throw std::runtime_error("Failed to use the certificate");
         }
 
@@ -298,6 +304,7 @@ void Client::encryptConnection() {
 
         res = SSL_CTX_use_PrivateKey(ssl_ctx, client_private_key);
         if (res != 1) {
+          EVP_PKEY_free(client_private_key);
           throw std::runtime_error("Failed to use the private key");
         }
 

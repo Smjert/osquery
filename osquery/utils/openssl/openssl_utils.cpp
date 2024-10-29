@@ -33,6 +33,7 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromHash(
         std::vector<std::uint8_t> hash(hash_size);
 
         if (X509_digest(cert, cert_digest, hash.data(), nullptr) == 0) {
+          OSSL_STORE_INFO_free(store_info);
           return std::nullopt;
         }
 
@@ -47,12 +48,14 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromHash(
       }
     } else if (OSSL_STORE_INFO_get_type(store_info) == OSSL_STORE_INFO_PKEY) {
       if (client_cert == nullptr) {
+        OSSL_STORE_INFO_free(store_info);
         return std::nullopt;
       }
 
       auto* found_private_key = OSSL_STORE_INFO_get1_PKEY(store_info);
 
       if (found_private_key == nullptr) {
+        OSSL_STORE_INFO_free(store_info);
         return std::nullopt;
       }
 
@@ -198,6 +201,7 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
       }
     } else if (OSSL_STORE_INFO_get_type(store_info) == OSSL_STORE_INFO_PKEY) {
       if (client_cert == nullptr) {
+        OSSL_STORE_INFO_free(store_info);
         return std::nullopt;
       }
 
@@ -206,10 +210,9 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
       // Verify that this is the private key of the selected certificate
       if (X509_check_private_key(client_cert, found_private_key)) {
         private_key = found_private_key;
-        break;
+      } else {
+        EVP_PKEY_free(found_private_key);
       }
-
-      EVP_PKEY_free(found_private_key);
     }
 
     OSSL_STORE_INFO_free(store_info);

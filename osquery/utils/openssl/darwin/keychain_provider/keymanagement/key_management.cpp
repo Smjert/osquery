@@ -317,7 +317,6 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     BIO_free(bio);
     CFRelease(key_data);
 
-    // Extract 'e' and 'n'.
     BIGNUM* n = nullptr;
     BIGNUM* e = nullptr;
 
@@ -325,8 +324,6 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
 
     if (res == 0) {
       EVP_PKEY_free(key);
-      BN_free(n);
-      BN_free(e);
       return 0;
     }
 
@@ -335,7 +332,6 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     if (res == 0) {
       EVP_PKEY_free(key);
       BN_free(n);
-      BN_free(e);
       return 0;
     }
 
@@ -344,18 +340,24 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     OSSL_PARAM_BLD* bld = OSSL_PARAM_BLD_new();
     if (bld == nullptr) {
       DBGERR("Failed to allocate parameter builder");
+      BN_free(n);
+      BN_free(e);
       return 0;
     }
 
     if (!OSSL_PARAM_BLD_push_BN(bld, "n", n)) {
       DBGERR("Failed to push N parameter as OSSL_PARAM");
       OSSL_PARAM_BLD_free(bld);
+      BN_free(n);
+      BN_free(e);
       return 0;
     }
 
     if (!OSSL_PARAM_BLD_push_BN(bld, "e", e)) {
       DBGERR("Failed to push E parameter as OSSL_PARAM");
       OSSL_PARAM_BLD_free(bld);
+      BN_free(n);
+      BN_free(e);
       return 0;
     }
 
@@ -364,10 +366,14 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
     if (params == nullptr) {
       DBGERR("Failed to convert param builder to param array");
       OSSL_PARAM_BLD_free(bld);
+      BN_free(n);
+      BN_free(e);
       return 0;
     }
 
     OSSL_PARAM_BLD_free(bld);
+    BN_free(n);
+    BN_free(e);
 
     DBGERR("Successful export of key at handle: "
            << std::hex << provider_key->getHandle() << " with selection "
@@ -375,7 +381,9 @@ int OsqueryKeychainKeyManagementExport(const void* key_data,
 
     /* NOTE: we return here because this is the only type of selection
        we support now */
-    return param_callback(params, callback_arg);
+    auto ret = param_callback(params, callback_arg);
+    OSSL_PARAM_free(params);
+    return ret;
   }
 
   /*
@@ -441,33 +449,40 @@ int OsqueryKeychainKeyManagementImport(void* key_data,
       return 0;
     }
 
-    BIGNUM* bn_rsa_n = nullptr;
-    auto res = OSSL_PARAM_get_BN(rsa_n, &bn_rsa_n);
+    BIGNUM* n = nullptr;
+    auto res = OSSL_PARAM_get_BN(rsa_n, &n);
 
     if (res == 0) {
       return 0;
     }
 
-    BIGNUM* bn_rsa_e = nullptr;
-    res = OSSL_PARAM_get_BN(rsa_e, &bn_rsa_e);
+    BIGNUM* e = nullptr;
+    res = OSSL_PARAM_get_BN(rsa_e, &e);
 
     if (res == 0) {
+      BN_free(n);
       return 0;
     }
 
     OSSL_PARAM_BLD* bld = OSSL_PARAM_BLD_new();
     if (bld == nullptr) {
       DBGERR("Failed to allocate parameter builder");
+      BN_free(e);
+      BN_free(n);
       return 0;
     }
 
-    if (!OSSL_PARAM_BLD_push_BN(bld, "n", bn_rsa_n)) {
+    if (!OSSL_PARAM_BLD_push_BN(bld, "n", n)) {
       DBGERR("Failed to push N parameter as OSSL_PARAM");
+      BN_free(e);
+      BN_free(n);
       return 0;
     }
 
-    if (!OSSL_PARAM_BLD_push_BN(bld, "e", bn_rsa_e)) {
+    if (!OSSL_PARAM_BLD_push_BN(bld, "e", e)) {
       DBGERR("Failed to push E parameter as OSSL_PARAM");
+      BN_free(e);
+      BN_free(n);
       return 0;
     }
 
@@ -475,14 +490,18 @@ int OsqueryKeychainKeyManagementImport(void* key_data,
     OSSL_PARAM* params = OSSL_PARAM_BLD_to_param(bld);
     if (params == nullptr) {
       DBGERR("Failed to convert param builder to param array");
+      OSSL_PARAM_BLD_free(bld);
       return 0;
     }
 
     OSSL_PARAM_BLD_free(bld);
+    BN_free(e);
+    BN_free(n);
 
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
 
     if (ctx == nullptr) {
+      OSSL_PARAM_free(params);
       return 0;
     }
 
@@ -494,8 +513,11 @@ int OsqueryKeychainKeyManagementImport(void* key_data,
     EVP_PKEY* pkey = nullptr;
     if (!EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, params)) {
       EVP_PKEY_CTX_free(ctx);
+      OSSL_PARAM_free(params);
       return 0;
     }
+
+    OSSL_PARAM_free(params);
 
     auto key_raw_data_size = i2d_PublicKey(pkey, nullptr);
     std::vector<std::uint8_t> key_raw_data(key_raw_data_size);
