@@ -419,6 +419,8 @@ bool SignatureCtx::finishSignature(
   CFDataGetBytes(
       cf_signature, CFRangeMake(0, actual_signature_length), signature);
 
+  CFRelease(cf_signature);
+
   return true;
 }
 
@@ -473,6 +475,7 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
       nullptr, signature, signature_length, nullptr);
 
   if (cf_signature == nullptr) {
+    CFRelease(cf_hash);
     return false;
   }
 
@@ -481,6 +484,9 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
       provider_key_->getHandle(), algorithm_id_, cf_hash, cf_signature, &error);
 
   if (error != nullptr) {
+    CFRelease(error);
+    CFRelease(cf_signature);
+    CFRelease(cf_hash);
     return false;
   }
 
