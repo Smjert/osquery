@@ -374,11 +374,13 @@ bool SignatureCtx::finishSignature(
     return false;
   }
 
+  // TODO: Handle the error or don't pass it
   CFErrorRef error = nullptr;
   CFDataRef cf_signature = SecKeyCreateSignature(
       provider_key_->getHandle(), algorithm_id_, cf_hash, &error);
 
   if (cf_signature == nullptr) {
+#if DBGOUTPUT
     CFStringRef error_desc = CFErrorCopyDescription(error);
     auto utf16_length = CFStringGetLength(error_desc);
     auto length =
@@ -397,6 +399,7 @@ bool SignatureCtx::finishSignature(
     DBGERR("Failed to create Signature: ") << error_str << "\n";
 
     CFRelease(error_desc);
+#endif
     CFRelease(error);
     return false;
   }

@@ -213,7 +213,7 @@ int OsqueryKeychainKeyManagementHas(const void* key_data, int selection) {
 
     CFRelease(attributes);
 
-    return has_required_features ? 0 : 1;
+    return has_required_features ? 1 : 0;
   }
 
   // OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS for RSA keys doesn't exist,
