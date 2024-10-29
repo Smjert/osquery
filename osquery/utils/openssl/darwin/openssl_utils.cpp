@@ -385,11 +385,6 @@ X509_STORE* getCABundleFromSearchParameters(
       CFRelease(certificate_data);
 
       if (x509_cert) {
-        auto name = X509_get_issuer_name(x509_cert);
-
-        char name_buffer[1024];
-        X509_NAME_oneline(name, name_buffer, sizeof(name_buffer));
-
         auto res = X509_STORE_add_cert(store, x509_cert);
 
         if (res == 0) {
