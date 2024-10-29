@@ -435,6 +435,8 @@ bool Store::loadNextCertificate(OSSL_CALLBACK* object_callback,
       OSSL_PARAM_END};
   object_callback(cert_params, object_callback_arg);
 
+  CFRelease(certificate_data);
+
   ++current_certificate_idx_;
 
   if (current_certificate_idx_ >= CFArrayGetCount(certificates_)) {

@@ -177,6 +177,7 @@ X509_STORE* getCABundleFromSearchParameters(
       if (certificate_attributes == nullptr) {
         if (error != nullptr) {
           DBGERR("Error code: " << CFErrorGetCode(error));
+          CFRelease(error);
         }
         continue;
       }
@@ -187,6 +188,7 @@ X509_STORE* getCABundleFromSearchParameters(
 
       if (not_before_attribute == nullptr) {
         DBGERR("No not before attribute");
+        CFRelease(certificate_attributes);
         continue;
       }
 
@@ -196,6 +198,7 @@ X509_STORE* getCABundleFromSearchParameters(
 
       if (not_after_attribute == nullptr) {
         DBGERR("No not after attribute");
+        CFRelease(certificate_attributes);
         continue;
       }
 
@@ -209,6 +212,7 @@ X509_STORE* getCABundleFromSearchParameters(
 
       auto now = CFAbsoluteTimeGetCurrent();
       if (now < not_before_time) {
+        CFRelease(certificate_attributes);
         continue;
       }
 
@@ -221,6 +225,7 @@ X509_STORE* getCABundleFromSearchParameters(
                        &not_after_time);
 
       if (now > not_after_time) {
+        CFRelease(certificate_attributes);
         continue;
       }
 
@@ -232,6 +237,7 @@ X509_STORE* getCABundleFromSearchParameters(
             (CFNumberRef)CFDictionaryGetValue(key_usage, kSecPropertyKeyValue);
 
         if (key_usage_number == nullptr) {
+          CFRelease(certificate_attributes);
           continue;
         }
 
@@ -239,12 +245,14 @@ X509_STORE* getCABundleFromSearchParameters(
         if (!CFNumberGetValue(key_usage_number,
                               CFNumberType::kCFNumberIntType,
                               &key_usage_value)) {
+          CFRelease(certificate_attributes);
           continue;
         }
 
         // Bit for Key Cert Sign
         if (key_usage_value > 0 && (key_usage_value & 0x20) != 0x20) {
           DBGERR("Incorrect key usage purpose");
+          CFRelease(certificate_attributes);
           continue;
         }
       }
@@ -257,6 +265,7 @@ X509_STORE* getCABundleFromSearchParameters(
             extended_key_usage_attribute, kSecPropertyKeyValue);
 
         if (extended_key_usage_array == nullptr) {
+          CFRelease(certificate_attributes);
           continue;
         }
 
@@ -296,6 +305,7 @@ X509_STORE* getCABundleFromSearchParameters(
         }
 
         if (!has_correct_purpose) {
+          CFRelease(certificate_attributes);
           continue;
         }
       }
@@ -309,6 +319,7 @@ X509_STORE* getCABundleFromSearchParameters(
             subject_attributes, kSecPropertyKeyValue);
 
         if (subject_values == nullptr) {
+          CFRelease(certificate_attributes);
           continue;
         }
 
@@ -361,6 +372,8 @@ X509_STORE* getCABundleFromSearchParameters(
           continue;
         }
       }
+
+      CFRelease(certificate_attributes);
 
       CFDataRef certificate_data = SecCertificateCopyData(certificate);
 

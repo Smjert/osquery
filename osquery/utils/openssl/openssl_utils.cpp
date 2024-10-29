@@ -41,6 +41,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromHash(
                        hash.begin(),
                        hash.end())) {
           client_cert = cert;
+        } else {
+          X509_free(cert);
         }
       }
     } else if (OSSL_STORE_INFO_get_type(store_info) == OSSL_STORE_INFO_PKEY) {
@@ -59,6 +61,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromHash(
         private_key = found_private_key;
         break;
       }
+
+      EVP_PKEY_free(found_private_key);
     }
 
     OSSL_STORE_INFO_free(store_info);
@@ -95,6 +99,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
 
         // On error, or on the certificate date being expired, we skip
         if (X509_cmp_time(cert_not_after, &current_time) != 1) {
+          X509_free(cert);
+          OSSL_STORE_INFO_free(store_info);
           continue;
         }
 
@@ -102,12 +108,16 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
 
         // On error, or on the certificate not being yet usable, we skip
         if (X509_cmp_time(cert_not_before, &current_time) != -1) {
+          X509_free(cert);
+          OSSL_STORE_INFO_free(store_info);
           continue;
         }
 
         auto ex_flags = X509_get_extension_flags(cert);
 
         if (ex_flags & EXFLAG_INVALID_POLICY || ex_flags & EXFLAG_CRITICAL) {
+          X509_free(cert);
+          OSSL_STORE_INFO_free(store_info);
           continue;
         }
 
@@ -117,6 +127,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
           auto key_usage_flags = X509_get_key_usage(cert);
 
           if (!(key_usage_flags & KU_DIGITAL_SIGNATURE)) {
+            X509_free(cert);
+            OSSL_STORE_INFO_free(store_info);
             continue;
           }
         }
@@ -127,6 +139,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
           auto ex_key_flags = X509_get_extended_key_usage(cert);
 
           if (!(ex_key_flags & XKU_SSL_CLIENT)) {
+            X509_free(cert);
+            OSSL_STORE_INFO_free(store_info);
             continue;
           }
         }
@@ -178,6 +192,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
 
         if (certificate_found) {
           client_cert = cert;
+        } else {
+          X509_free(cert);
         }
       }
     } else if (OSSL_STORE_INFO_get_type(store_info) == OSSL_STORE_INFO_PKEY) {
@@ -192,6 +208,8 @@ std::optional<std::pair<X509*, EVP_PKEY*>> getClientCertificateFromFields(
         private_key = found_private_key;
         break;
       }
+
+      EVP_PKEY_free(found_private_key);
     }
 
     OSSL_STORE_INFO_free(store_info);
