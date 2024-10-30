@@ -310,22 +310,6 @@ Store* Store::openStore(std::string_view store_name) {
 
   std::size_t current_key_certificate_idx = 0;
 
-  // CFIndex count = CFArrayGetCount(result);
-  // for (CFIndex i = 0; i < count; i++) {
-  //   SecCertificateRef certRef =
-  //       static_cast<SecCertificateRef>(CFArrayGetValueAtIndex(result, i));
-  //   CFStringRef certSummary = SecCertificateCopySubjectSummary(certRef);
-  //   char certSummaryBuf[256];
-  //   if (CFStringGetCString(certSummary,
-  //                          certSummaryBuf,
-  //                          sizeof(certSummaryBuf),
-  //                          kCFStringEncodingASCII)) {
-  //     printf("Cert Name: %s\n", certSummaryBuf);
-  //   }
-  //   CFRelease(certSummary);
-  // }
-  // CFRelease(result);
-
   auto opt_private_key = searchNextValidPrivateKey(
       keychain, certificates, current_key_certificate_idx);
 
