@@ -19,7 +19,7 @@
 
 #define DBGOUTPUT 0
 
-#ifdef DBGOUTPUT
+#if DBGOUTPUT
 #define DBGERR(message) std::cerr << message << std::endl;
 #else
 #define DBGERR(message)

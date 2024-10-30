@@ -31,7 +31,7 @@
 
 #define DBGOUTPUT 0
 
-#ifdef DBGOUTPUT
+#if DBGOUTPUT
 #define DBGERR(message) std::cerr << message << std::endl;
 #define DBGWERR(message) std::wcerr << message << std::endl;
 #define DBGINFO(message) std::cout << message << std::endl;
