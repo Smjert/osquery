@@ -645,8 +645,6 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
 SignatureCtx* SignatureCtx::clone() {
   SignatureCtx* new_ctx = new SignatureCtx();
 
-  DBGERR("Duplicating hash ctx: " << std::hex << hash_ctx_ << " to "
-                                  << new_ctx->hash_ctx_ << std::dec);
   new_ctx->provider_key_ = static_cast<ProviderKey*>(
       OsqueryKeychainKeyManagementDup(provider_key_, OSSL_KEYMGMT_SELECT_ALL));
 
@@ -656,6 +654,9 @@ SignatureCtx* SignatureCtx::clone() {
   }
 
   new_ctx->hash_ctx_ = EVP_MD_CTX_dup(hash_ctx_);
+
+  DBGERR("Duplicating hash ctx: " << std::hex << hash_ctx_ << " to "
+                                  << new_ctx->hash_ctx_ << std::dec);
 
   new_ctx->algorithm_id_ = algorithm_id_;
 
