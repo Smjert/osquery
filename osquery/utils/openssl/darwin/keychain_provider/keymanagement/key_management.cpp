@@ -531,34 +531,40 @@ int OsqueryKeychainKeyManagementImport(void* key_data,
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
 
-    CFDataRef keyData = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
-                                                    key_raw_data.data(),
-                                                    key_raw_data.size(),
-                                                    kCFAllocatorNull);
+    CFDataRef cf_key_data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
+                                                        key_raw_data.data(),
+                                                        key_raw_data.size(),
+                                                        kCFAllocatorNull);
 
     // Prepare attributes for SecKey creation
-    CFMutableDictionaryRef keyAttributes =
+    CFMutableDictionaryRef key_attributes =
         CFDictionaryCreateMutable(nullptr,
                                   2,
                                   &kCFTypeDictionaryKeyCallBacks,
                                   &kCFTypeDictionaryValueCallBacks);
-    CFDictionarySetValue(keyAttributes, kSecAttrKeyType, kSecAttrKeyTypeRSA);
+    CFDictionarySetValue(key_attributes, kSecAttrKeyType, kSecAttrKeyTypeRSA);
     CFDictionarySetValue(
-        keyAttributes, kSecAttrKeyClass, kSecAttrKeyClassPublic);
+        key_attributes, kSecAttrKeyClass, kSecAttrKeyClassPublic);
 
     CFErrorRef error = nullptr;
-    SecKeyRef publicKey = SecKeyCreateWithData(keyData, keyAttributes, &error);
+    SecKeyRef public_key =
+        SecKeyCreateWithData(cf_key_data, key_attributes, &error);
 
-    if (publicKey == nullptr) {
+    CFRelease(key_attributes);
+    CFRelease(cf_key_data);
+
+    if (public_key == nullptr) {
       return 0;
     }
 
     osquery::ProviderKey* provider_key =
         static_cast<osquery::ProviderKey*>(key_data);
 
-    *provider_key = osquery::ProviderKey(publicKey,
+    *provider_key = osquery::ProviderKey(public_key,
                                          osquery::ProviderKeyType::Public,
                                          osquery::ProviderKeyAlgorithm::RSA);
+
+    CFRelease(public_key);
 
     DBGERR("Successfully imported a key!");
 

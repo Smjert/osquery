@@ -31,7 +31,9 @@ class SignatureCtx {
  public:
   SignatureCtx() = default;
   SignatureCtx(const SignatureCtx& other) = delete;
+  SignatureCtx(const SignatureCtx&& other) noexcept = delete;
   SignatureCtx& operator=(const SignatureCtx& other) = delete;
+  SignatureCtx& operator=(const SignatureCtx&& other) noexcept = delete;
   ~SignatureCtx();
 
   bool finishSignature(std::basic_string_view<std::uint8_t> hash_data,

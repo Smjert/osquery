@@ -105,7 +105,10 @@ static const OSSL_ALGORITHM* OsqueryKeychainQueryOperations(
   return nullptr; /* When unsupported return NULL */
 }
 
-void OsqueryKeychainTeardown() {}
+void OsqueryKeychainTeardown(void* prov_ctx) {
+  auto* context = static_cast<osquery::KeychainProviderCtx*>(prov_ctx);
+  delete context;
+}
 
 namespace osquery {
 static const OSSL_DISPATCH keychain_dispatch_table[] = {

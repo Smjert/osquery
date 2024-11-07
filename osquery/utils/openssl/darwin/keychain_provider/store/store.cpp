@@ -212,6 +212,8 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
     // Extract the private key from the identity
     SecKeyRef current_private_key = nullptr;
     status = SecIdentityCopyPrivateKey(identity, &current_private_key);
+
+    CFRelease(identity);
     if (status != errSecSuccess) {
       continue;
     }
@@ -220,6 +222,7 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
 
     // This means the algorithm of the key is not supported
     if (!opt_key_algorithm.has_value()) {
+      CFRelease(current_private_key);
       continue;
     }
 
@@ -247,7 +250,11 @@ std::optional<ProviderKey> searchNextValidPrivateKey(
     return std::nullopt;
   }
 
-  return ProviderKey(private_key, ProviderKeyType::Private, *opt_key_algorithm);
+  auto provider_key =
+      ProviderKey(private_key, ProviderKeyType::Private, *opt_key_algorithm);
+  // ProviderKey retains the key, so we have to release it here
+  CFRetain(private_key);
+  return {std::move(provider_key)};
 }
 } // namespace
 
@@ -295,6 +302,8 @@ Store* Store::openStore(std::string_view store_name) {
                          &kCFCopyStringDictionaryKeyCallBacks,
                          &kCFTypeDictionaryValueCallBacks);
 
+  CFRelease(keychains);
+
   if (query == nullptr) {
     DBGERR("Failed to initialize the certificates query");
     return nullptr;
@@ -302,6 +311,8 @@ Store* Store::openStore(std::string_view store_name) {
 
   CFArrayRef certificates = nullptr;
   OSStatus osStatus = SecItemCopyMatching(query, (CFTypeRef*)&certificates);
+  CFRelease(query);
+
   if (osStatus != noErr) {
     DBGERR("Failed to find certificates in store: " << store_name
                                                     << ", error: " << osStatus);

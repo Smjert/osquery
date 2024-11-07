@@ -319,6 +319,8 @@ namespace osquery {
 SignatureCtx::~SignatureCtx() {
   EVP_MD_CTX_free(hash_ctx_);
   hash_ctx_ = nullptr;
+
+  delete provider_key_;
   provider_key_ = nullptr;
 }
 
@@ -343,7 +345,7 @@ bool SignatureCtx::initHash(const char* digest_name, ProviderKey& key) {
   EVP_MD_free(hash_type);
 
   hash_ctx_ = hash_ctx;
-  provider_key_ = &key;
+  provider_key_ = key.clone();
 
   DBGERR("Initializing hash handle: " << std::hex << hash_ctx_ << " and key: "
                                       << key.getHandle() << std::dec);
@@ -366,8 +368,10 @@ bool SignatureCtx::finishSignature(
     std::size_t max_signature_length,
     unsigned char* signature,
     std::size_t& actual_signature_length) {
-  CFDataRef cf_hash = CFDataCreateWithBytesNoCopy(
-      nullptr, hash_data.data(), hash_data.size(), kCFAllocatorNull);
+  CFDataRef cf_hash = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
+                                                  hash_data.data(),
+                                                  hash_data.size(),
+                                                  kCFAllocatorNull);
 
   if (cf_hash == nullptr) {
     DBGERR("Failed to create CFData from buffer for signature");
@@ -378,6 +382,8 @@ bool SignatureCtx::finishSignature(
   CFErrorRef error = nullptr;
   CFDataRef cf_signature = SecKeyCreateSignature(
       provider_key_->getHandle(), algorithm_id_, cf_hash, &error);
+
+  CFRelease(cf_hash);
 
   if (cf_signature == nullptr) {
 #if DBGOUTPUT
@@ -464,15 +470,17 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
 
   hash_data.resize(hash_size);
 
-  CFDataRef cf_hash = CFDataCreateWithBytesNoCopy(
-      nullptr, hash_data.data(), hash_data.size(), nullptr);
+  CFDataRef cf_hash = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
+                                                  hash_data.data(),
+                                                  hash_data.size(),
+                                                  kCFAllocatorNull);
 
   if (cf_hash == nullptr) {
     return false;
   }
 
   CFDataRef cf_signature = CFDataCreateWithBytesNoCopy(
-      nullptr, signature, signature_length, nullptr);
+      kCFAllocatorDefault, signature, signature_length, kCFAllocatorNull);
 
   if (cf_signature == nullptr) {
     CFRelease(cf_hash);
@@ -483,10 +491,11 @@ bool SignatureCtx::finishHashAndVerifySignature(unsigned char* signature,
   bool valid_signature = SecKeyVerifySignature(
       provider_key_->getHandle(), algorithm_id_, cf_hash, cf_signature, &error);
 
+  CFRelease(cf_signature);
+  CFRelease(cf_hash);
+
   if (error != nullptr) {
     CFRelease(error);
-    CFRelease(cf_signature);
-    CFRelease(cf_hash);
     return false;
   }
 
@@ -636,19 +645,19 @@ bool SignatureCtx::updateParams(const OSSL_PARAM params[]) {
 SignatureCtx* SignatureCtx::clone() {
   SignatureCtx* new_ctx = new SignatureCtx();
 
-  new_ctx->hash_ctx_ = EVP_MD_CTX_dup(hash_ctx_);
-
   DBGERR("Duplicating hash ctx: " << std::hex << hash_ctx_ << " to "
                                   << new_ctx->hash_ctx_ << std::dec);
-
-  new_ctx->algorithm_id_ = algorithm_id_;
-
   new_ctx->provider_key_ = static_cast<ProviderKey*>(
       OsqueryKeychainKeyManagementDup(provider_key_, OSSL_KEYMGMT_SELECT_ALL));
 
   if (new_ctx->provider_key_ == nullptr) {
+    delete new_ctx;
     return nullptr;
   }
+
+  new_ctx->hash_ctx_ = EVP_MD_CTX_dup(hash_ctx_);
+
+  new_ctx->algorithm_id_ = algorithm_id_;
 
   new_ctx->padding_ = padding_;
 

@@ -131,6 +131,8 @@ X509_STORE* getCABundleFromSearchParameters(
     CFArrayRef certificates = nullptr;
     OSStatus os_status =
         SecItemCopyMatching(query, reinterpret_cast<CFTypeRef*>(&certificates));
+    CFRelease(query);
+
     if (os_status != noErr) {
       DBGERR("Failed to find certificates in store: "
              << store_name << ", error: " << os_status);
@@ -390,6 +392,7 @@ X509_STORE* getCABundleFromSearchParameters(
         if (res == 0) {
           DBGERR("Failed to add a certificate!");
           X509_free(x509_cert);
+          CFRelease(certificates);
           return nullptr;
         }
 

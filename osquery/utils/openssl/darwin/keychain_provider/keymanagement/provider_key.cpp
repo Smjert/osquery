@@ -15,10 +15,22 @@
 
 namespace osquery {
 
+namespace {
+SecKeyRef retainHandle(SecKeyRef handle) {
+  if (handle) {
+    CFRetain(handle);
+  }
+
+  return handle;
+}
+} // namespace
+
 ProviderKey::ProviderKey(SecKeyRef handle,
                          ProviderKeyType key_type,
                          ProviderKeyAlgorithm key_algorithm)
-    : handle_(handle), key_type_(key_type), key_algorithm_(key_algorithm) {}
+    : handle_(retainHandle(handle)),
+      key_type_(key_type),
+      key_algorithm_(key_algorithm) {}
 
 ProviderKey::ProviderKey(ProviderKey&& other) noexcept
     : handle_(std::exchange(other.handle_, nullptr)),
@@ -26,15 +38,15 @@ ProviderKey::ProviderKey(ProviderKey&& other) noexcept
       key_algorithm_(other.key_algorithm_) {}
 
 ProviderKey& ProviderKey::operator=(ProviderKey&& other) noexcept {
-  if (handle_) {
-    CFRelease(handle_);
-  }
-
   handle_ = std::exchange(other.handle_, nullptr);
   key_type_ = other.key_type_;
   key_algorithm_ = other.key_algorithm_;
 
   return *this;
+}
+
+ProviderKey* ProviderKey::clone() const {
+  return new ProviderKey(this->handle_, this->key_type_, this->key_algorithm_);
 }
 
 ProviderKey::~ProviderKey() {
@@ -53,16 +65,5 @@ std::size_t ProviderKey::getKeyLengthBits() const {
 
   // NOTE: This calculation is only valid for RSA keys!
   return block_size * 8;
-}
-
-ProviderKey* ProviderKey::clone() const {
-  if (handle_ == nullptr) {
-    return new ProviderKey(nullptr, key_type_, key_algorithm_);
-  }
-
-  // Increase the reference count for the clone
-  CFRetain(handle_);
-
-  return new ProviderKey(handle_, key_type_, key_algorithm_);
 }
 } // namespace osquery

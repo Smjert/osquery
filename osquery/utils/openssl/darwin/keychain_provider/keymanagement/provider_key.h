@@ -26,7 +26,6 @@ class ProviderKey {
   ProviderKey(SecKeyRef handle,
               ProviderKeyType key_type,
               ProviderKeyAlgorithm key_algorithm);
-
   ~ProviderKey();
 
   ProviderKey(const ProviderKey& other) = delete;
@@ -34,6 +33,8 @@ class ProviderKey {
 
   ProviderKey& operator=(const ProviderKey& other) = delete;
   ProviderKey& operator=(ProviderKey&& other) noexcept;
+
+  ProviderKey* clone() const;
 
   const SecKeyRef& getHandle() const {
     return handle_;
@@ -47,8 +48,6 @@ class ProviderKey {
   }
 
   std::size_t getKeyLengthBits() const;
-  ProviderKey* clone() const;
-  void freeKeyHandle();
 
  private:
   SecKeyRef handle_;
