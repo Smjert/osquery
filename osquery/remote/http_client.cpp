@@ -263,7 +263,14 @@ void Client::encryptConnection() {
 
         if (ca_store == nullptr) {
           throw std::runtime_error(
-              "Could not retrieve the current user CA certificates");
+              "Could not retrieve the current user CA certificates bundle");
+        }
+
+        STACK_OF(X509_OBJECT)* objects = X509_STORE_get0_objects(ca_store);
+
+        if (objects == nullptr || sk_X509_OBJECT_num(objects) == 0) {
+          LOG(WARNING) << "Could not find any CA certificate with the provided "
+                          "search parameters";
         }
 
         ctx.set_verify_mode(boost::asio::ssl::verify_peer);
