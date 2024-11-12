@@ -325,7 +325,7 @@ X509_STORE* getCABundleFromSearchParameters(
           continue;
         }
 
-        std::size_t attributesFound = 0;
+        std::size_t attributes_found = 0;
         for (CFIndex i = 0; i < CFArrayGetCount(subject_values); i++) {
           CFDictionaryRef element =
               (CFDictionaryRef)CFArrayGetValueAtIndex(subject_values, i);
@@ -356,21 +356,20 @@ X509_STORE* getCABundleFromSearchParameters(
 
               if (CFStringCompare(value, expected_value, 0) ==
                   kCFCompareEqualTo) {
-                ++attributesFound;
+                ++attributes_found;
               }
 
               CFRelease(expected_value);
 
-              if (attributesFound == params.size()) {
+              if (attributes_found == params.size()) {
                 break;
               }
             }
           }
         }
 
-        CFRelease(certificate_attributes);
-
-        if (attributesFound != params.size()) {
+        if (attributes_found != params.size()) {
+          CFRelease(certificate_attributes);
           continue;
         }
       }
